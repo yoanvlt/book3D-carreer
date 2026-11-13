@@ -1,0 +1,65 @@
+import { test, after } from 'node:test';
+import assert from 'node:assert/strict';
+import { readFile, writeFile, mkdir, rm } from 'node:fs/promises';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import { join } from 'node:path';
+import { tmpdir } from 'node:os';
+import ts from 'typescript';
+
+// Compile the actual pure world modules, without a browser or a second implementation.
+const folder=join(tmpdir(),`careerverse-tests-${process.pid}`);await mkdir(folder,{recursive:true});
+for(const name of ['config','terrain','landscape','collision']){
+  const source=await readFile(new URL(`../src/world/${name}.ts`,import.meta.url),'utf8');
+  const output=ts.transpileModule(source,{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ES2022}}).outputText.replace(/from '(\.\/[\w-]+)'/g,"from '$1.mjs'");
+  await writeFile(join(folder,name+'.mjs'),output);
+}
+const {buildings,entrance,localToWorld,WORLD}=await import(pathToFileURL(join(folder,'config.mjs')));
+const {heightAt,terrainSlope}=await import(pathToFileURL(join(folder,'terrain.mjs')));
+const {blocked,moveWithCollisions,cameraFraction,obstacles}=await import(pathToFileURL(join(folder,'collision.mjs')));
+after(async()=>{await rm(folder,{recursive:true,force:true});});
+
+test('Six unique destinations, safe arrival points and future narrative stations',()=>{
+  assert.equal(new Set(buildings.map(b=>b.id)).size,6);
+  for(const b of buildings){assert.equal(blocked(...entrance(b)),false,`${b.id} spawn blocked`);assert.equal(b.interior.stations.length,8);assert.equal(b.interior.status,'planned');}
+  assert.equal(blocked(...WORLD.spawn),false);
+});
+test('Every building has an exactly level platform',()=>{
+  for(const b of buildings){for(const [x,z] of [[0,0],[b.size[0]/2,0],[0,b.size[1]/2]]){const p=localToWorld(b,x,z);assert.ok(Math.abs(heightAt(...p)-b.elevation)<.001);}}
+});
+test('Relief is substantial, finite and continuous along the main paths',()=>{
+  const heights=[];
+  for(let x=-45;x<=45;x+=3)for(let z=-45;z<=45;z+=3){const h=heightAt(x,z);assert.ok(Number.isFinite(h));heights.push(h);}
+  assert.ok(Math.max(...heights)-Math.min(...heights)>4);
+  for(const b of buildings){const end=entrance(b);let previous=heightAt(0,0);for(let i=1;i<=150;i++){const x=end[0]*i/150,z=end[1]*i/150,y=heightAt(x,z);assert.ok(Math.abs(y-previous)<.3);assert.ok(terrainSlope(x,z)<1.2);previous=y;}}
+});
+test('Fast movement cannot tunnel through rotated building walls',()=>{
+  for(const b of buildings){const start=entrance(b),target=b.position;const result=moveWithCollisions(start,[target[0]-start[0],target[1]-start[1]]);assert.equal(blocked(...result),false);assert.ok(Math.hypot(result[0]-target[0],result[1]-target[1])>3);}
+});
+test('World perimeter blocks escape, including a very long frame',()=>{
+  const result=moveWithCollisions([0,45],[0,100]);assert.ok(Math.hypot(...result)<=WORLD.radius);assert.equal(blocked(...result),false);
+});
+test('Diagonal movement slides along a wall without becoming embedded',()=>{
+  const b=buildings[0],start=entrance(b);let result=start;
+  for(let i=0;i<100;i++)result=moveWithCollisions(result,[.06,-.1]);
+  assert.equal(blocked(...result),false);assert.ok(Math.hypot(result[0]-start[0],result[1]-start[1])>1);
+});
+test('Camera rays retract before all six building volumes',()=>{
+  for(let i=0;i<buildings.length;i++){
+    const b=buildings[i],p=entrance(b),o=obstacles[i];
+    const from={x:p[0],y:b.elevation+1.65,z:p[1]},to={x:b.position[0],y:b.elevation+4,z:b.position[1]};
+    const fraction=cameraFraction(from,to);assert.ok(fraction>0&&fraction<1,`${b.id}: ${fraction}`);
+    const end={x:from.x+(to.x-from.x)*fraction,z:from.z+(to.z-from.z)*fraction};
+    const dx=end.x-o.x,dz=end.z-o.z;const lx=dx*Math.cos(o.angle)-dz*Math.sin(o.angle),lz=dx*Math.sin(o.angle)+dz*Math.cos(o.angle);
+    assert.ok(Math.abs(lx)>o.halfX||Math.abs(lz)>o.halfZ);
+  }
+});
+test('Camera terrain sampling rejects rays below the ground',()=>{
+  const from={x:0,y:5,z:12},to={x:0,y:-3,z:20};assert.ok(cameraFraction(from,to)<1);
+});
+test('Camera still retracts when the player is pressed against a wall',()=>{
+  for(const b of buildings){const p=localToWorld(b,0,b.size[1]/2+.8);const from={x:p[0],y:b.elevation+1.65,z:p[1]};const to={x:b.position[0],y:b.elevation+3,z:b.position[1]};assert.ok(cameraFraction(from,to)<.3,b.id);}
+});
+test('Terrain and collision functions remain deterministic',()=>{
+  assert.deepEqual(moveWithCollisions([10,12],[2,3]),moveWithCollisions([10,12],[2,3]));
+  assert.equal(heightAt(17,-22),heightAt(17,-22));
+});
