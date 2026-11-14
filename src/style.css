@@ -104,7 +104,7 @@ kbd {
     box-shadow 0.12s;
 }
 .button-primary {
-  font-size: var(--text-lg);
+  font-size: var(--text-button);
   padding: 15px 30px;
 }
 .action-primary {

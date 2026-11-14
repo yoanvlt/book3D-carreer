@@ -25,7 +25,17 @@ export const ui = {
 export const typography = {
   family: "'Bricolage Grotesque Variable', 'Bricolage Grotesque', system-ui, sans-serif",
   /** Tailles en px. Aucun texte d'information sous 13 px. */
-  size: { xs: 13, sm: 14, md: 16, lg: 18, xl: 22, xxl: 30, display: 'clamp(52px, 5.6vw, 96px)' },
+  size: {
+    xs: 13,
+    sm: 14,
+    md: 16,
+    lg: 18,
+    /** Bouton principal : blanc sur orange (3,1:1) n'est conforme AA qu'en grand texte gras (18,66 px et plus). */
+    button: 19,
+    xl: 22,
+    xxl: 30,
+    display: 'clamp(52px, 5.6vw, 96px)',
+  },
   weight: { regular: 450, medium: 550, bold: 700, heavy: 800 },
   lineHeight: { tight: 1.05, snug: 1.3, body: 1.55 },
 } as const;
