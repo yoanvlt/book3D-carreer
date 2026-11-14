@@ -5,6 +5,7 @@ import * as THREE from 'three';
 import { color as C } from '../design/tokens';
 import { player, getState, marker, journey } from '../state';
 import { heightAt } from '../world/terrain';
+import { play } from '../audio/sound';
 import { Box, Cylinder, Ball, material } from './Primitives';
 import { angleDifference } from '../world/motion';
 import { buildings } from '../world/config';
@@ -93,6 +94,7 @@ export default function Robot() {
     armL = useRef<THREE.Group>(null!),
     armR = useRef<THREE.Group>(null!);
   const head = useRef<THREE.Group>(null!);
+  const airborne = useRef(false);
   const gait = useRef(0),
     motion = useRef(0),
     previous = useRef({ speed: 0, angle: player.angle });
@@ -105,7 +107,13 @@ export default function Robot() {
     motion.current = THREE.MathUtils.damp(motion.current, active ? player.speed : 0, 9, dt);
     const speed = motion.current,
       run = Math.max(0, Math.min(1, (speed - 6) / 3));
+    const stride = Math.sign(Math.sin(gait.current));
     gait.current += dt * (speed * 2.5);
+    // Un pas à chaque demi-cycle de marche, au sol ; un son au départ du saut.
+    if (speed > 1.2 && player.jump.height === 0 && Math.sign(Math.sin(gait.current)) !== stride)
+      play('pas', { rate: 0.9 + Math.random() * 0.25, volume: state.interior ? 0.35 : 0.45 });
+    if (player.jump.velocity > 0 && !airborne.current) play('saut', { volume: 0.5 });
+    airborne.current = player.jump.velocity > 0 || player.jump.height > 0;
     const swing = Math.sin(gait.current) * Math.min(1, speed / 3) * (0.55 + run * 0.35);
     left.current.rotation.x = swing;
     right.current.rotation.x = -swing;
