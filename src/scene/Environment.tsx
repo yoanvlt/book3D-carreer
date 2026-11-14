@@ -37,6 +37,51 @@ function Instances({ items, geometry }: { items: Item[]; geometry: THREE.BufferG
     />
   );
 }
+/** Horloge du vent, partagée par tous les feuillages. */
+const swayTime = { value: 0 };
+
+/**
+ * Matériau des arbres : ondulation du feuillage selon la position de chaque instance et, pour les
+ * arbres gênants, transparence tramée (alphaHash) pilotée par instance : pas de tri, pas de voile.
+ */
+function treeMaterial({ ghost, sway }: { ghost: boolean; sway: boolean }) {
+  const m = new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: 0.78, alphaHash: ghost });
+  m.onBeforeCompile = (shader) => {
+    shader.uniforms.swayTime = swayTime;
+    let vertex = 'uniform float swayTime;\n' + shader.vertexShader;
+    let fragment = shader.fragmentShader;
+    if (sway)
+      vertex = vertex.replace(
+        '#include <begin_vertex>',
+        `#include <begin_vertex>
+        #ifdef USE_INSTANCING
+          vec3 root = instanceMatrix[3].xyz;
+          float lift = position.y + 1.0;
+          transformed.x += sin(swayTime * 1.3 + root.x * 0.35 + root.z * 0.27) * 0.05 * lift;
+          transformed.z += cos(swayTime * 1.1 + root.x * 0.21) * 0.035 * lift;
+        #endif`,
+      );
+    if (ghost) {
+      vertex =
+        'attribute float instanceOpacity;\nvarying float vInstanceOpacity;\n' +
+        vertex.replace(
+          '#include <begin_vertex>',
+          '#include <begin_vertex>\nvInstanceOpacity = instanceOpacity;',
+        );
+      fragment =
+        'varying float vInstanceOpacity;\n' +
+        fragment.replace(
+          '#include <alphahash_fragment>',
+          'diffuseColor.a *= vInstanceOpacity;\n#include <alphahash_fragment>',
+        );
+    }
+    shader.vertexShader = vertex;
+    shader.fragmentShader = fragment;
+  };
+  m.customProgramCacheKey = () => `tree-${ghost}-${sway}`;
+  return m;
+}
+
 /** Arbres instanciés. Un arbre qui cache le robot passe dans un maillage translucide. */
 const MAX_GHOSTS = 10;
 function Trees() {
@@ -92,7 +137,7 @@ function Trees() {
   const ghostTrunks = useRef<THREE.InstancedMesh>(null!);
   const ghostLeaves = useRef<THREE.InstancedMesh>(null!);
   const ghost = useMemo(() => {
-    // Opacité par instance : attribut lu par le shader standard modifié.
+    // Opacité par instance, lue par le shader standard modifié (voir treeMaterial).
     const make = (geometry: THREE.BufferGeometry, count: number) => {
       const g = geometry.clone();
       g.setAttribute(
@@ -101,27 +146,13 @@ function Trees() {
       );
       return g;
     };
-    const m = new THREE.MeshStandardMaterial({
-      color: '#ffffff',
-      roughness: 0.78,
-      transparent: true,
-      depthWrite: false,
-    });
-    m.onBeforeCompile = (shader) => {
-      shader.vertexShader =
-        'attribute float instanceOpacity;\nvarying float vInstanceOpacity;\n' +
-        shader.vertexShader.replace(
-          '#include <begin_vertex>',
-          '#include <begin_vertex>\nvInstanceOpacity = instanceOpacity;',
-        );
-      shader.fragmentShader =
-        'varying float vInstanceOpacity;\n' +
-        shader.fragmentShader.replace(
-          '#include <dithering_fragment>',
-          '#include <dithering_fragment>\ngl_FragColor.a *= vInstanceOpacity;',
-        );
+    return {
+      trunk: make(trunkGeo, MAX_GHOSTS),
+      leaf: make(leafGeo, MAX_GHOSTS * 4),
+      trunkMaterial: treeMaterial({ ghost: true, sway: false }),
+      leafMaterial: treeMaterial({ ghost: true, sway: true }),
+      solidLeafMaterial: treeMaterial({ ghost: false, sway: true }),
     };
-    return { trunk: make(trunkGeo, MAX_GHOSTS), leaf: make(leafGeo, MAX_GHOSTS * 4), material: m };
   }, [trunkGeo, leafGeo]);
   const state = useMemo(
     () => ({ alpha: new Float32Array(trees.length).fill(1), solid: new Uint8Array(trees.length).fill(1) }),
@@ -169,8 +200,9 @@ function Trees() {
       mesh.setColorAt(0, temp.c.set('#ffffff'));
     }
   }, [trunks, leaves, matrices, temp]);
-  useFrame(({ camera }, delta) => {
+  useFrame(({ camera, clock }, delta) => {
     const s = getState();
+    if (!s.reducedMotion) swayTime.value = clock.elapsedTime;
     const active = s.phase === 'explore' || s.phase === 'travel';
     const fov = (camera as THREE.PerspectiveCamera).fov;
     temp.eye.copy(camera.position);
@@ -185,6 +217,7 @@ function Trees() {
     const leafOpacity = ghost.leaf.attributes.instanceOpacity as THREE.InstancedBufferAttribute;
     parts.forEach((part, i) => {
       let hidden = false;
+      let cover = false;
       if (active) {
         // 1. Le feuillage coupe la ligne de vue caméra → robot.
         const t = THREE.MathUtils.clamp(temp.to.subVectors(part.center, temp.eye).dot(temp.dir), 0, length);
@@ -198,9 +231,11 @@ function Trees() {
           temp.to.copy(part.center).project(camera);
           hidden =
             size > 0.26 && temp.to.z < 1 && Math.abs(temp.to.x) < 1 + size && Math.abs(temp.to.y) < 1 + size;
+          cover = hidden;
         }
       }
-      const alpha = THREE.MathUtils.damp(state.alpha[i], hidden ? 0.22 : 1, 8, delta);
+      // Arbre sur la ligne de vue : trame légère ; arbre qui couvre l'écran : disparition complète.
+      const alpha = THREE.MathUtils.damp(state.alpha[i], hidden ? (cover ? 0 : 0.35) : 1, 9, delta);
       state.alpha[i] = alpha > 0.995 ? 1 : alpha;
       const solid = state.alpha[i] === 1 ? 1 : 0;
       if (solid !== state.solid[i]) {
@@ -246,20 +281,19 @@ function Trees() {
       />
       <instancedMesh
         ref={solidLeaves}
-        args={[leafGeo, material('#ffffff'), leaves.length]}
+        args={[leafGeo, ghost.solidLeafMaterial, leaves.length]}
         castShadow
         receiveShadow
       />
       <instancedMesh
         ref={ghostTrunks}
-        args={[ghost.trunk, ghost.material, MAX_GHOSTS]}
+        args={[ghost.trunk, ghost.trunkMaterial, MAX_GHOSTS]}
         frustumCulled={false}
       />
       <instancedMesh
         ref={ghostLeaves}
-        args={[ghost.leaf, ghost.material, MAX_GHOSTS * 4]}
+        args={[ghost.leaf, ghost.leafMaterial, MAX_GHOSTS * 4]}
         frustumCulled={false}
-        renderOrder={2}
       />
     </>
   );

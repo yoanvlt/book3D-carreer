@@ -13,6 +13,7 @@ import { SkyDome } from './Atmosphere';
 import { scene } from '../design/tokens';
 import * as THREE from 'three';
 import { Clouds } from './Sky';
+import Life from './Life';
 
 // Contours (postprocessing) : téléchargés seulement en qualité Soignée.
 const Effects = lazy(() => import('./Effects'));
@@ -117,6 +118,7 @@ export default function World() {
           <Buildings />
           <Environment />
           <Clouds />
+          <Life />
         </>
       )}
       <Robot />
