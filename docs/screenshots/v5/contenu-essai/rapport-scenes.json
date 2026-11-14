@@ -28,7 +28,7 @@
         "reading": null
       },
       "exploration": {
-        "fps": 9,
+        "fps": 12,
         "drawCalls": 191,
         "dpr": 1,
         "triangles": 319795,
@@ -77,9 +77,9 @@
       },
       "interieur": {
         "fps": 1,
-        "drawCalls": 97,
+        "drawCalls": 103,
         "dpr": 1,
-        "triangles": 44423,
+        "triangles": 45155,
         "position": [
           -3.9,
           0,
@@ -110,7 +110,7 @@
     "qualite": "high",
     "scenes": {
       "accueil": {
-        "fps": 8,
+        "fps": 2,
         "drawCalls": 223,
         "dpr": 1,
         "triangles": 321871,
@@ -134,7 +134,7 @@
         "reading": null
       },
       "exploration": {
-        "fps": 2,
+        "fps": 3,
         "drawCalls": 155,
         "dpr": 1,
         "triangles": 306531,
@@ -182,7 +182,7 @@
         "reading": null
       },
       "interieur": {
-        "fps": 5,
+        "fps": 4,
         "drawCalls": 90,
         "dpr": 1,
         "triangles": 44061,
