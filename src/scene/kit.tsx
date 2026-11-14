@@ -5,7 +5,7 @@
  */
 import { RoundedBox } from '@react-three/drei';
 import { color as C } from '../design/tokens';
-import { Box, Cylinder, GLASS, material, type Finish, type V3 } from './Primitives';
+import { Ball, Box, Cylinder, GLASS, material, type Finish, type V3 } from './Primitives';
 
 /** Volume aux arêtes adoucies. */
 export function Bevel({
@@ -242,19 +242,19 @@ export function SolarPanel({ p, w = 2.2, d = 1.3, r = 0 }: { p: V3; w?: number; 
   );
 }
 
-/** Jardinière plantée. */
+/** Jardinière plantée : bac et touffes arrondies. */
 export function Planter({ p, w = 1.6, color = C.stoneDark }: { p: V3; w?: number; color?: string }) {
   const count = Math.max(2, Math.round(w / 0.55));
   return (
     <group position={p}>
       <Box p={[0, 0.3, 0]} s={[w, 0.6, 0.7]} color={color} />
+      <Box p={[0, 0.61, 0]} s={[w - 0.12, 0.04, 0.58]} color={C.woodDark} shadow={false} />
       {Array.from({ length: count }, (_, i) => (
-        <Box
+        <Ball
           key={i}
-          p={[-w / 2 + (w / count) * (i + 0.5), 0.75, 0]}
-          s={[0.48, 0.42 + (i % 2) * 0.16, 0.5]}
-          r={[0, i * 0.7, 0]}
-          color={i % 3 === 1 ? C.flower : C.leaf}
+          p={[-w / 2 + (w / count) * (i + 0.5), 0.78 + (i % 2) * 0.06, i % 2 ? 0.08 : -0.06]}
+          s={[0.3, 0.28 + (i % 2) * 0.08, 0.28]}
+          color={i % 3 === 1 ? C.flower : i % 3 === 2 ? C.leafDark : C.leaf}
         />
       ))}
     </group>
