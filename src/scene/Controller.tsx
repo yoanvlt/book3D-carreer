@@ -15,6 +15,7 @@ import {
   cancelJourney,
   travel,
   walkTo,
+  stopTour,
 } from '../state';
 import { moveIndoors, stationAt } from '../world/narrative';
 import { WORLD, CAMERA, buildings, entrance } from '../world/config';
@@ -56,6 +57,7 @@ export default function Controller() {
         return;
       }
       if (k === 'escape') {
+        stopTour();
         endPresentation();
         cancelJourney();
         setState({ map: false, help: false, detail: null, reading: null });

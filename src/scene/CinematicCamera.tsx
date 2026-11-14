@@ -74,6 +74,8 @@ export default function CinematicCamera() {
       const shot = buildingShots(b, aspect)[2];
       position = shot.position;
       target = shot.target;
+      // Pose fixe ; en visite guidée, on passe au lieu suivant après la durée prévue.
+      if (s.tour !== null && r.time >= presentation.duration) endPresentation();
     } else {
       if (aspect !== r.aspect) {
         // Reframe from the current pose on resize, never snap.

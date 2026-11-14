@@ -227,3 +227,68 @@ test('Nuages : aucun ne masque le pied de l’île ni le titre, sur les quatre �
   for (const [w, h] of clouds.CHECKED_SCREENS)
     for (const c of list) assert.equal(clouds.cloudConflicts(c, w, h), false);
 });
+
+const passport = await source.import('world/passport');
+
+test('Passeport : tampons gardés dans le navigateur, sans erreur si le stockage manque', () => {
+  const memory = new Map();
+  const store = { getItem: (k) => memory.get(k) ?? null, setItem: (k, v) => memory.set(k, v) };
+  assert.deepEqual(passport.loadStamps(store), []);
+  assert.equal(passport.saveStamps(['veolia', 'profile', 'inconnu'], store), true);
+  assert.deepEqual(
+    passport.loadStamps(store),
+    ['profile', 'veolia'],
+    'ordre des lieux, ids inconnus ignorés',
+  );
+  const broken = {
+    getItem: () => {
+      throw new Error('bloqué');
+    },
+    setItem: () => {
+      throw new Error('bloqué');
+    },
+  };
+  assert.deepEqual(passport.loadStamps(broken), []);
+  assert.equal(passport.saveStamps(['profile'], broken), false);
+  memory.set(passport.PASSPORT_KEY, '{pas du json');
+  assert.deepEqual(passport.loadStamps(store), []);
+  assert.equal(passport.visitComplete(buildings.map((b) => b.id)), true);
+  assert.equal(passport.visitComplete(['profile']), false);
+});
+
+test('Fin de visite : carte masquée tant que site.md n’a ni CV ni contact', () => {
+  const none = { cv: null, contact: { email: null, linkedin: null, github: null } };
+  assert.equal(passport.endCard(none), null);
+  assert.deepEqual(passport.endCard({ ...none, cv: 'medias/cv.pdf' }), { cv: 'medias/cv.pdf', links: [] });
+  const card = passport.endCard({ ...none, contact: { ...none.contact, email: 'a@b.fr' } });
+  assert.deepEqual(card.links, [{ label: 'a@b.fr', href: 'mailto:a@b.fr' }]);
+});
+
+test('Visite guidée : six lieux enchaînés en moins de 60 s, quittable à tout moment', () => {
+  assert.ok(
+    game.TOUR.order.length * (game.TOUR.perPlace + TIMING.showcaseReturn) <= 60,
+    'durée totale de la visite',
+  );
+  game.setState({ phase: 'home', tour: null, showcase: null, interior: null });
+  game.startTour();
+  const seen = [];
+  for (let i = 0; i < 6; i++) {
+    assert.equal(game.getState().phase, 'showcase');
+    assert.equal(game.presentation.full, true);
+    assert.equal(game.presentation.duration, game.TOUR.perPlace);
+    seen.push(game.getState().showcase);
+    assert.equal(skipCurrent(), true, 'un clic passe au lieu suivant');
+    game.finishPresentation();
+  }
+  assert.deepEqual(
+    seen,
+    buildings.map((b) => b.id),
+  );
+  assert.equal(game.getState().tour, null);
+  assert.equal(game.getState().phase, 'home');
+  game.startTour();
+  game.stopTour();
+  game.finishPresentation();
+  assert.equal(game.getState().tour, null);
+  assert.equal(game.getState().phase, 'home');
+});

@@ -11,6 +11,8 @@ import InteriorHUD from './ui/InteriorHUD';
 import Map from './ui/Map';
 import Joystick from './ui/Joystick';
 import PlaceDialog from './ui/PlaceDialog';
+import Passport, { EndCard } from './ui/Passport';
+import Tour from './ui/Tour';
 import ReadableVersion from './ui/ReadableVersion';
 import SceneBoundary from './ui/SceneBoundary';
 import StatusLayer from './ui/StatusLayer';
@@ -37,6 +39,8 @@ export default function App() {
       <ExploreHud />
       <Joystick />
       <BuildingPresentation />
+      <Tour />
+      <Passport />
       <InteriorHUD />
       <div id='scene-curtain' aria-hidden='true' />
       <StatusLayer />
@@ -47,6 +51,7 @@ export default function App() {
       )}
       <PlaceDialog />
       <HelpDialog />
+      <EndCard />
       {debugEnabled && <Debug />}
     </main>
   );

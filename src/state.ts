@@ -12,6 +12,7 @@ import { heightAt } from './world/terrain';
 import { findRoute } from './world/navigation';
 import { blocked } from './world/collision';
 import { TIMING, cumulative, travelDuration } from './world/timing';
+import { loadStamps, saveStamps } from './world/passport';
 import { ROOM, stationsFor, indoorRoute, stationApproach, stationAt, indoorBlocked } from './world/narrative';
 export type Phase =
   'home' | 'entering' | 'explore' | 'travel' | 'doorway' | 'showcase' | 'returning' | 'homing';
@@ -39,6 +40,10 @@ type State = {
   showcase: BuildingId | null;
   /** Le visiteur a déjà marché : l'aide clavier n'est plus affichée. */
   moved: boolean;
+  /** Visite guidée : index du lieu présenté, ou null. */
+  tour: number | null;
+  /** Carte de fin de visite ouverte. */
+  ending: boolean;
 };
 let state: State = {
   phase: 'home',
@@ -48,7 +53,7 @@ let state: State = {
   nearby: null,
   quality: 'high',
   qualityAuto: true,
-  visited: [],
+  visited: loadStamps(),
   ready: false,
   reducedMotion: window.matchMedia('(prefers-reduced-motion: reduce)').matches,
   fps: 0,
@@ -60,10 +65,13 @@ let state: State = {
   notice: '',
   showcase: null,
   moved: false,
+  tour: null,
+  ending: false,
 };
 const listeners = new Set<() => void>();
 export const getState = () => state;
 export const setState = (patch: Partial<State>) => {
+  if (patch.visited && patch.visited !== state.visited) saveStamps(patch.visited);
   state = { ...state, ...patch };
   listeners.forEach((fn) => fn());
 };
@@ -204,6 +212,14 @@ export function finishPresentation() {
   view.pitch = presentation.savedPitch;
   view.distance = presentation.savedDistance;
   setState({ phase: presentation.fromHome ? 'home' : 'explore', showcase: null });
+  if (state.tour !== null) {
+    const next = state.tour + 1;
+    if (next < TOUR.order.length) {
+      setState({ tour: next });
+      tourStep();
+    } else setState({ tour: null });
+    return;
+  }
   if (id && enterAfter) {
     if (presentation.preview) setState({ detail: id });
     else openBuilding(id);
@@ -380,4 +396,27 @@ export function walkTo(p: Point): boolean {
   marker.point = p;
   marker.serial++;
   return startJourney(route, null);
+}
+
+/**
+ * Visite guidée depuis l'accueil : les six lieux s'enchaînent, chacun avec sa présentation complète
+ * (quatre vues) et sa fiche. Durée totale : 6 × (8 + 0,8) s ≈ 53 s. On la quitte à tout moment ;
+ * un clic ou Espace passe au lieu suivant.
+ */
+export const TOUR = { perPlace: 8, order: buildings.map((b) => b.id) };
+function tourStep() {
+  const id = TOUR.order[state.tour ?? 0];
+  discover(id, true);
+  presentation.full = true;
+  presentation.duration = TOUR.perPlace;
+}
+export function startTour() {
+  if (state.phase !== 'home' || state.tour !== null) return;
+  setState({ tour: 0, ...overlaysClosed });
+  tourStep();
+}
+export function stopTour() {
+  if (state.tour === null) return;
+  setState({ tour: null });
+  endPresentation();
 }

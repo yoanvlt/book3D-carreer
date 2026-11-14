@@ -1,4 +1,4 @@
-import { enter, showPanel, useGame } from '../state';
+import { enter, showPanel, startTour, useGame } from '../state';
 import { site } from '../content';
 
 const start = () => {
@@ -21,6 +21,9 @@ export default function Hero() {
         </button>
         <button className='button-secondary' onClick={() => showPanel('map')}>
           Plan
+        </button>
+        <button className='button-secondary' onClick={startTour} disabled={!state.ready}>
+          Visite guidée <span className='hero-duration'>1 min</span>
         </button>
       </div>
       <p className='hero-keys desktop-only'>
