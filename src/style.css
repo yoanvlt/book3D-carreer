@@ -945,3 +945,29 @@ kbd {
     animation-duration: 0.01ms !important;
   }
 }
+
+/* Prototype V5 : joystick tactile */
+.joystick {
+  position: fixed;
+  left: 20px;
+  bottom: calc(24px + env(safe-area-inset-bottom));
+  width: 128px;
+  height: 128px;
+  border-radius: 50%;
+  background: rgb(255 255 255 / 0.55);
+  border: 2px solid rgb(255 255 255 / 0.9);
+  box-shadow: 0 10px 30px rgb(29 79 112 / 0.25);
+  backdrop-filter: blur(8px);
+  touch-action: none;
+  z-index: 30;
+  display: grid;
+  place-items: center;
+}
+.joystick-knob {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: #ff5a2c;
+  box-shadow: 0 4px 0 #c63f17;
+  pointer-events: none;
+}

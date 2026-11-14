@@ -15,23 +15,23 @@ Les numéros renvoient aux repères roses des images `img/ann-*.jpg`. Les images
 
 AMD Radeon intégrée (portable milieu de gamme), 1440×900, densité 1,5, navigateur de l'app Claude (panneau masqué : valeurs indicatives).
 
-| Scène | FPS | Draw calls |
-| --- | --- | --- |
-| Accueil | 52 | 211 |
-| Exploration | 38 à 60 | 140 à 168 |
-| Intérieur Veolia | 39 à 60 | 123 |
-| Qualité Légère | aucun gain | — |
+| Scène            | FPS        | Draw calls |
+| ---------------- | ---------- | ---------- |
+| Accueil          | 52         | 211        |
+| Exploration      | 38 à 60    | 140 à 168  |
+| Intérieur Veolia | 39 à 60    | 123        |
+| Qualité Légère   | aucun gain | —          |
 
 JavaScript : 2,3 ms par image. Écart entre deux images : 26,7 ms en moyenne, 80 ms au 95e centile. Les saccades ne viennent donc ni du code ni des ombres. À vérifier dans un Chrome normal (onglet visible) avant d'optimiser.
 
 ### Temps morts
 
-| Action | Durée mesurée | Cible |
-| --- | --- | --- |
-| Trajet automatique place → Veolia | 16,3 s | ≤ 6 s |
-| Entrer (E jusqu'à la main rendue) | 8,3 s | 2,5 s |
-| Ressortir | 5,9 s | 2 s |
-| Présentation (V) | 7,5 à 9 s | 4 s, passable |
+| Action                            | Durée mesurée | Cible         |
+| --------------------------------- | ------------- | ------------- |
+| Trajet automatique place → Veolia | 16,3 s        | ≤ 6 s         |
+| Entrer (E jusqu'à la main rendue) | 8,3 s         | 2,5 s         |
+| Ressortir                         | 5,9 s         | 2 s           |
+| Présentation (V)                  | 7,5 à 9 s     | 4 s, passable |
 
 Vitesses : marche 6,2, course 9,5, trajet automatique plafonné à 9 (4,2 en intérieur).
 
@@ -61,9 +61,9 @@ Le logo « careerverse. » reste générique : nom ou monogramme.
 ### img/ann-profil.jpg (état réel en ligne)
 
 1. et 2. Armoires en blocs bruns, on dirait des caisses.
-3. Panneau « Bientôt » minuscule au mur.
-4. Logo grisé à l'intérieur, il a l'air désactivé.
-5. Salle de 22 × 36 pour 4 socles : trop de sol vide.
+2. Panneau « Bientôt » minuscule au mur.
+3. Logo grisé à l'intérieur, il a l'air désactivé.
+4. Salle de 22 × 36 pour 4 socles : trop de sol vide.
 
 ### img/ann-mob.jpg
 

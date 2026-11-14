@@ -1,6 +1,7 @@
 Tu reprends mon portfolio 3D CareerVerse (React Three Fiber, Vite, TypeScript), repo yoanvlt/book3D-carreer, en ligne sur https://yoanvlt.github.io/book3D-carreer/. La V4 est sur `main` (commit `2351894`).
 
 J'ai placé un brief dans `docs/v5-brief/` :
+
 - `audit/AUDIT_V4.md` et `audit/img/` : mesures de la V4 (GPU réel, durées, taille), captures annotées des points restants (`ann-*.jpg`), comparaison avec le prototype (`avant-*.jpg`, `apres-*.jpg`).
 - `prototype/v5-prototype.patch` et `prototype/NOTES.md` : nuages, joystick tactile, occlusion ambiante.
 

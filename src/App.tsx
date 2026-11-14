@@ -9,6 +9,7 @@ import HelpDialog from './ui/HelpDialog';
 import Hero from './ui/Hero';
 import InteriorHUD from './ui/InteriorHUD';
 import Map from './ui/Map';
+import Joystick from './ui/Joystick';
 import PlaceDialog from './ui/PlaceDialog';
 import ReadableVersion from './ui/ReadableVersion';
 import SceneBoundary from './ui/SceneBoundary';
@@ -34,6 +35,7 @@ export default function App() {
       <Header />
       <Hero />
       <ExploreHud />
+      <Joystick />
       <BuildingPresentation />
       <InteriorHUD />
       <div id='scene-curtain' aria-hidden='true' />

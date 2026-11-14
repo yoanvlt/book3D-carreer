@@ -79,7 +79,7 @@ for (const [width, height] of sizes) {
   const shot = async (scene) => {
     await page.evaluate(() => document.getElementById('diagnostics')?.setAttribute('hidden', ''));
     await page.waitForTimeout(1500);
-    await page.screenshot({ path: `${out}/${scene}-${width}x${height}.png` });
+    await page.screenshot({ path: `${out}/${scene}-${width}x${height}.png`, timeout: 180000 });
     await page.evaluate(() => document.getElementById('diagnostics')?.removeAttribute('hidden'));
   };
   const entry = { taille: `${width}x${height}`, qualite: quality, scenes: {} };

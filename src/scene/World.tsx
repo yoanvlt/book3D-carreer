@@ -12,6 +12,7 @@ import CameraRig from './CameraRig';
 import { SkyDome } from './Atmosphere';
 import { scene } from '../design/tokens';
 import * as THREE from 'three';
+import { Clouds, Effects } from './V5Extras';
 import { useGame, setState, getState, player, cameraMode, passage } from '../state';
 
 function Runtime() {
@@ -112,6 +113,7 @@ export default function World() {
           <Terrain />
           <Buildings />
           <Environment />
+          <Clouds />
         </>
       )}
       <Robot />
@@ -120,6 +122,7 @@ export default function World() {
       <CameraRig />
       <CinematicCamera />
       <Runtime />
+      <Effects enabled={quality === 'high'} />
     </Canvas>
   );
 }
