@@ -958,28 +958,60 @@ kbd {
   }
 }
 
-/* Prototype V5 : joystick tactile */
+/* ---------- Commandes tactiles ---------- */
 .joystick {
-  position: fixed;
-  left: 20px;
-  bottom: calc(24px + env(safe-area-inset-bottom));
-  width: 128px;
-  height: 128px;
+  position: absolute;
+  left: var(--space-4);
+  bottom: calc(var(--space-5) + env(safe-area-inset-bottom));
+  width: 132px;
+  height: 132px;
   border-radius: 50%;
-  background: rgb(255 255 255 / 0.55);
+  background: rgb(255 255 255 / 0.6);
   border: 2px solid rgb(255 255 255 / 0.9);
-  box-shadow: 0 10px 30px rgb(29 79 112 / 0.25);
-  backdrop-filter: blur(8px);
+  box-shadow: var(--shadow-panel);
   touch-action: none;
-  z-index: 30;
+  z-index: 7;
   display: grid;
   place-items: center;
 }
 .joystick-knob {
-  width: 54px;
-  height: 54px;
+  width: 56px;
+  height: 56px;
   border-radius: 50%;
-  background: #ff5a2c;
-  box-shadow: 0 4px 0 #c63f17;
+  background: var(--accent);
+  box-shadow: var(--shadow-raised);
   pointer-events: none;
+}
+.jump-button {
+  position: absolute;
+  right: var(--space-4);
+  bottom: calc(var(--space-6) + 76px + env(safe-area-inset-bottom));
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--paper);
+  box-shadow: var(--shadow-panel);
+  touch-action: none;
+  z-index: 7;
+}
+.jump-button svg {
+  width: 28px;
+  height: 28px;
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 2.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+/* Avec joystick, les cartes d'action passent au-dessus des commandes. */
+@media (pointer: coarse), (max-width: 760px) {
+  .is-exploring:not(:has(.interior-hud)) .place-card,
+  .is-exploring .journey {
+    bottom: calc(150px + env(safe-area-inset-bottom));
+  }
+  .interior-hud .place-card {
+    bottom: calc(150px + env(safe-area-inset-bottom));
+  }
 }

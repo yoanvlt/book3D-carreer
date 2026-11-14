@@ -1,4 +1,4 @@
-import { goHome, showPanel, useGame } from '../state';
+import { goHome, isBusy, showPanel, useGame } from '../state';
 
 function Brand() {
   return (
@@ -22,7 +22,7 @@ function Brand() {
 /** Marque (retour à la vue d'ensemble), plan et aide. */
 export default function Header() {
   const state = useGame();
-  const busy = state.phase !== 'home' && state.phase !== 'explore';
+  const busy = isBusy(state);
   return (
     <header className='topbar'>
       <button

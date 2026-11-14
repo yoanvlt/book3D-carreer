@@ -76,6 +76,54 @@ export function blocked(x: number, z: number, radius = WORLD.robotRadius): boole
   });
 }
 /** Sub-stepping plus axis sliding prevents tunneling even at a low frame rate. */
+/**
+ * Normale de contact au point (x, z) : direction qui éloigne de l'obstacle le plus pénétré,
+ * calculée dans le repère tourné de chaque boîte. Sert à glisser le long des murs en biais.
+ */
+export function contactNormal(x: number, z: number, radius = WORLD.robotRadius): Point | null {
+  let best: Point | null = null;
+  let depth = -Infinity;
+  const r = Math.hypot(x, z);
+  if (r > WORLD.radius - radius) {
+    best = [-x / r, -z / r];
+    depth = r - (WORLD.radius - radius);
+  }
+  for (const o of allObstacles) {
+    const dx = x - o.x,
+      dz = z - o.z,
+      c = Math.cos(o.angle),
+      s = Math.sin(o.angle);
+    const lx = dx * c - dz * s,
+      lz = dx * s + dz * c;
+    const cx = Math.max(-o.halfX, Math.min(o.halfX, lx)),
+      cz = Math.max(-o.halfZ, Math.min(o.halfZ, lz));
+    let nx = lx - cx,
+      nz = lz - cz;
+    const d = Math.hypot(nx, nz);
+    let penetration = radius - d;
+    if (d < 1e-6) {
+      // Centre dans la boîte : sortir par la face la plus proche.
+      const px = o.halfX - Math.abs(lx),
+        pz = o.halfZ - Math.abs(lz);
+      [nx, nz] = px < pz ? [Math.sign(lx) || 1, 0] : [0, Math.sign(lz) || 1];
+      penetration = radius + Math.min(px, pz);
+    } else {
+      nx /= d;
+      nz /= d;
+    }
+    if (penetration > depth && penetration > 0) {
+      depth = penetration;
+      // Retour du repère local au monde (rotation inverse).
+      best = [nx * c + nz * s, -nx * s + nz * c];
+    }
+  }
+  return best;
+}
+
+/**
+ * Sous-pas et glissement : un déplacement qui rencontre un obstacle est projeté sur sa
+ * tangente, y compris pour les bâtiments et les bancs tournés ; à défaut, glissement par axe.
+ */
 export function moveWithCollisions(position: Point, delta: Point): Point {
   let [x, z] = position;
   const steps = Math.max(1, Math.ceil(Math.hypot(...delta) / 0.2));
@@ -85,10 +133,23 @@ export function moveWithCollisions(position: Point, delta: Point): Point {
     if (!blocked(x + dx, z + dz)) {
       x += dx;
       z += dz;
-    } else {
-      if (!blocked(x + dx, z)) x += dx;
-      if (!blocked(x, z + dz)) z += dz;
+      continue;
     }
+    const n = contactNormal(x + dx, z + dz);
+    if (n) {
+      const dot = dx * n[0] + dz * n[1];
+      if (dot < 0) {
+        const tx = dx - dot * n[0],
+          tz = dz - dot * n[1];
+        if (!blocked(x + tx, z + tz)) {
+          x += tx;
+          z += tz;
+          continue;
+        }
+      }
+    }
+    if (!blocked(x + dx, z)) x += dx;
+    if (!blocked(x, z + dz)) z += dz;
   }
   return [x, z];
 }

@@ -1,5 +1,6 @@
 import { cameraFraction, allObstacles, type Vec3 } from './collision';
 import { heightAt } from './terrain';
+import { CAMERA } from './config';
 
 export const cameraSettings = { minimumDistance: 9, clearance: 0.65 };
 export function cameraPoint(target: Vec3, yaw: number, pitch: number, distance: number): Vec3 {
@@ -128,4 +129,16 @@ export function moveInteriorCamera(from: Vec3, to: Vec3, target: Vec3, dt: numbe
   // At a boundary a translating target can invalidate the previous orbit.
   // The room's convex free camera volume permits this bounded fallback.
   return { x: from.x + dx * alpha, y: 6.2, z: from.z + dz * alpha };
+}
+
+/**
+ * Cadrage effectif selon le format d'écran. En portrait (largeur / hauteur < 0,8), la caméra
+ * recule et monte ; les réglages du visiteur (molette, glisser) restent relatifs.
+ */
+export function framing(aspect: number, distance: number, pitch: number) {
+  if (aspect >= CAMERA.portrait.below) return { distance, pitch };
+  return {
+    distance: distance * (CAMERA.portrait.distance / CAMERA.distance),
+    pitch: Math.min(CAMERA.maxElevation, pitch + (CAMERA.portrait.elevation - CAMERA.elevation)),
+  };
 }

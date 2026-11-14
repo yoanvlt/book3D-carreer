@@ -4,7 +4,7 @@ import * as THREE from 'three';
 import { safeCameraRoute, sampleRoute, ease, mix3 } from '../world/cinematics';
 import type { Vec3 } from '../world/collision';
 import { CAMERA } from '../world/config';
-import { chooseCamera, moveCamera, chooseInteriorCamera, moveInteriorCamera } from '../world/camera';
+import { chooseCamera, moveCamera, chooseInteriorCamera, moveInteriorCamera, framing } from '../world/camera';
 import { heightAt } from '../world/terrain';
 import { getState, setState, player, view, finishArrival, skip } from '../state';
 
@@ -34,6 +34,8 @@ export default function CameraRig() {
     runtime.current.skip = skip.serial;
     const dt = Math.min(delta, 0.05),
       r = runtime.current,
+      // Cadrage portrait réglé ici, à chaque image, selon le format réel de l'écran.
+      frame = framing(size.width / size.height, view.distance, view.pitch),
       s = getState();
     const narrow = size.width < 760;
     if (s.phase === 'showcase' || s.phase === 'returning') {
@@ -66,7 +68,7 @@ export default function CameraRig() {
     if (r.interior) {
       r.interior = null;
       r.target.set(player.x, player.y + 1.65, player.z);
-      const c = chooseCamera(r.target, view.yaw, view.pitch, view.distance, view.yaw);
+      const c = chooseCamera(r.target, view.yaw, frame.pitch, frame.distance, view.yaw);
       camera.position.set(c.point.x, c.point.y, c.point.z);
       r.look.copy(r.target);
     }
@@ -113,11 +115,11 @@ export default function CameraRig() {
         r.target.z - Math.cos(view.yaw) * CAMERA.lookAhead,
       );
       r.desired.set(
-        player.x + Math.sin(view.yaw) * view.distance * Math.cos(view.pitch),
-        r.target.y + Math.sin(view.pitch) * view.distance,
-        player.z + Math.cos(view.yaw) * view.distance * Math.cos(view.pitch),
+        player.x + Math.sin(view.yaw) * frame.distance * Math.cos(frame.pitch),
+        r.target.y + Math.sin(frame.pitch) * frame.distance,
+        player.z + Math.cos(view.yaw) * frame.distance * Math.cos(frame.pitch),
       );
-      const candidate = chooseCamera(r.target, view.yaw, view.pitch, view.distance, r.chosenYaw);
+      const candidate = chooseCamera(r.target, view.yaw, frame.pitch, frame.distance, r.chosenYaw);
       r.chosenYaw = candidate.yaw;
       r.safe.set(candidate.point.x, candidate.point.y, candidate.point.z);
       if (s.phase === 'explore' && r.teleport !== player.teleport) {

@@ -16,19 +16,17 @@ export default function Hero() {
       <h1 className='hero-title'>{site.nom}</h1>
       <p className='hero-text'>{site.accroche}</p>
       <div className='hero-actions'>
-        <button className='button-primary desktop-only' onClick={start} disabled={!state.ready}>
+        <button className='button-primary' onClick={start} disabled={!state.ready}>
           Explorer la ville
-        </button>
-        <button className='button-primary mobile-only' onClick={() => showPanel('map')}>
-          Voir les lieux
         </button>
         <button className='button-secondary' onClick={() => showPanel('map')}>
           Plan
         </button>
       </div>
       <p className='hero-keys desktop-only'>
-        <kbd>ZQSD</kbd> ou flèches pour marcher, <kbd>E</kbd> pour entrer
+        <kbd>ZQSD</kbd> ou flèches pour marcher, <kbd>E</kbd> pour entrer, <kbd>Espace</kbd> pour passer
       </p>
+      <p className='hero-keys mobile-only'>Joystick pour marcher, toucher le sol pour y aller.</p>
     </section>
   );
 }

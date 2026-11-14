@@ -10,7 +10,7 @@ export default function StatusLayer() {
   const destination = journey.destination ? place(journey.destination).titre : null;
   return (
     <>
-      {state.phase === 'travel' && (
+      {state.phase === 'travel' && journey.destination && (
         <div className='journey panel' role='status'>
           <span>{destination ? `En route vers ${destination}` : 'En route'}</span>
           <button className='action-secondary' onClick={cancelJourney}>

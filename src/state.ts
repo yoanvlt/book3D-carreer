@@ -10,8 +10,9 @@ import {
 } from './world/config';
 import { heightAt } from './world/terrain';
 import { findRoute } from './world/navigation';
+import { blocked } from './world/collision';
 import { TIMING, cumulative, travelDuration } from './world/timing';
-import { ROOM, stationsFor, indoorRoute, stationApproach, stationAt } from './world/narrative';
+import { ROOM, stationsFor, indoorRoute, stationApproach, stationAt, indoorBlocked } from './world/narrative';
 export type Phase =
   'home' | 'entering' | 'explore' | 'travel' | 'doorway' | 'showcase' | 'returning' | 'homing';
 export type CameraMode =
@@ -89,12 +90,20 @@ export const player = {
   x: WORLD.spawn[0],
   z: WORLD.spawn[1],
   y: heightAt(...WORLD.spawn),
-  angle: Math.PI,
+  angle: WORLD.spawnAngle,
   speed: 0,
   teleport: 0,
   reaction: 0,
+  /** Saut visuel : hauteur au-dessus du sol et vitesse verticale. */
+  jump: { height: 0, velocity: 0 },
 };
-export const view = { yaw: 0, movementYaw: 0, pitch: CAMERA.elevation, distance: CAMERA.distance, reset: 0 };
+export const view = {
+  yaw: WORLD.spawnAngle - Math.PI,
+  movementYaw: 0,
+  pitch: CAMERA.elevation,
+  distance: CAMERA.distance,
+  reset: 0,
+};
 /** Trajet automatique en cours : ligne brisée parcourue en temps fixé (voir world/timing.ts). */
 export const journey = {
   points: [] as Point[],
@@ -153,7 +162,12 @@ export function finishArrival() {
   setState({ phase: 'explore' });
   if (destination) travel(destination);
 }
+/** Marche lancée en touchant le sol : elle ne bloque pas l'interface. */
+export const isTapWalk = (s = state) => s.phase === 'travel' && !journey.destination && !journey.exit;
+/** Une séquence automatique possède le robot et la caméra : l'interface attend. */
+export const isBusy = (s = state) => s.phase !== 'home' && s.phase !== 'explore' && !isTapWalk(s);
 export function showPanel(panel: 'map' | 'help') {
+  if (isTapWalk()) cancelJourney();
   if (!isIdle()) return;
   setState({ ...overlaysClosed, [panel]: !state[panel] });
 }
@@ -335,8 +349,9 @@ export function resetPlayer() {
   player.z = WORLD.spawn[1];
   player.y = heightAt(...WORLD.spawn);
   player.speed = 0;
+  player.angle = WORLD.spawnAngle;
   player.teleport++;
-  view.yaw = 0;
+  view.yaw = WORLD.spawnAngle - Math.PI;
   setState({ phase: 'entering', ...overlaysClosed, nearby: null });
 }
 export function guideExit(): boolean {
@@ -344,4 +359,25 @@ export function guideExit(): boolean {
   // Près du seuil : la porte s'ouvre ; plus loin, un fondu remplace la marche (sortie ≤ 2 s).
   leaveBuilding();
   return getState().phase === 'doorway';
+}
+
+/** Repère du dernier « toucher pour aller », affiché au sol pendant la marche. */
+export const marker = { point: null as Point | null, serial: 0 };
+
+/** Toucher le sol pour y aller : itinéraire calculé par la navigation existante. */
+export function walkTo(p: Point): boolean {
+  if (state.phase === 'travel' && !journey.destination) cancelJourney();
+  if (state.phase !== 'explore' || state.map || state.help || state.detail || state.reading) return false;
+  if (Math.hypot(p[0] - player.x, p[1] - player.z) < 0.6) return false;
+  const route = state.interior
+    ? indoorBlocked(p[0], p[1], state.interior)
+      ? []
+      : indoorRoute([player.x, player.z], p, state.interior)
+    : blocked(p[0], p[1])
+      ? []
+      : findRoute([player.x, player.z], p);
+  if (!route.length) return false;
+  marker.point = p;
+  marker.serial++;
+  return startJourney(route, null);
 }

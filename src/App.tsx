@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react';
-import { setState, useGame } from './state';
+import { isBusy, setState, useGame } from './state';
 import BuildingPresentation from './ui/BuildingPresentation';
 import Debug, { debugEnabled } from './ui/Debug';
 import Dialog from './ui/Dialog';
@@ -22,7 +22,7 @@ export default function App() {
   const state = useGame();
   if (readable) return <ReadableVersion />;
   const home = state.phase === 'home';
-  const busy = state.phase !== 'home' && state.phase !== 'explore';
+  const busy = isBusy(state);
   return (
     <main className={`app ${home ? 'is-home' : 'is-exploring'} ${busy ? 'is-transitioning' : ''}`}>
       <div className='world' aria-label='Ville 3D interactive'>

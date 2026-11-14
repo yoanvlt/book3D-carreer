@@ -1,28 +1,45 @@
-import { moveIndoors, stationAt } from '../world/narrative';
 import { useEffect, useRef } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
+import * as THREE from 'three';
 import {
   getState,
   setState,
   player,
   view,
+  journey,
   interact,
   resetPlayer,
   showPanel,
   discover,
   endPresentation,
   cancelJourney,
+  travel,
+  walkTo,
 } from '../state';
+import { moveIndoors, stationAt } from '../world/narrative';
 import { WORLD, CAMERA, buildings, entrance } from '../world/config';
 import { heightAt } from '../world/terrain';
 import { moveWithCollisions } from '../world/collision';
 import { skipCurrent } from '../world/motion';
+import { JUMP, actions, combineInput, desiredVelocity, groundHit, stepJump } from '../world/controls';
 
+const MOVE_KEYS = ['w', 'z', 'a', 'q', 's', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'];
+const overlay = () => {
+  const s = getState();
+  return !!(s.map || s.detail || s.reading || s.help);
+};
+
+/**
+ * Entrées du visiteur : clavier, souris et toucher. Le clavier et le joystick alimentent le même
+ * vecteur d'entrée (world/controls.ts). Un appui court sur la scène fait marcher jusqu'au point
+ * touché ; un glisser tourne la caméra ; pendant une séquence automatique, il la passe.
+ */
 export default function Controller() {
   const keys = useRef(new Set<string>()),
     nearTimer = useRef(0),
-    velocity = useRef({ x: 0, z: 0 });
-  const { gl } = useThree();
+    velocity = useRef({ x: 0, z: 0 }),
+    jumps = useRef(actions.jump);
+  const { gl, camera } = useThree();
   useEffect(() => {
     const held = keys.current;
     function down(e: KeyboardEvent) {
@@ -50,7 +67,11 @@ export default function Controller() {
         held.clear();
         return;
       }
-      if (state.phase !== 'explore' || state.map || state.detail || state.reading || state.help) return;
+      if (state.phase !== 'explore' || overlay()) return;
+      if (k === ' ') {
+        actions.jump++;
+        return;
+      }
       if (k === 'v' && state.nearby) {
         discover(state.nearby);
         return;
@@ -69,61 +90,81 @@ export default function Controller() {
         return;
       }
       held.add(k);
-      if (
-        !state.moved &&
-        ['w', 'z', 'a', 'q', 's', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(k)
-      )
-        window.setTimeout(() => setState({ moved: true }), 1500);
+      if (!state.moved && MOVE_KEYS.includes(k)) window.setTimeout(() => setState({ moved: true }), 1500);
     }
     const up = (e: KeyboardEvent) => held.delete(e.key.toLowerCase());
+    // Un appui devient un glisser (rotation de caméra) au-delà de 8 px, sinon un toucher.
+    let press: {
+      id: number;
+      x: number;
+      y: number;
+      lastX: number;
+      lastY: number;
+      time: number;
+      drag: boolean;
+    } | null = null;
     const clear = () => {
       held.clear();
       player.speed = 0;
       velocity.current = { x: 0, z: 0 };
-      dragging = false;
+      press = null;
     };
-    let dragging = false,
-      lastX = 0,
-      lastY = 0;
     const start = (e: PointerEvent) => {
-      // Un clic ou un toucher sur la scène passe la séquence automatique en cours.
       const s = getState();
-      if (!s.map && !s.help && !s.detail && !s.reading && skipCurrent()) return;
-      if (
-        getState().phase !== 'explore' ||
-        getState().map ||
-        getState().detail ||
-        getState().reading ||
-        getState().help
-      )
-        return;
-      dragging = true;
-      lastX = e.clientX;
-      lastY = e.clientY;
+      if (overlay()) return;
+      // Un nouveau toucher pendant une marche « toucher pour aller » la redirige au lieu de la passer.
+      const tapWalk = s.phase === 'travel' && !journey.destination;
+      if (!tapWalk && skipCurrent()) return;
+      if (s.phase !== 'explore' && !tapWalk) return;
+      press = {
+        id: e.pointerId,
+        x: e.clientX,
+        y: e.clientY,
+        lastX: e.clientX,
+        lastY: e.clientY,
+        time: performance.now(),
+        drag: false,
+      };
       gl.domElement.setPointerCapture(e.pointerId);
     };
     const drag = (e: PointerEvent) => {
-      if (getState().phase !== 'explore') {
-        dragging = false;
-        return;
-      }
-      if (!dragging) return;
-      view.yaw -= (e.clientX - lastX) * 0.005;
-      view.pitch = Math.max(0.25, Math.min(1.14, view.pitch + (e.clientY - lastY) * 0.003));
-      lastX = e.clientX;
-      lastY = e.clientY;
+      if (!press || e.pointerId !== press.id) return;
+      if (!press.drag && Math.hypot(e.clientX - press.x, e.clientY - press.y) > 8) press.drag = true;
+      if (!press.drag || getState().phase !== 'explore') return;
+      view.yaw -= (e.clientX - press.lastX) * 0.005;
+      view.pitch = Math.max(
+        CAMERA.minElevation,
+        Math.min(CAMERA.maxElevation, view.pitch + (e.clientY - press.lastY) * 0.003),
+      );
+      press.lastX = e.clientX;
+      press.lastY = e.clientY;
     };
-    const end = () => {
-      dragging = false;
+    const end = (e: PointerEvent) => {
+      const p = press;
+      press = null;
+      if (!p || p.drag || e.type === 'pointercancel' || performance.now() - p.time > 500 || overlay()) return;
+      // Toucher : point du sol (ou bâtiment) sous le doigt.
+      const rect = gl.domElement.getBoundingClientRect();
+      const ndc = new THREE.Vector2(
+        ((e.clientX - rect.left) / rect.width) * 2 - 1,
+        -((e.clientY - rect.top) / rect.height) * 2 + 1,
+      );
+      const ray = new THREE.Raycaster();
+      ray.setFromCamera(ndc, camera);
+      const hit = groundHit(ray.ray.origin, ray.ray.direction, !!getState().interior);
+      if (!hit) return;
+      // Différé d'une tâche : un clic sur le poteau indicateur ouvre le plan, on ne marche pas alors.
+      window.setTimeout(() => {
+        if (overlay()) return;
+        if (hit.building) {
+          if (getState().phase === 'travel') cancelJourney();
+          travel(hit.building);
+        } else walkTo(hit.point);
+        if (!getState().moved) setState({ moved: true });
+      }, 0);
     };
     const wheel = (e: WheelEvent) => {
-      if (
-        getState().phase === 'explore' &&
-        !getState().map &&
-        !getState().help &&
-        !getState().reading &&
-        !getState().detail
-      ) {
+      if (getState().phase === 'explore' && !overlay()) {
         e.preventDefault();
         view.distance = Math.max(
           CAMERA.minDistance,
@@ -151,36 +192,33 @@ export default function Controller() {
       gl.domElement.removeEventListener('pointercancel', end);
       gl.domElement.removeEventListener('wheel', wheel);
     };
-  }, [gl]);
+  }, [gl, camera]);
   useFrame((_, delta) => {
     const dt = Math.max(0.001, Math.min(delta, 0.05)),
       state = getState();
-    if (['travel', 'doorway', 'showcase', 'returning'].includes(state.phase)) {
+    stepJump(player.jump, dt);
+    if (state.phase !== 'explore' || overlay()) {
       keys.current.clear();
+      if (!['travel', 'doorway', 'showcase', 'returning'].includes(state.phase)) player.speed = 0;
       velocity.current = { x: 0, z: 0 };
+      jumps.current = actions.jump;
       return;
     }
-    if (state.phase !== 'explore' || state.map || state.detail || state.reading || state.help) {
-      keys.current.clear();
-      player.speed = 0;
-      velocity.current = { x: 0, z: 0 };
-      return;
+    if (jumps.current !== actions.jump) {
+      jumps.current = actions.jump;
+      if (player.jump.height === 0) player.jump.velocity = JUMP.velocity;
     }
     const has = (...ks: string[]) => ks.some((k) => keys.current.has(k));
-    let forward = Number(has('w', 'z', 'arrowup')) - Number(has('s', 'arrowdown'));
-    let right = Number(has('d', 'arrowright')) - Number(has('a', 'q', 'arrowleft'));
-    const len = Math.hypot(forward, right);
-    if (len) {
-      forward /= len;
-      right /= len;
-    }
-    const speed = (has('shift') ? WORLD.runSpeed : WORLD.walkSpeed) * (state.interior ? 0.7 : 1);
-    const desiredX = (right * Math.cos(view.movementYaw) - forward * Math.sin(view.movementYaw)) * speed * dt;
-    const desiredZ =
-      (-right * Math.sin(view.movementYaw) - forward * Math.cos(view.movementYaw)) * speed * dt;
-    const damping = 1 - Math.exp(-(len ? 7 : 10) * dt);
-    velocity.current.x += (desiredX / dt - velocity.current.x) * damping;
-    velocity.current.z += (desiredZ / dt - velocity.current.z) * damping;
+    const intent = combineInput({
+      forward: Number(has('w', 'z', 'arrowup')) - Number(has('s', 'arrowdown')),
+      right: Number(has('d', 'arrowright')) - Number(has('a', 'q', 'arrowleft')),
+      run: has('shift'),
+    });
+    const speed = (intent.run ? WORLD.runSpeed : WORLD.walkSpeed) * (state.interior ? 0.7 : 1);
+    const [vx, vz] = desiredVelocity(intent, view.movementYaw, speed);
+    const damping = 1 - Math.exp(-(intent.magnitude ? 7 : 10) * dt);
+    velocity.current.x += (vx - velocity.current.x) * damping;
+    velocity.current.z += (vz - velocity.current.z) * damping;
     const dx = velocity.current.x * dt,
       dz = velocity.current.z * dt;
     const [x, z] = state.interior
@@ -190,7 +228,7 @@ export default function Controller() {
     player.x = x;
     player.z = z;
     player.y = state.interior ? 0 : heightAt(x, z);
-    if (len) {
+    if (intent.magnitude > 0.05 && Math.hypot(dx, dz) > 1e-4) {
       const target = Math.atan2(dx, dz);
       const diff = Math.atan2(Math.sin(target - player.angle), Math.cos(target - player.angle));
       player.angle += diff * (1 - Math.exp(-14 * dt));
