@@ -1,3 +1,4 @@
+import SlidingDoor from './SlidingDoor';
 import { RoundedBox } from '@react-three/drei';
 import { useRef, useEffect, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
@@ -75,13 +76,10 @@ function Veolia(){return <>
   {[-5,0,5].map(x=><Box key={x} p={[x,6.05,5.2]} s={[3.7,.15,2.4]} r={[-.3,0,0]} color='#426b80'/>)}
 </>;}
 function Portal({b}:{b:Building}){
-  const left=useRef<THREE.Group>(null!),right=useRef<THREE.Group>(null!);
-  useFrame((_,dt)=>{const amount=THREE.MathUtils.damp(right.current.position.x,getState().door===b.id?1.25:0,8,dt);left.current.position.x=-amount;right.current.position.x=amount;});
   return <group position={[0,0,b.size[1]/2+.5]}>
     <Box p={[0,1.7,-.12]} s={[2.9,3.4,.22]} color={C.ink}/>
     {[-1,1].map(side=><Box key={side} p={[side*1.65,1.8,.2]} s={[.25,3.6,1]} color={C.cream}/>)}<Box p={[0,3.6,.25]} s={[3.55,.3,1.1]} color={b.color}/>
-    <group ref={left}><Box p={[-.68,1.65,.07]} s={[1.3,3.25,.1]} color={C.glass}/><Box p={[-.09,1.6,.15]} s={[.06,.5,.08]} color={C.cream}/></group>
-    <group ref={right}><Box p={[.68,1.65,.07]} s={[1.3,3.25,.1]} color={C.glass}/><Box p={[.09,1.6,.15]} s={[.06,.5,.08]} color={C.cream}/></group><Box p={[0,.05,1.25]} s={[4,.1,2.4]} color={C.cream}/>
+    <SlidingDoor id={b.id}/><Box p={[0,.05,1.25]} s={[4,.1,2.4]} color={C.cream}/>
   </group>;
 }
 const models={profile:Portrait,'project-1':Innovation,'project-2':Mechanism,'project-3':Discovery,missions:Atelier,veolia:Veolia};

@@ -1,3 +1,4 @@
+import SlidingDoor from './SlidingDoor';
 import { useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
@@ -7,9 +8,11 @@ import { useGame, getState } from '../state';
 import { Box, Cylinder, Ball, Beam, Sign } from './Primitives';
 
 function Exhibit({station:s,color}:{station:Station;color:string}){
+  const title=useRef<THREE.Group>(null!);
   const sculpture=useRef<THREE.Group>(null!),light=useRef<THREE.MeshStandardMaterial>(null!);
   useFrame(({clock},dt)=>{
-    const active=getState().station===s.id;
+    const state=getState(),active=state.station===s.id;
+    const seen=state.seen.includes(state.interior+':'+s.id);const scale=THREE.MathUtils.damp(title.current.scale.x,active||seen?1:.8,6,dt);title.current.scale.setScalar(scale);
     light.current.emissiveIntensity=THREE.MathUtils.damp(light.current.emissiveIntensity,active?.85:.08,5,dt);
     const reduced=getState().reducedMotion;
     sculpture.current.rotation.y=reduced?0:Math.sin(clock.elapsedTime*.22+s.position[1])*.22;
@@ -25,7 +28,7 @@ function Exhibit({station:s,color}:{station:Station;color:string}){
     </group>
     <Box p={[0,3.4,-.3]} s={[4.3,1.9,.2]} color={C.ink}/>
     <mesh position={[0,3.4,-.185]}><planeGeometry args={[4.1,1.7]}/><meshStandardMaterial ref={light} color='#2e515a' emissive={color} emissiveIntensity={.08}/></mesh>
-    <Sign text={s.title} p={[0,3.65,-.16]} s={[3.9,.55]} color={C.cream} bg='#2e515a'/>
+    <group ref={title}><Sign text={s.title} p={[0,3.65,-.16]} s={[3.9,.55]} color={C.cream} bg='#2e515a'/></group>
     <Sign text={s.draft?'CONTENU A DOCUMENTer'.toUpperCase():'APPROCHEZ POUR DECOUVRIR'} p={[0,3.05,-.16]} s={[3.8,.32]} color='#add2cc' bg='#2e515a'/>
     <Cylinder p={[0,.015,2.5]} s={[1.2,.02,1.2]} color={color}/>
   </group>;
@@ -62,7 +65,7 @@ export default function Interior(){
       <Cylinder p={[side*9,.5,14.8]} s={[.8,1,.8]} color={b.color}/><Ball p={[side*9,1.8,14.8]} s={[1.1,1.3,1.1]} color={C.leaf}/>
     </group>)}
     <Box p={[0,3.8,-18]} s={[22,7.6,.4]} color='#385965'/>
-    <Box p={[0,1.8,17.8]} s={[3.5,3.6,.16]} color={C.ink}/><Sign text='SORTIE / LA VILLE' p={[0,4.4,17.55]} s={[5,.65]} rotation={[0,Math.PI,0]}/>
+    <group position={[0,0,17.8]} rotation={[0,Math.PI,0]}><SlidingDoor id={b.id}/></group><Sign text='SORTIE / LA VILLE' p={[0,4.4,17.55]} s={[5,.65]} rotation={[0,Math.PI,0]}/>
     <Sign text={b.id==='profile'?'LA MAISON PORTRAIT':b.subtitle.toUpperCase()} p={[0,6.8,-17.75]} s={[15,1.15]} color={C.cream} bg='#385965'/>
     {b.id==='profile'?<PortraitArchitecture/>:<ThematicArchitecture id={b.id} color={b.color}/>}
     {stationsFor(b.id).map(station=><Exhibit key={station.id} station={station} color={b.color}/>)}
