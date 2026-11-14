@@ -41,6 +41,8 @@ export const ROOM = {
   halfDepth: 18,
   spawn: [0, 11] as Point,
   exit: [0, 16] as Point,
+  /** Seuil intérieur de la porte. */
+  door: [0, 17.55] as Point,
   /** Point atteint après la porte : assez loin du seuil pour que la caméra voie la salle. */
   arrival: [0, 8.5] as Point,
 };

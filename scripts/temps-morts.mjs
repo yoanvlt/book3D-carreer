@@ -13,6 +13,11 @@ const { heightAt } = await source.import('world/terrain');
 const { tickMotion } = await source.import('world/motion');
 const cinema = await source.import('world/cinematics');
 const narrative = await source.import('world/narrative');
+// Absent de la V4 : la présentation y durait compositions[id].duration + 1,6 s de retour.
+const TIMING = await source.import('world/timing').then(
+  (m) => m.TIMING,
+  () => null,
+);
 
 const DT = 1 / 60;
 function run(until, limit = 60 * 120) {
@@ -55,7 +60,7 @@ for (const b of buildings) {
   Object.assign(game.player, { x: p[0], z: p[1], y: 0 });
   game.guideExit();
   const exit = run(() => idle() && !game.getState().interior);
-  const show = cinema.compositions[b.id].duration + (cinema.RETURN_DURATION ?? 1.6);
+  const show = TIMING ? TIMING.showcase + TIMING.showcaseReturn : cinema.compositions[b.id].duration + 1.6;
   rows.push({ lieu: b.id, trajet: travel, entrer: enter, sortir: exit, presentation: show });
 }
 await source.cleanup();

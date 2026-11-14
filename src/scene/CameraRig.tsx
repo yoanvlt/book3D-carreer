@@ -6,7 +6,7 @@ import type { Vec3 } from '../world/collision';
 import { CAMERA } from '../world/config';
 import { chooseCamera, moveCamera, chooseInteriorCamera, moveInteriorCamera } from '../world/camera';
 import { heightAt } from '../world/terrain';
-import { getState, setState, player, view, finishArrival } from '../state';
+import { getState, setState, player, view, finishArrival, skip } from '../state';
 
 export default function CameraRig() {
   const { camera, size } = useThree();
@@ -17,6 +17,7 @@ export default function CameraRig() {
     interior: null as string | null,
     chosenYaw: 0,
     teleport: 0,
+    skip: 0,
     t: 0,
     offset: 0,
     from: new THREE.Vector3(),
@@ -28,6 +29,9 @@ export default function CameraRig() {
     safe: new THREE.Vector3(),
   });
   useFrame((_, delta) => {
+    // Une demande de passer n'est valable que pour la séquence en cours.
+    const skipped = runtime.current.skip !== skip.serial;
+    runtime.current.skip = skip.serial;
     const dt = Math.min(delta, 0.05),
       r = runtime.current,
       s = getState();
@@ -80,6 +84,7 @@ export default function CameraRig() {
         r.route = safeCameraRoute(r.from, end);
       }
       r.t += dt / (s.reducedMotion ? 0.001 : 2.5);
+      if (skipped) r.t = 1;
       const p = sampleRoute(r.route, r.t),
         aim = mix3(r.lookFrom, { x: 0, y: 1, z: 0 }, ease(r.t));
       camera.position.set(p.x, p.y, p.z);
@@ -132,6 +137,7 @@ export default function CameraRig() {
         }
         if (r.t === 0) r.route = safeCameraRoute(r.from, r.safe);
         r.t += dt / (s.reducedMotion ? 0.001 : 2.7);
+        if (skipped) r.t = 1;
         const t = Math.min(1, r.t),
           e = t * t * (3 - 2 * t);
         const pathPosition = sampleRoute(r.route, t);

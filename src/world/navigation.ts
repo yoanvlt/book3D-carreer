@@ -60,8 +60,8 @@ export function findRoute(start: Point, goal: Point): Point[] {
       }
       result.push(start);
       result.reverse();
-      return result.filter(
-        (p, i) => !i || Math.hypot(p[0] - result[i - 1][0], p[1] - result[i - 1][1]) > 0.01,
+      return smoothRoute(
+        result.filter((p, i) => !i || Math.hypot(p[0] - result[i - 1][0], p[1] - result[i - 1][1]) > 0.01),
       );
     }
     open.delete(current);
@@ -94,4 +94,25 @@ export function findRoute(start: Point, goal: Point): Point[] {
     }
   }
   return [];
+}
+
+/**
+ * Supprime les crans de la grille : un point intermédiaire est retiré quand la ligne droite
+ * qui le contourne reste libre. Les raccourcis sont limités à 10 unités pour suivre les rues.
+ */
+export function smoothRoute(route: Point[]): Point[] {
+  if (route.length < 3) return route;
+  const out = [route[0]];
+  for (let i = 0; i < route.length - 1;) {
+    let j = route.length - 1;
+    while (
+      j > i + 1 &&
+      (Math.hypot(route[j][0] - route[i][0], route[j][1] - route[i][1]) > 10 ||
+        !clearSegment(route[i], route[j]))
+    )
+      j--;
+    out.push(route[j]);
+    i = j;
+  }
+  return out;
 }

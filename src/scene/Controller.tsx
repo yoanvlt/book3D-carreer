@@ -16,6 +16,7 @@ import {
 import { WORLD, CAMERA, buildings, entrance } from '../world/config';
 import { heightAt } from '../world/terrain';
 import { moveWithCollisions } from '../world/collision';
+import { skipCurrent } from '../world/motion';
 
 export default function Controller() {
   const keys = useRef(new Set<string>()),
@@ -41,6 +42,11 @@ export default function Controller() {
         endPresentation();
         cancelJourney();
         setState({ map: false, help: false, detail: null, reading: null });
+        held.clear();
+        return;
+      }
+      // Pendant une séquence automatique, Espace, Entrée ou E la termine.
+      if ([' ', 'enter', 'e'].includes(k) && skipCurrent()) {
         held.clear();
         return;
       }
@@ -80,6 +86,9 @@ export default function Controller() {
       lastX = 0,
       lastY = 0;
     const start = (e: PointerEvent) => {
+      // Un clic ou un toucher sur la scène passe la séquence automatique en cours.
+      const s = getState();
+      if (!s.map && !s.help && !s.detail && !s.reading && skipCurrent()) return;
       if (
         getState().phase !== 'explore' ||
         getState().map ||

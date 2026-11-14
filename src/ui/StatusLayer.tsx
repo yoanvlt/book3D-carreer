@@ -1,4 +1,5 @@
 import { cancelJourney, journey, setState, skipJourney, useGame } from '../state';
+import { skipCurrent } from '../world/motion';
 import { buildings } from '../world/config';
 import { place } from '../content';
 
@@ -19,6 +20,11 @@ export default function StatusLayer() {
             Passer
           </button>
         </div>
+      )}
+      {['doorway', 'entering', 'homing', 'returning'].includes(state.phase) && (
+        <button className='skip-hint panel' onClick={() => skipCurrent()}>
+          Passer <kbd>Espace</kbd>
+        </button>
       )}
       {state.notice && (
         <button className='notice panel' onClick={() => setState({ notice: '' })}>
