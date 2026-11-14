@@ -44,6 +44,23 @@ export const ROOM = {
   /** Point atteint après la porte : assez loin du seuil pour que la caméra voie la salle. */
   arrival: [0, 8.5] as Point,
 };
+/** Mobilier qui bloque la marche, le long des murs et au fond : [x, z, demi-largeur, demi-profondeur]. */
+export type Footprint = [number, number, number, number];
+const SIDES = (z1: number, z2: number, half = 1.4): Footprint[] => [
+  [-9.85, z1, 0.45, half],
+  [9.85, z1, 0.45, half],
+  [-9.85, z2, 0.45, half],
+  [9.85, z2, 0.45, half],
+];
+export const FURNITURE: Record<BuildingId, Footprint[]> = {
+  profile: [...SIDES(0.8, -7.2, 1.6), [-2.4, -16.3, 2.2, 0.6], [3.6, -16.2, 0.8, 0.7]],
+  'project-1': [...SIDES(-1.8, -8.8, 1.3), [0, -16.2, 2.6, 0.7]],
+  'project-2': [...SIDES(1, -7, 1.4), [0, -16.4, 3.2, 0.55]],
+  'project-3': [...SIDES(-1.8, -8.8, 1.1), [5, -16, 1.1, 1]],
+  missions: [...SIDES(-1.8, -8.8, 1.3), [-3.4, -16.2, 0.6, 0.6], [3.4, -16.2, 0.6, 0.6]],
+  veolia: [...SIDES(-1.8, -8.8, 1.3), [0, -16.3, 3, 0.6]],
+};
+
 export function indoorBlocked(x: number, z: number, id: BuildingId) {
   if (Math.abs(x) > ROOM.halfWidth - 0.7 || Math.abs(z) > ROOM.halfDepth - 0.8) return true;
   if ([-9, 9].some((px) => Math.hypot(x - px, z - 14.8) < 1.65)) return true;
@@ -51,6 +68,13 @@ export function indoorBlocked(x: number, z: number, id: BuildingId) {
   if (
     (id === 'profile' || id === 'project-2') &&
     [-11, -3, 5, 13].some((pz) => Math.abs(z - pz) < 0.8 && Math.abs(x) > 9.5)
+  )
+    return true;
+  if (
+    FURNITURE[id].some(
+      ([fx, fz, hx, hz]) =>
+        Math.hypot(Math.max(0, Math.abs(x - fx) - hx), Math.max(0, Math.abs(z - fz) - hz)) < 0.55,
+    )
   )
     return true;
   // Include the robot's radius around plinths, not only their centre footprint.
