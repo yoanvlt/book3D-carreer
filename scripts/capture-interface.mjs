@@ -74,7 +74,7 @@ const shot = (page, name) => saveShot(page, `${out}/${name}`);
 {
   const { page, context } = await open(390, 844);
   await ready(page);
-  await page.click('.hero .button-primary.mobile-only');
+  await page.locator('.hero .button-secondary').first().click();
   await page.waitForSelector('.map-dialog');
   await shot(page, 'plan-390x844');
   await page.click('.destination >> nth=1');

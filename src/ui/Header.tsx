@@ -49,7 +49,12 @@ export default function Header() {
       </button>
       <div className='header-actions'>
         <SoundButton />
-        <button className='plan-button panel' disabled={busy} onClick={() => showPanel('map')}>
+        <button
+          className='plan-button panel'
+          aria-label='Plan (M)'
+          disabled={busy}
+          onClick={() => showPanel('map')}
+        >
           <svg viewBox='0 0 24 24' aria-hidden='true'>
             <path d='m3 5 6-2 6 2 6-2v16l-6 2-6-2-6 2Zm6-2v16m6-14v16' />
           </svg>
