@@ -5,6 +5,7 @@ import { getState, setState, player, view, interact, resetPlayer, showPanel, dis
 import { WORLD, CAMERA, buildings, entrance } from '../world/config';
 import { heightAt } from '../world/terrain';
 import { moveWithCollisions } from '../world/collision';
+import { maxCameraDistance } from '../theme';
 
 export default function Controller(){
   const keys=useRef(new Set<string>()),nearTimer=useRef(0),velocity=useRef({x:0,z:0});const {gl}=useThree();
@@ -31,7 +32,7 @@ export default function Controller(){
     const start=(e:PointerEvent)=>{if(getState().phase!=='explore'||getState().map||getState().detail||getState().reading||getState().help)return;dragging=true;lastX=e.clientX;lastY=e.clientY;gl.domElement.setPointerCapture(e.pointerId);};
     const drag=(e:PointerEvent)=>{if(getState().phase!=='explore'){dragging=false;return;}if(!dragging)return;view.yaw-=(e.clientX-lastX)*.005;view.pitch=Math.max(.25,Math.min(1.14,view.pitch+(e.clientY-lastY)*.003));lastX=e.clientX;lastY=e.clientY;};
     const end=()=>{dragging=false;};
-    const wheel=(e:WheelEvent)=>{if(getState().phase==='explore'&&!getState().map&&!getState().help&&!getState().reading&&!getState().detail){e.preventDefault();view.distance=Math.max(10,Math.min(19,view.distance+e.deltaY*.008));}};
+    const wheel=(e:WheelEvent)=>{if(getState().phase==='explore'&&!getState().map&&!getState().help&&!getState().reading&&!getState().detail){e.preventDefault();view.distance=Math.max(10,Math.min(maxCameraDistance,view.distance+e.deltaY*.008));}};
     window.addEventListener('keydown',down);window.addEventListener('keyup',up);window.addEventListener('blur',clear);document.addEventListener('visibilitychange',clear);
     gl.domElement.addEventListener('pointerdown',start);gl.domElement.addEventListener('pointermove',drag);gl.domElement.addEventListener('pointerup',end);gl.domElement.addEventListener('pointercancel',end);gl.domElement.addEventListener('wheel',wheel,{passive:false});
     return()=>{window.removeEventListener('keydown',down);window.removeEventListener('keyup',up);window.removeEventListener('blur',clear);document.removeEventListener('visibilitychange',clear);gl.domElement.removeEventListener('pointerdown',start);gl.domElement.removeEventListener('pointermove',drag);gl.domElement.removeEventListener('pointerup',end);gl.domElement.removeEventListener('pointercancel',end);gl.domElement.removeEventListener('wheel',wheel);};

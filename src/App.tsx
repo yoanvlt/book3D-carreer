@@ -6,6 +6,7 @@ import { useGame, setState, enter, openBuilding, resetPlayer, travel, skipJourne
 import { buildings } from './world/config';
 import Map from './ui/Map';
 import Dialog from './ui/Dialog';
+import { themed } from './theme';
 
 const World=lazy(()=>import('./scene/World'));
 class SceneBoundary extends Component<{children:ReactNode},{failed:boolean}>{
@@ -21,15 +22,21 @@ export default function App(){
   return <main className={`app ${home?'is-home':'is-exploring'} ${busy?'is-transitioning':''}`}>
     <div className='world' aria-label='Campus 3D interactif'><SceneBoundary><Suspense fallback={null}><World/></Suspense></SceneBoundary></div>
     <header className='topbar'><button className='brand-button' disabled={busy||!!state.interior} aria-label='Revenir à la vue aérienne' onClick={goHome}><Brand/></button><span className='header-caption'>LE PORTFOLIO À EXPLORER</span><div className='header-actions'><button className='text-button' disabled={busy} aria-label='Ouvrir le plan' onClick={()=>showPanel('map')}><svg viewBox='0 0 24 24' aria-hidden='true'><path d='m3 5 6-2 6 2 6-2v16l-6 2-6-2-6 2Zm6-2v16m6-14v16'/></svg><span>Le plan</span><kbd>M</kbd></button><button className='help-button' disabled={busy} aria-label='Commandes et réglages' onClick={()=>showPanel('help')}>?</button></div></header>
-    <section className={`hero ${!home?'hero-hidden':''}`} aria-hidden={!home} inert={!home}>
+    {themed?<section className={`hero hero4 ${!home?'hero-hidden':''}`} aria-hidden={!home} inert={!home}>
+      <p className='hero4-role'>Data, IA et systèmes d’information</p>
+      <h1 className='hero4-title'>Yoan Viollet</h1>
+      <p className='hero4-text'>Mon parcours et mes projets, rangés dans une petite ville que l’on visite à pied.</p>
+      <div className='hero4-actions'><button className='hero4-primary desktop-only' onClick={start} disabled={!state.ready}>Explorer la ville</button><button className='hero4-primary mobile-only' onClick={()=>showPanel('map')}>Voir les lieux</button><button className='hero4-secondary' onClick={()=>showPanel('map')}>Plan</button></div>
+      <p className='hero4-keys desktop-only'><kbd>ZQSD</kbd> marcher <kbd>E</kbd> entrer <kbd>M</kbd> plan</p>
+    </section>:<section className={`hero ${!home?'hero-hidden':''}`} aria-hidden={!home} inert={!home}>
       <div className='eyebrow hero-eyebrow'><span className='tiny-sun'>✳</span> BIENVENUE DANS MON UNIVERS</div>
       <h1>Un parcours.<br/>Tout un <em>monde.</em></h1>
       <div className='hero-rule'/><p className='intro-name'>Yoan Viollet<span>DATA · IA · PROJETS</span></p>
       <p className='hero-description'>Les idées prennent vie, les projets prennent place.<br className='wide-only'/> Découvrez mon parcours, à votre rythme.</p>
       <div className='hero-buttons'><button className='primary desktop-only' onClick={start} disabled={!state.ready}>Entrer dans la ville <Arrow/></button><button className='primary mobile-only' onClick={()=>showPanel('map')}>Explorer les lieux <Arrow/></button><button className='secondary' onClick={()=>showPanel('map')}>Voir le plan <span>↗</span></button></div>
       <p className='hero-hint desktop-only'><span className='keyboard-icon'>⌘</span> Une visite libre, au clavier et à la souris.</p>
-    </section>
-    {home&&<><div className='world-note'><span className='note-line'/><span>LE CAMPUS DES POSSIBLES<small>Six lieux, autant d’histoires.</small></span></div><footer className='home-footer'><span>UN PETIT MONDE, DE GRANDES IDÉES.</span><span className='footer-center'><i/> OUVERT À LA CURIOSITÉ</span><span>ÉDITION 03 <span className='footer-slash'>/</span> 2026</span></footer></>}
+    </section>}
+    {home&&!themed&&<><div className='world-note'><span className='note-line'/><span>LE CAMPUS DES POSSIBLES<small>Six lieux, autant d’histoires.</small></span></div><footer className='home-footer'><span>UN PETIT MONDE, DE GRANDES IDÉES.</span><span className='footer-center'><i/> OUVERT À LA CURIOSITÉ</span><span>ÉDITION 03 <span className='footer-slash'>/</span> 2026</span></footer></>}
     {!home&&!state.interior&&<>
       <div className='location-label'><span className='eyebrow'>VOUS EXPLOREZ</span><strong>{nearby?nearby.subtitle:'La place des possibles'}</strong></div>
       <nav className='quick-nav' aria-label='Navigation rapide'><span className='quick-title'>LES LIEUX</span>{buildings.map(b=><button key={b.id} disabled={busy} title={b.name} aria-label={`Rejoindre ${b.name}`} className={state.nearby===b.id?'active':''} onClick={()=>travel(b.id)} style={{'--place-color':b.color} as React.CSSProperties}><span>{b.number}</span><i/>{state.visited.includes(b.id)&&<sup>✓</sup>}</button>)}</nav>

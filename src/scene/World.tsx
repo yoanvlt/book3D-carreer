@@ -10,6 +10,8 @@ import Environment from './Environment';
 import Robot from './Robot';
 import Controller from './Controller';
 import CameraRig from './CameraRig';
+import { SkyDome, ThemeApplier } from './Atmosphere';
+import { theme } from '../theme';
 import { useGame, setState, getState, player, cameraMode, passage } from '../state';
 
 function Runtime(){
@@ -27,9 +29,9 @@ function Runtime(){
   });
   return null;
 }
-export default function World(){const {quality,interior}=useGame();return <Canvas shadows={quality==='high'?'soft':false} dpr={quality==='high'?[1,1.5]:1} camera={{position:[78,86,100],fov:41,near:.1,far:420}} gl={{antialias:true,powerPreference:'high-performance',toneMapping:THREE.ACESFilmicToneMapping,toneMappingExposure:1.15}} onCreated={({gl})=>{gl.setClearColor('#e8cdaa');}}>
-  <hemisphereLight args={['#d3eaff','#b99679',1.4]}/>
-  <directionalLight position={[-35,65,28]} intensity={2.8} color='#fff0d5' castShadow={quality==='high'} shadow-mapSize={[2048,2048]} shadow-camera-left={-65} shadow-camera-right={65} shadow-camera-top={65} shadow-camera-bottom={-65} shadow-camera-near={1} shadow-camera-far={180} shadow-normalBias={.045} shadow-bias={-.00015} shadow-radius={3}/>
-  {interior?<Interior/>:<><color attach='background' args={['#e8cdaa']}/><Terrain/><Buildings/><Environment/></>}<Robot/><Transitions/><Controller/><CameraRig/><CinematicCamera/><Runtime/>
+export default function World(){const {quality,interior}=useGame();return <Canvas shadows={quality==='high'?'soft':false} dpr={quality==='high'?[1,1.5]:1} camera={{position:[78,86,100],fov:41,near:.1,far:theme.sky?1400:420}} gl={{antialias:true,powerPreference:'high-performance',toneMapping:theme.toneMapping,toneMappingExposure:theme.exposure}} onCreated={({gl})=>{gl.setClearColor(theme.sky?theme.sky.horizon:'#e8cdaa');}}>
+  <hemisphereLight args={[theme.hemi.sky,theme.hemi.ground,theme.hemi.intensity]}/>
+  <directionalLight position={theme.sun.position} intensity={theme.sun.intensity} color={theme.sun.color} castShadow={quality==='high'} shadow-mapSize={[2048,2048]} shadow-camera-left={-65} shadow-camera-right={65} shadow-camera-top={65} shadow-camera-bottom={-65} shadow-camera-near={1} shadow-camera-far={180} shadow-normalBias={.045} shadow-bias={-.00015} shadow-radius={3}/>
+  {interior?<Interior/>:<>{theme.sky?<SkyDome/>:<color attach='background' args={['#e8cdaa']}/>}{theme.fog&&<fog attach='fog' args={[theme.fog.color,theme.fog.near,theme.fog.far]}/>}<Terrain/><Buildings/><Environment/></>}<Robot/><Transitions/><Controller/><CameraRig/><CinematicCamera/><Runtime/><ThemeApplier/>
 </Canvas>;}
 

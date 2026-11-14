@@ -5,6 +5,7 @@ import * as THREE from 'three';
 import { buildings, COLORS as C } from '../world/config';
 import { stationsFor, type Station } from '../world/narrative';
 import { useGame, getState } from '../state';
+import { theme } from '../theme';
 import { Box, Cylinder, Ball, Beam, Sign } from './Primitives';
 
 function Exhibit({station:s,color}:{station:Station;color:string}){
@@ -53,8 +54,8 @@ export default function Interior(){
   const {interior}=useGame();if(!interior)return null;
   const b=buildings.find(b=>b.id===interior)!;
   return <>
-    <color attach='background' args={['#36535c']}/>
-    <Box p={[0,-.5,0]} s={[90,.8,90]} color='#36535c'/>
+    <color attach='background' args={[theme.interior.background]}/>
+    <Box p={[0,-.5,0]} s={[90,.8,90]} color={theme.interior.background}/>
     <Box p={[0,-.12,0]} s={[22,.24,36]} color='#e9d3b0'/>
     <Box p={[0,.018,0]} s={[2.4,.025,32]} color={b.color}/>
     {[-14,-7,0,7,14].map(z=><Box key={z} p={[0,.025,z]} s={[22,.02,.035]} color='#bfa78b'/>)}
@@ -69,6 +70,6 @@ export default function Interior(){
     <Sign text={b.id==='profile'?'LA MAISON PORTRAIT':b.subtitle.toUpperCase()} p={[0,6.8,-17.75]} s={[15,1.15]} color={C.cream} bg='#385965'/>
     {b.id==='profile'?<PortraitArchitecture/>:<ThematicArchitecture id={b.id} color={b.color}/>}
     {stationsFor(b.id).map(station=><Exhibit key={station.id} station={station} color={b.color}/>)}
-    <directionalLight position={[0,12,10]} intensity={1} color='#ffdbb6'/>
+    <directionalLight position={[0,12,10]} intensity={theme.interior.lightIntensity} color={theme.interior.light}/>
   </>;
 }
