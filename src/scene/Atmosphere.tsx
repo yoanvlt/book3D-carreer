@@ -28,9 +28,15 @@ export function SkyDome() {
     });
   }, [sky]);
   const ref = useRef<THREE.Mesh>(null!);
-  useFrame(({ camera }) => { if (ref.current) ref.current.position.copy(camera.position); });
+  useFrame(({ camera }) => {
+    if (ref.current) ref.current.position.copy(camera.position);
+  });
   if (!material) return null;
-  return <mesh ref={ref} material={material} renderOrder={-1} frustumCulled={false}><sphereGeometry args={[600, 32, 16]} /></mesh>;
+  return (
+    <mesh ref={ref} material={material} renderOrder={-1} frustumCulled={false}>
+      <sphereGeometry args={[600, 32, 16]} />
+    </mesh>
+  );
 }
 
 const linear = new THREE.Color();
@@ -50,10 +56,14 @@ export function ThemeApplier() {
     clock.current -= dt;
     if (clock.current > 0) return;
     clock.current = 0.25;
-    scene.traverse(object => {
+    scene.traverse((object) => {
       if (object instanceof THREE.InstancedMesh) {
         if (!object.userData.themed && object.instanceColor) {
-          for (let i = 0; i < object.count; i++) { object.getColorAt(i, linear); remapColor(linear); object.setColorAt(i, linear); }
+          for (let i = 0; i < object.count; i++) {
+            object.getColorAt(i, linear);
+            remapColor(linear);
+            object.setColorAt(i, linear);
+          }
           object.instanceColor.needsUpdate = true;
           object.userData.themed = true;
         }
@@ -65,14 +75,22 @@ export function ThemeApplier() {
         if (!(m instanceof THREE.MeshStandardMaterial) || m.userData.themed) continue;
         m.userData.themed = true;
         if (m.map) {
-          if (theme.signGlow) { m.emissiveMap = m.map; m.emissive.set('#ffffff'); m.emissiveIntensity = theme.signGlow; m.needsUpdate = true; }
+          if (theme.signGlow) {
+            m.emissiveMap = m.map;
+            m.emissive.set('#ffffff');
+            m.emissiveIntensity = theme.signGlow;
+            m.needsUpdate = true;
+          }
           continue;
         }
         if (m.vertexColors) continue;
         const source = '#' + m.color.getHexString(THREE.SRGBColorSpace);
         const glow = theme.glow[source];
         remapColor(m.color);
-        if (glow) { m.emissive.set(glow.emissive); m.emissiveIntensity = glow.intensity; }
+        if (glow) {
+          m.emissive.set(glow.emissive);
+          m.emissiveIntensity = glow.intensity;
+        }
       }
     });
   });

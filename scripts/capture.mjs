@@ -1,17 +1,29 @@
-// Captures de contrôle visuel : node scripts/capture.mjs <url> <dossier> [préfixe] [tailles]
-// Nécessite un serveur (npm run preview). Utilise le Chromium préinstallé (Playwright).
+// Contrôle visuel automatisé (Playwright + Chromium préinstallé).
+//
+//   npm run build && npm run preview          (dans un autre terminal)
+//   node scripts/capture.mjs scenes <dossier> [tailles]   accueil, exploration, porte, intérieur, lecture
+//   node scripts/capture.mjs portes <dossier>             entrée, lecture d'une station et sortie des six portes
+//
+// Variables : URL (défaut http://127.0.0.1:4173/book3D-carreer/), QUALITE (high|low).
+// Le rendu passe par SwiftShader (processeur) : les FPS relevés ne valent pas pour un vrai GPU.
 import { createRequire } from 'node:module';
 import { mkdir, writeFile } from 'node:fs/promises';
 const require = createRequire(import.meta.url);
 const { chromium } = require('playwright');
 
-const [url = 'http://127.0.0.1:4173/book3D-carreer/?debug=1', out = 'docs/screenshots/v4', prefix = '', only = ''] = process.argv.slice(2);
-const sizes = [
+const [mode = 'scenes', out = 'docs/screenshots/v4', only = ''] = process.argv.slice(2);
+const base = process.env.URL ?? 'http://127.0.0.1:4173/book3D-carreer/';
+const url = base + (base.includes('?') ? '&' : '?') + 'debug=1';
+const quality = process.env.QUALITE ?? 'high';
+const ALL = [
   [1920, 1080],
   [1440, 900],
   [1366, 768],
   [390, 844],
-].filter(([w, h]) => !only || only.split(',').includes(`${w}x${h}`));
+];
+const sizes =
+  mode === 'portes' ? [[1440, 900]] : ALL.filter(([w, h]) => !only || only.split(',').includes(`${w}x${h}`));
+const IDS = ['profile', 'project-1', 'project-2', 'project-3', 'missions', 'veolia'];
 
 const diag = (page) =>
   page.evaluate(() => {
@@ -21,19 +33,31 @@ const diag = (page) =>
       return {};
     }
   });
-async function until(page, test, label, timeout = 240000) {
+const game = (page) => page.evaluate(() => window.__careerverse.state());
+async function until(page, test, label, timeout = 300000) {
   const start = Date.now();
   for (;;) {
-    const d = await diag(page);
-    if (test(d)) return d;
-    if (Date.now() - start > timeout) throw new Error(`Délai dépassé : ${label} ${JSON.stringify(d)}`);
-    await page.waitForTimeout(500);
+    const s = await game(page);
+    if (test(s)) return s;
+    if (Date.now() - start > timeout) throw new Error(`Délai dépassé : ${label} ${JSON.stringify(s)}`);
+    await page.waitForTimeout(400);
   }
+}
+const call = (page, name, ...args) => page.evaluate(([n, a]) => window.__careerverse[n](...a), [name, args]);
+/** Attend un relevé de diagnostic postérieur à l'état demandé (il est rafraîchi toutes les ~2 s). */
+async function settle(page, ms = 4500) {
+  await page.waitForTimeout(ms);
+  return diag(page);
 }
 
 await mkdir(out, { recursive: true });
 const browser = await chromium.launch({
-  args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'],
+  args: [
+    '--use-gl=angle',
+    '--use-angle=swiftshader',
+    '--enable-unsafe-swiftshader',
+    '--ignore-gpu-blocklist',
+  ],
 });
 const report = [];
 for (const [width, height] of sizes) {
@@ -49,45 +73,74 @@ for (const [width, height] of sizes) {
   const errors = [];
   page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
   page.on('pageerror', (e) => errors.push(e.message));
-  const name = (scene) => `${out}/${prefix}${scene}-${width}x${height}.png`;
-  const entry = { size: `${width}x${height}`, scenes: {} };
+  const shot = (scene) => page.screenshot({ path: `${out}/${scene}-${width}x${height}.png` });
+  const entry = { taille: `${width}x${height}`, qualite: quality, scenes: {} };
   await page.goto(url);
-  await page.waitForSelector('.loading', { state: 'detached', timeout: 120000 });
-  await until(page, (d) => d.phase === 'home', 'accueil');
-  await page.waitForTimeout(3000);
-  await page.screenshot({ path: name('accueil') });
-  entry.scenes.accueil = await diag(page);
+  await page.waitForSelector('.loading', { state: 'detached', timeout: 180000 });
+  await page.waitForFunction(() => !!window.__careerverse);
+  await call(page, 'setState', { quality });
+  await until(page, (s) => s.phase === 'home', 'accueil');
 
-  const api = await page.evaluate(() => !!window.__careerverse);
-  if (mobile && !api) {
-    entry.note = 'mobile : pas de crochet de test, captures limitées à l’accueil';
+  if (mode === 'scenes') {
+    entry.scenes.accueil = await settle(page);
+    await shot('accueil');
+    await call(page, 'enter');
+    await until(page, (s) => s.phase === 'explore', 'exploration');
+    entry.scenes.exploration = await settle(page);
+    await shot('exploration');
+    await call(page, 'travel', 'profile');
+    await until(page, (s) => s.phase === 'explore' && s.nearby === 'profile', 'arrivée Profil');
+    entry.scenes.porte = await settle(page);
+    await shot('porte');
+    await call(page, 'openBuilding', 'profile');
+    await until(page, (s) => s.phase === 'explore' && s.interior === 'profile', 'intérieur');
+    await call(page, 'guideToStation', 0);
+    await until(page, (s) => s.phase === 'explore', 'station');
+    entry.scenes.interieur = await settle(page);
+    await shot('interieur');
+    if ((await game(page)).station) {
+      await call(page, 'interact');
+      await until(page, (s) => !!s.reading, 'lecture');
+      await page.waitForTimeout(800);
+      await shot('lecture');
+      entry.scenes.lecture = { reading: (await game(page)).reading };
+    }
   } else {
-    if (api) await page.evaluate(() => window.__careerverse.enter());
-    else await page.click('.desktop-only:is(.hero4-primary,.primary)');
-    await until(page, (d) => d.phase === 'explore', 'exploration');
-    await page.waitForTimeout(2500);
-    await page.screenshot({ path: name('exploration') });
-    entry.scenes.exploration = await diag(page);
-
-    if (api) await page.evaluate(() => window.__careerverse.travel('profile'));
-    else await page.click('.quick-nav button >> nth=0');
-    await page.waitForTimeout(3000);
-    await until(page, (d) => d.phase === 'explore' && (d.nearby ?? 'profile') === 'profile', 'arrivée Profil');
-    await page.waitForTimeout(2500);
-    await page.screenshot({ path: name('porte') });
-    entry.scenes.porte = await diag(page);
-
-    if (api) await page.evaluate(() => window.__careerverse.openBuilding('profile'));
-    else await page.keyboard.press('e');
-    await until(page, (d) => d.phase === 'explore' && d.interior === 'profile', 'intérieur');
-    await page.waitForTimeout(2500);
-    await page.screenshot({ path: name('interieur') });
-    entry.scenes.interieur = await diag(page);
+    await call(page, 'enter');
+    await until(page, (s) => s.phase === 'explore', 'exploration');
+    entry.portes = [];
+    for (const id of IDS) {
+      const door = { id };
+      await call(page, 'travel', id);
+      await until(page, (s) => s.phase === 'explore' && !s.interior && s.nearby === id, `arrivée ${id}`);
+      await call(page, 'openBuilding', id);
+      await until(page, (s) => s.phase === 'explore' && s.interior === id, `entrée ${id}`);
+      door.entree = true;
+      await call(page, 'guideToStation', 0);
+      await until(page, (s) => s.phase === 'explore', `station ${id}`);
+      const station = (await game(page)).station;
+      if (station) {
+        await call(page, 'interact');
+        await until(page, (s) => !!s.reading, `lecture ${id}`);
+        door.lecture = station;
+        await page.waitForTimeout(600);
+        await shot(`lecture-${id}`);
+        await call(page, 'setState', { reading: null });
+      } else door.lecture = null;
+      door.interieur = await diag(page);
+      await shot(`interieur-${id}`);
+      await call(page, 'leave');
+      await until(page, (s) => s.phase === 'explore' && !s.interior, `sortie ${id}`);
+      door.sortie = true;
+      door.exterieur = await settle(page, 2500);
+      entry.portes.push(door);
+      console.log(JSON.stringify(door));
+    }
   }
-  entry.errors = errors;
+  entry.erreurs = errors;
   report.push(entry);
-  console.log(JSON.stringify(entry));
+  console.log(JSON.stringify({ taille: entry.taille, erreurs: errors }));
   await context.close();
 }
-await writeFile(`${out}/${prefix}rapport.json`, JSON.stringify(report, null, 2));
+await writeFile(`${out}/rapport-${mode}.json`, JSON.stringify(report, null, 2));
 await browser.close();

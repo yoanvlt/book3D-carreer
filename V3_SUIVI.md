@@ -19,17 +19,17 @@ Les anomalies visuelles signalées de toiture, de textes ou d’occultation occa
 
 Une seule phase possède le robot et la caméra à un instant donné. Les actions publiques contrôlent la phase avant de démarrer. Un deuxième clic pendant un franchissement, une présentation ou un trajet ne remplace pas son propriétaire.
 
-| Phase | Mode de caméra | Robot | Fin |
-|---|---|---|---|
-| home | aerial | immobile | entrer ou destination |
-| entering | arrival | immobile | finishArrival |
-| explore, extérieur | exterior | Controller | action explicite |
-| explore, intérieur | interior | Controller | action explicite |
-| travel | guided | tickMotion | arrivée, annulation ou passage |
-| showcase | presentation | position conservée | fin, Échap ou bouton |
-| returning | return | position conservée | finishPresentation |
-| doorway | door | tickMotion | fermeture après dégagement |
-| homing | homeward | position conservée | retour accueil |
+| Phase              | Mode de caméra | Robot              | Fin                            |
+| ------------------ | -------------- | ------------------ | ------------------------------ |
+| home               | aerial         | immobile           | entrer ou destination          |
+| entering           | arrival        | immobile           | finishArrival                  |
+| explore, extérieur | exterior       | Controller         | action explicite               |
+| explore, intérieur | interior       | Controller         | action explicite               |
+| travel             | guided         | tickMotion         | arrivée, annulation ou passage |
+| showcase           | presentation   | position conservée | fin, Échap ou bouton           |
+| returning          | return         | position conservée | finishPresentation             |
+| doorway            | door           | tickMotion         | fermeture après dégagement     |
+| homing             | homeward       | position conservée | retour accueil                 |
 
 Ordre des callbacks R3F : Transitions à -3, Controller à -2, caméra à -1. CameraRig rend la main à CinematicCamera pendant showcase et returning. Le mode diagnostique `?debug=1` indique phase, mode, étape de porte et positions.
 
@@ -39,14 +39,14 @@ Le retour aérien conserve le lieu du robot. Une destination sélectionnée depu
 
 Les compositions se configurent dans `src/world/cinematics.ts`, en coordonnées locales du bâtiment : déplacement latéral, altitude, recul frontal et hauteur visée. Les quatre poses diffèrent selon l’architecture.
 
-| Lieu | Durée de présentation | Intention |
-|---|---:|---|
-| Profil | 8,5 s | révéler la silhouette et prendre de la hauteur |
-| Projet 1 | 8 s | travelling sur les volumes décalés |
-| Projet 2 | 8 s | structure voûtée et roue mécanique |
-| Projet 3 | 9 s | ascension vers le dôme |
-| Autres missions | 7,5 s | parcourir les modules de galerie |
-| Veolia | 8,5 s | cuves, réseaux et façade rouge |
+| Lieu            | Durée de présentation | Intention                                      |
+| --------------- | --------------------: | ---------------------------------------------- |
+| Profil          |                 8,5 s | révéler la silhouette et prendre de la hauteur |
+| Projet 1        |                   8 s | travelling sur les volumes décalés             |
+| Projet 2        |                   8 s | structure voûtée et roue mécanique             |
+| Projet 3        |                   9 s | ascension vers le dôme                         |
+| Autres missions |                 7,5 s | parcourir les modules de galerie               |
+| Veolia          |                 8,5 s | cuves, réseaux et façade rouge                 |
 
 Le retour dure 1,6 s. Les interpolations quintiques s’arrêtent en douceur aux poses. Les liaisons sont vérifiées par échantillonnage contre les volumes de collision et le relief. Si une liaison directe est obstruée, le trajet passe au-dessus des enveloppes architecturales. La caméra sauvegarde position, orientation, champ de vision et décalage de projection ; un retour interrompant une présentation ne repart pas d’un champ de vision arbitraire.
 
@@ -54,14 +54,14 @@ Le cadrage s’élargit en portrait. Le mode de réduction des mouvements affich
 
 ## Séquence de porte
 
-| Étape | Comportement | Durée |
-|---|---|---:|
+| Étape    | Comportement                                            |    Durée |
+| -------- | ------------------------------------------------------- | -------: |
 | approach | route vérifiée jusqu’au seuil ; orientation progressive | variable |
-| opening | ouverture commune aux deux scènes | 0,60 s |
-| crossing | franchissement du couloir aligné | 1,35 s |
-| handoff | raccord coloré et changement de scène au milieu | 0,28 s |
-| emerging | déplacement visible vers une position dégagée | 1,35 s |
-| closing | fermeture après dégagement complet | 0,55 s |
+| opening  | ouverture commune aux deux scènes                       |   0,60 s |
+| crossing | franchissement du couloir aligné                        |   1,35 s |
+| handoff  | raccord coloré et changement de scène au milieu         |   0,28 s |
+| emerging | déplacement visible vers une position dégagée           |   1,35 s |
+| closing  | fermeture après dégagement complet                      |   0,55 s |
 
 Le fondu coloré atteint son maximum pendant le changement de scène ; ce n’est pas une continuité géométrique entre les deux volumes. Les intérieurs V2 restent des scènes distinctes. Le franchissement ne peut pas être annulé à mi-seuil : les autres commandes sont suspendues jusqu’à sa fin.
 
@@ -102,18 +102,18 @@ Ces tests de logique ne simulent ni le clic DOM réel, ni le rendu WebGL, ni les
 
 L’outil navigateur de la session était indisponible. Aucune capture V3 n’a été réalisée. Les anciennes captures V2, si présentes localement, ne constituent pas une validation de cette version.
 
-| Vérification manuelle | Statut |
-|---|---|
-| Accueil, présentation et plan à 1920 × 1080 | À effectuer |
-| Même vérification à 2560 × 1440 | À effectuer |
-| Format 1366 × 768 et portrait 390 × 844 | À effectuer |
-| Six présentations : cadrages, passages anticipés, entrée directe | À effectuer |
-| Façades, angles, pentes, demi-tours rapides, course | À effectuer |
-| Six portes : entrée, sortie, réentrée, observation du raccord | À effectuer |
+| Vérification manuelle                                                | Statut      |
+| -------------------------------------------------------------------- | ----------- |
+| Accueil, présentation et plan à 1920 × 1080                          | À effectuer |
+| Même vérification à 2560 × 1440                                      | À effectuer |
+| Format 1366 × 768 et portrait 390 × 844                              | À effectuer |
+| Six présentations : cadrages, passages anticipés, entrée directe     | À effectuer |
+| Façades, angles, pentes, demi-tours rapides, course                  | À effectuer |
+| Six portes : entrée, sortie, réentrée, observation du raccord        | À effectuer |
 | 44 stations : activation, lecture, focus, fermeture, reprise clavier | À effectuer |
-| Clics répétés, Échap, perte de focus et changement de taille | À effectuer |
-| Console navigateur, FPS et fluidité GPU | À effectuer |
-| Validation artistique par Yoan | En attente |
+| Clics répétés, Échap, perte de focus et changement de taille         | À effectuer |
+| Console navigateur, FPS et fluidité GPU                              | À effectuer |
+| Validation artistique par Yoan                                       | En attente  |
 
 La stabilité perceptive de la caméra extérieure en mouvement, les éventuelles occultations par le décor fin, le confort du raccord de porte, le rendu des toitures intérieures et la lisibilité réelle des superpositions restent à confirmer visuellement. Aucun objectif de 60 FPS n’est déclaré atteint.
 

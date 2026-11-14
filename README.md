@@ -40,40 +40,40 @@ Le build est généré dans `dist/`. La base Vite et le workflow GitHub Pages ex
 
 ## Commandes
 
-| Action | Commande |
-|---|---|
-| Marcher | ZQSD, WASD ou flèches |
-| Courir | Maj |
-| Regarder | Cliquer-glisser sur la scène |
-| Zoom extérieur | Molette |
-| Présenter le bâtiment proche | V ou Découvrir le bâtiment |
-| Entrer / lire une station / sortir au seuil | E |
-| Plan | M |
-| Recentrer la caméra | C |
-| Revenir à la place ; dans un intérieur, rejoindre la sortie | R |
-| Fermer un panneau / terminer une présentation / annuler un trajet | Échap |
-| Parcours intérieur guidé | Numéros des stations |
-| Sortie depuis une station | Rejoindre la sortie |
+| Action                                                            | Commande                     |
+| ----------------------------------------------------------------- | ---------------------------- |
+| Marcher                                                           | ZQSD, WASD ou flèches        |
+| Courir                                                            | Maj                          |
+| Regarder                                                          | Cliquer-glisser sur la scène |
+| Zoom extérieur                                                    | Molette                      |
+| Présenter le bâtiment proche                                      | V ou Découvrir le bâtiment   |
+| Entrer / lire une station / sortir au seuil                       | E                            |
+| Plan                                                              | M                            |
+| Recentrer la caméra                                               | C                            |
+| Revenir à la place ; dans un intérieur, rejoindre la sortie       | R                            |
+| Fermer un panneau / terminer une présentation / annuler un trajet | Échap                        |
+| Parcours intérieur guidé                                          | Numéros des stations         |
+| Sortie depuis une station                                         | Rejoindre la sortie          |
 
 Les trajets peuvent être passés explicitement. Le mode de réduction des mouvements les passe automatiquement. Sur mobile, utiliser le plan et les fiches ; la marche au clavier n’est pas exigée.
 
 ## Organisation
 
-| Module | Responsabilité |
-|---|---|
-| `src/state.ts` | Actions gardées, phase exclusive, progression et demande d’entrée après présentation |
-| `src/world/motion.ts` | Unique contrôleur de déplacement automatique et séquence des portes |
-| `src/world/cinematics.ts` | Plans architecturaux locaux, adaptation au format, interpolation et liaisons de caméra |
-| `src/world/camera.ts` | Recherche de cadrages, balayage extérieur, déplacements intérieurs |
-| `src/world/narrative.ts` | Textes existants, zones narratives, collisions et routes intérieures |
-| `src/world/navigation.ts` | Itinéraires extérieurs A* existants |
-| `src/scene/CameraRig.tsx` | Accueil, suivi, descente, retour aérien et raccords de scènes |
-| `src/scene/CinematicCamera.tsx` | Présentation et retour à la pose sauvegardée |
-| `src/scene/Transitions.tsx` | Exécution du contrôleur automatique avant le clavier et la caméra |
-| `src/scene/SlidingDoor.tsx` | Porte commune aux scènes extérieure et intérieure |
-| `src/scene/Buildings.tsx`, `Interior.tsx` | Architectures préservées et scénographie des stations |
-| `src/ui/BuildingPresentation.tsx` | Commandes et légende architecturale |
-| `tests/*.test.mjs` | Tests des vrais modules TypeScript, transpilés temporairement dans .cache |
+| Module                                    | Responsabilité                                                                         |
+| ----------------------------------------- | -------------------------------------------------------------------------------------- |
+| `src/state.ts`                            | Actions gardées, phase exclusive, progression et demande d’entrée après présentation   |
+| `src/world/motion.ts`                     | Unique contrôleur de déplacement automatique et séquence des portes                    |
+| `src/world/cinematics.ts`                 | Plans architecturaux locaux, adaptation au format, interpolation et liaisons de caméra |
+| `src/world/camera.ts`                     | Recherche de cadrages, balayage extérieur, déplacements intérieurs                     |
+| `src/world/narrative.ts`                  | Textes existants, zones narratives, collisions et routes intérieures                   |
+| `src/world/navigation.ts`                 | Itinéraires extérieurs A* existants                                                    |
+| `src/scene/CameraRig.tsx`                 | Accueil, suivi, descente, retour aérien et raccords de scènes                          |
+| `src/scene/CinematicCamera.tsx`           | Présentation et retour à la pose sauvegardée                                           |
+| `src/scene/Transitions.tsx`               | Exécution du contrôleur automatique avant le clavier et la caméra                      |
+| `src/scene/SlidingDoor.tsx`               | Porte commune aux scènes extérieure et intérieure                                      |
+| `src/scene/Buildings.tsx`, `Interior.tsx` | Architectures préservées et scénographie des stations                                  |
+| `src/ui/BuildingPresentation.tsx`         | Commandes et légende architecturale                                                    |
+| `tests/*.test.mjs`                        | Tests des vrais modules TypeScript, transpilés temporairement dans .cache              |
 
 Les bâtiments se configurent dans `config.ts`, les trajectoires dans `cinematics.ts`, les contenus dans `narrative.ts`. Aucun contenu professionnel n’a été ajouté ou inventé.
 
