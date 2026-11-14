@@ -435,13 +435,7 @@ function Atelier() {
           </group>
         );
       })}
-      <Sign
-        text={place('missions').enseigne}
-        p={[0, 4.3, 3.3]}
-        s={[3.4, 0.8]}
-        color={C.ink}
-        bg={C.white}
-      />
+      <Sign text={place('missions').enseigne} p={[0, 4.3, 3.3]} s={[3.4, 0.8]} color={C.ink} bg={C.white} />
       {/* Guirlande entre les pavillons */}
       {Array.from({ length: 9 }, (_, i) => (
         <Ball

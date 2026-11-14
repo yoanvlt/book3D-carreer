@@ -1,11 +1,14 @@
 import { useLayoutEffect, useMemo, useRef } from 'react';
+import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
-import { color as C } from '../design/tokens';
+import { color as C, placeColor } from '../design/tokens';
 import { Box, Cylinder, Beam, Sign, material } from './Primitives';
+import StaticBatch from './StaticBatch';
 import { trees, benches, lamps } from '../world/landscape';
 import { heightAt } from '../world/terrain';
 import { buildings } from '../world/config';
-import { setState } from '../state';
+import { getState, player, setState } from '../state';
+import { place } from '../content';
 
 type Item = { p: [number, number, number]; s: [number, number, number]; color: string; angle?: number };
 function Instances({ items, geometry }: { items: Item[]; geometry: THREE.BufferGeometry }) {
@@ -34,40 +37,238 @@ function Instances({ items, geometry }: { items: Item[]; geometry: THREE.BufferG
     />
   );
 }
-function Planting() {
-  const { trunks, leaves, shrubs } = useMemo(() => {
-    const trunks: Item[] = [],
-      leaves: Item[] = [],
-      shrubs: Item[] = [];
+/** Arbres instanciés. Un arbre qui cache le robot passe dans un maillage translucide. */
+const MAX_GHOSTS = 10;
+function Trees() {
+  const { trunks, leaves, parts } = useMemo(() => {
+    const trunks: Item[] = [];
+    const leaves: Item[] = [];
+    const parts: { trunk: number; leaves: number[]; center: THREE.Vector3; radius: number }[] = [];
     for (const t of trees) {
-      const [x, z] = t.p,
-        y = heightAt(x, z),
-        s = t.s;
-      trunks.push({ p: [x, y + 1.5 * s, z], s: [0.22 * s, 3 * s, 0.22 * s], color: '#7a5236' });
+      const [x, z] = t.p;
+      const y = heightAt(x, z);
+      const s = t.s;
+      const part = {
+        trunk: trunks.length,
+        leaves: [] as number[],
+        center: new THREE.Vector3(x, y + 3.4 * s, z),
+        radius: 2.1 * s,
+      };
+      trunks.push({ p: [x, y + 1.5 * s, z], s: [0.22 * s, 3 * s, 0.22 * s], color: C.trunk });
       if (t.kind === 2) {
-        for (let j = 0; j < 3; j++)
+        for (let j = 0; j < 3; j++) {
+          part.leaves.push(leaves.length);
           leaves.push({
             p: [x, y + (3 + j * 0.8) * s, z],
             s: [(1.35 - j * 0.3) * s, 1.6 * s, (1.35 - j * 0.3) * s],
             color: C.leafDark,
             angle: j,
           });
+        }
       } else {
         for (const [dx, dy, dz, r] of [
           [0, 4, 0, 1.8],
           [-0.8, 3.2, 0.2, 1.3],
           [0.8, 3.4, 0.1, 1.2],
           [0.25, 3.7, -0.7, 1.35],
-        ])
+        ]) {
+          part.leaves.push(leaves.length);
           leaves.push({
             p: [x + dx * s, y + dy * s, z + dz * s],
             s: [r * s, r * (t.kind === 1 ? 0.65 : 1) * s, r * s],
-            color: t.kind === 1 ? '#ffc23d' : C.leaf,
+            color: t.kind === 1 ? C.leafAutumn : C.leaf,
             angle: x,
           });
+        }
       }
+      parts.push(part);
     }
-    // Flower beds arranged in narrow bands, not random scattering.
+    return { trunks, leaves, parts };
+  }, []);
+  const trunkGeo = useMemo(() => new THREE.CylinderGeometry(1, 1.25, 1, 6), []);
+  const leafGeo = useMemo(() => new THREE.IcosahedronGeometry(1, 1), []);
+  const solidTrunks = useRef<THREE.InstancedMesh>(null!);
+  const solidLeaves = useRef<THREE.InstancedMesh>(null!);
+  const ghostTrunks = useRef<THREE.InstancedMesh>(null!);
+  const ghostLeaves = useRef<THREE.InstancedMesh>(null!);
+  const ghost = useMemo(() => {
+    // Opacité par instance : attribut lu par le shader standard modifié.
+    const make = (geometry: THREE.BufferGeometry, count: number) => {
+      const g = geometry.clone();
+      g.setAttribute(
+        'instanceOpacity',
+        new THREE.InstancedBufferAttribute(new Float32Array(count).fill(1), 1),
+      );
+      return g;
+    };
+    const m = new THREE.MeshStandardMaterial({
+      color: '#ffffff',
+      roughness: 0.78,
+      transparent: true,
+      depthWrite: false,
+    });
+    m.onBeforeCompile = (shader) => {
+      shader.vertexShader =
+        'attribute float instanceOpacity;\nvarying float vInstanceOpacity;\n' +
+        shader.vertexShader.replace(
+          '#include <begin_vertex>',
+          '#include <begin_vertex>\nvInstanceOpacity = instanceOpacity;',
+        );
+      shader.fragmentShader =
+        'varying float vInstanceOpacity;\n' +
+        shader.fragmentShader.replace(
+          '#include <dithering_fragment>',
+          '#include <dithering_fragment>\ngl_FragColor.a *= vInstanceOpacity;',
+        );
+    };
+    return { trunk: make(trunkGeo, MAX_GHOSTS), leaf: make(leafGeo, MAX_GHOSTS * 4), material: m };
+  }, [trunkGeo, leafGeo]);
+  const state = useMemo(
+    () => ({ alpha: new Float32Array(trees.length).fill(1), solid: new Uint8Array(trees.length).fill(1) }),
+    [],
+  );
+  const temp = useMemo(
+    () => ({
+      m: new THREE.Matrix4(),
+      zero: new THREE.Matrix4().makeScale(0, 0, 0),
+      c: new THREE.Color(),
+      eye: new THREE.Vector3(),
+      head: new THREE.Vector3(),
+      dir: new THREE.Vector3(),
+      to: new THREE.Vector3(),
+    }),
+    [],
+  );
+  const matrices = useMemo(() => {
+    const object = new THREE.Object3D();
+    const build = (item: Item) => {
+      object.position.set(...item.p);
+      object.scale.set(...item.s);
+      object.rotation.set(0, item.angle ?? 0, 0);
+      object.updateMatrix();
+      return object.matrix.clone();
+    };
+    return { trunks: trunks.map(build), leaves: leaves.map(build) };
+  }, [trunks, leaves]);
+  useLayoutEffect(() => {
+    trunks.forEach((item, i) => {
+      solidTrunks.current.setMatrixAt(i, matrices.trunks[i]);
+      solidTrunks.current.setColorAt(i, temp.c.set(item.color));
+    });
+    leaves.forEach((item, i) => {
+      solidLeaves.current.setMatrixAt(i, matrices.leaves[i]);
+      solidLeaves.current.setColorAt(i, temp.c.set(item.color));
+    });
+    for (const mesh of [solidTrunks.current, solidLeaves.current]) {
+      mesh.instanceMatrix.needsUpdate = true;
+      if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
+      mesh.computeBoundingSphere();
+    }
+    for (const mesh of [ghostTrunks.current, ghostLeaves.current]) {
+      mesh.count = 0;
+      mesh.setColorAt(0, temp.c.set('#ffffff'));
+    }
+  }, [trunks, leaves, matrices, temp]);
+  useFrame(({ camera }, delta) => {
+    const s = getState();
+    const active = s.phase === 'explore' || s.phase === 'travel';
+    const fov = (camera as THREE.PerspectiveCamera).fov;
+    temp.eye.copy(camera.position);
+    temp.head.set(player.x, player.y + 1.2, player.z);
+    temp.dir.subVectors(temp.head, temp.eye);
+    const length = temp.dir.length();
+    temp.dir.divideScalar(length || 1);
+    let changed = false;
+    let trunkCount = 0;
+    let leafCount = 0;
+    const trunkOpacity = ghost.trunk.attributes.instanceOpacity as THREE.InstancedBufferAttribute;
+    const leafOpacity = ghost.leaf.attributes.instanceOpacity as THREE.InstancedBufferAttribute;
+    parts.forEach((part, i) => {
+      let hidden = false;
+      if (active) {
+        // 1. Le feuillage coupe la ligne de vue caméra → robot.
+        const t = THREE.MathUtils.clamp(temp.to.subVectors(part.center, temp.eye).dot(temp.dir), 0, length);
+        hidden =
+          t < length - 0.8 &&
+          temp.to.copy(temp.eye).addScaledVector(temp.dir, t).distanceTo(part.center) < part.radius + 0.4;
+        // 2. Un arbre plus proche que le robot couvre une grande part de l'écran.
+        const distance = part.center.distanceTo(temp.eye);
+        if (!hidden && distance < length) {
+          const size = part.radius / (distance * Math.tan(THREE.MathUtils.degToRad(fov / 2)));
+          temp.to.copy(part.center).project(camera);
+          hidden =
+            size > 0.26 && temp.to.z < 1 && Math.abs(temp.to.x) < 1 + size && Math.abs(temp.to.y) < 1 + size;
+        }
+      }
+      const alpha = THREE.MathUtils.damp(state.alpha[i], hidden ? 0.22 : 1, 8, delta);
+      state.alpha[i] = alpha > 0.995 ? 1 : alpha;
+      const solid = state.alpha[i] === 1 ? 1 : 0;
+      if (solid !== state.solid[i]) {
+        state.solid[i] = solid;
+        changed = true;
+        solidTrunks.current.setMatrixAt(part.trunk, solid ? matrices.trunks[part.trunk] : temp.zero);
+        for (const l of part.leaves)
+          solidLeaves.current.setMatrixAt(l, solid ? matrices.leaves[l] : temp.zero);
+      }
+      if (!solid && trunkCount < MAX_GHOSTS) {
+        ghostTrunks.current.setMatrixAt(trunkCount, matrices.trunks[part.trunk]);
+        ghostTrunks.current.setColorAt(trunkCount, temp.c.set(trunks[part.trunk].color));
+        trunkOpacity.setX(trunkCount++, state.alpha[i]);
+        for (const l of part.leaves) {
+          ghostLeaves.current.setMatrixAt(leafCount, matrices.leaves[l]);
+          ghostLeaves.current.setColorAt(leafCount, temp.c.set(leaves[l].color));
+          leafOpacity.setX(leafCount++, state.alpha[i]);
+        }
+      }
+    });
+    if (changed) {
+      solidTrunks.current.instanceMatrix.needsUpdate = true;
+      solidLeaves.current.instanceMatrix.needsUpdate = true;
+    }
+    for (const [mesh, count, opacity] of [
+      [ghostTrunks.current, trunkCount, trunkOpacity],
+      [ghostLeaves.current, leafCount, leafOpacity],
+    ] as const) {
+      mesh.count = count;
+      if (!count) continue;
+      mesh.instanceMatrix.needsUpdate = true;
+      if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
+      opacity.needsUpdate = true;
+    }
+  });
+  return (
+    <>
+      <instancedMesh
+        ref={solidTrunks}
+        args={[trunkGeo, material('#ffffff'), trunks.length]}
+        castShadow
+        receiveShadow
+      />
+      <instancedMesh
+        ref={solidLeaves}
+        args={[leafGeo, material('#ffffff'), leaves.length]}
+        castShadow
+        receiveShadow
+      />
+      <instancedMesh
+        ref={ghostTrunks}
+        args={[ghost.trunk, ghost.material, MAX_GHOSTS]}
+        frustumCulled={false}
+      />
+      <instancedMesh
+        ref={ghostLeaves}
+        args={[ghost.leaf, ghost.material, MAX_GHOSTS * 4]}
+        frustumCulled={false}
+        renderOrder={2}
+      />
+    </>
+  );
+}
+
+/** Massifs fleuris, disposés en bandes le long des allées. */
+function Shrubs() {
+  const shrubs = useMemo(() => {
+    const items: Item[] = [];
     for (const [x, z, length, angle] of [
       [-16, 9, 7, 0.1],
       [13, 5, 6, 0.3],
@@ -77,27 +278,21 @@ function Planting() {
       [-31, 28, 6, 0.8],
     ]) {
       for (let i = 0; i < length; i++) {
-        const xx = x + i * Math.cos(angle) * 0.7,
-          zz = z + i * Math.sin(angle) * 0.7;
-        shrubs.push({
+        const xx = x + i * Math.cos(angle) * 0.7;
+        const zz = z + i * Math.sin(angle) * 0.7;
+        items.push({
           p: [xx, heightAt(xx, zz) + 0.4, zz],
           s: [0.65, 0.6, 0.6],
-          color: i % 3 === 0 ? '#c896c3' : '#729854',
+          color: i % 3 === 0 ? C.flower : C.hedge,
         });
       }
     }
-    return { trunks, leaves, shrubs };
+    return items;
   }, []);
-  const trunkGeo = useMemo(() => new THREE.CylinderGeometry(1, 1.25, 1, 6), []),
-    leafGeo = useMemo(() => new THREE.IcosahedronGeometry(1, 1), []);
-  return (
-    <>
-      <Instances items={trunks} geometry={trunkGeo} />
-      <Instances items={leaves} geometry={leafGeo} />
-      <Instances items={shrubs} geometry={leafGeo} />
-    </>
-  );
+  const geometry = useMemo(() => new THREE.IcosahedronGeometry(1, 1), []);
+  return <Instances items={shrubs} geometry={geometry} />;
 }
+
 function Bench({ p, angle }: { p: [number, number]; angle: number }) {
   return (
     <group position={[p[0], heightAt(...p) + 0.08, p[1]]} rotation={[0, angle, 0]}>
@@ -105,10 +300,10 @@ function Bench({ p, angle }: { p: [number, number]; angle: number }) {
         <Box key={x} p={[x, 0.35, 0]} s={[0.16, 0.7, 0.7]} color={C.ink} />
       ))}
       {[-0.28, 0, 0.28].map((z) => (
-        <Box key={z} p={[0, 0.74, z]} s={[3, 0.13, 0.21]} color='#c97b3f' />
+        <Box key={z} p={[0, 0.74, z]} s={[3, 0.13, 0.21]} color={C.wood} />
       ))}
       {[1, 1.3].map((y) => (
-        <Box key={y} p={[0, y, -0.36]} s={[3, 0.2, 0.13]} color='#c97b3f' />
+        <Box key={y} p={[0, y, -0.36]} s={[3, 0.2, 0.13]} color={C.wood} />
       ))}
       {[-1.2, 1.2].map((x) => (
         <Box key={x} p={[x, 1, -0.4]} s={[0.1, 0.75, 0.1]} color={C.ink} />
@@ -122,49 +317,75 @@ function Lamp({ p }: { p: [number, number] }) {
       <Cylinder p={[0, 1.95, 0]} s={[0.075, 3.9, 0.075]} color={C.ink} />
       <Cylinder p={[0, 0.18, 0]} s={[0.2, 0.36, 0.2]} color={C.ink} />
       <Box p={[0.33, 3.9, 0]} s={[0.8, 0.12, 0.22]} color={C.ink} />
-      <Box p={[0.58, 3.81, 0]} s={[0.5, 0.08, 0.25]} color={C.cream} />
+      <Box
+        p={[0.58, 3.81, 0]}
+        s={[0.5, 0.08, 0.25]}
+        color={C.lamp}
+        finish={{ glow: C.lamp, glowIntensity: 1.2 }}
+      />
     </group>
   );
 }
+/** Sculpture de la place centrale. */
 function Monument() {
   return (
     <group position={[0, 0.8, 0]}>
       <Cylinder p={[0, 0.22, 0]} s={[2.65, 0.44, 2.65]} color={C.cream} />
-      <Cylinder p={[0, 0.46, 0]} s={[2.25, 0.06, 2.25]} color='#79c2ce' />
+      <Cylinder p={[0, 0.46, 0]} s={[2.25, 0.06, 2.25]} color={C.water} />
       <Cylinder p={[0, 0.65, 0]} s={[1.05, 0.45, 1.05]} color={C.cream} />
       <group position={[0, 2.75, 0]} rotation={[0.12, 0.42, 0.15]}>
-        <mesh castShadow>
+        <mesh castShadow material={material(C.orange, { rough: 0.4 })}>
           <torusGeometry args={[1.9, 0.33, 8, 40, Math.PI * 1.72]} />
-          <meshStandardMaterial color={C.orange} roughness={0.4} />
         </mesh>
-        <mesh rotation={[0, Math.PI / 2, 0.2]} castShadow>
+        <mesh
+          rotation={[0, Math.PI / 2, 0.2]}
+          castShadow
+          material={material(C.yellow, { rough: 0.4, metal: 0.2 })}
+        >
           <torusGeometry args={[1.35, 0.13, 6, 40, Math.PI * 1.6]} />
-          <meshStandardMaterial color='#fcbb48' metalness={0.2} roughness={0.4} />
         </mesh>
       </group>
-      <Sign text='PLACE DES POSSIBLES' p={[0, 0.55, 2.5]} s={[3.2, 0.4]} />
     </group>
   );
 }
+/**
+ * Poteau indicateur de la place : une lame par lieu, orientée vers lui, dans la police de l'interface.
+ * Un clic ouvre le plan.
+ */
+const POST: [number, number] = [-8, 5];
 function Wayfinding() {
   return (
     <group
-      position={[-8, 0.7, 5]}
+      position={[POST[0], 0.7, POST[1]]}
+      userData={{ dynamic: true }}
       onClick={(e) => {
         e.stopPropagation();
         setState({ map: true });
       }}
-      onPointerOver={() => {
-        document.body.style.cursor = 'pointer';
-      }}
-      onPointerOut={() => {
-        document.body.style.cursor = '';
-      }}
+      onPointerOver={() => (document.body.style.cursor = 'pointer')}
+      onPointerOut={() => (document.body.style.cursor = '')}
     >
-      <Cylinder p={[0, 1.6, 0]} s={[0.1, 3.2, 0.1]} color={C.ink} />
-      <Sign text='LES PROJETS  →' p={[0.4, 2.9, 0.12]} s={[3, 0.5]} />
-      <Sign text='←  PROFIL' p={[-0.35, 2.25, 0.12]} s={[2.8, 0.5]} color={C.cream} bg={C.orange} />
-      <Sign text='PLAN DU CAMPUS  ↗' p={[0.3, 1.55, 0.12]} s={[3.3, 0.55]} />
+      <Cylinder p={[0, 2.2, 0]} s={[0.1, 4.4, 0.1]} color={C.ink} />
+      <Cylinder p={[0, 4.45, 0]} s={[0.16, 0.1, 0.16]} color={C.ink} />
+      {buildings.map((b, i) => {
+        const angle = Math.atan2(b.position[0] - POST[0], b.position[1] - POST[1]) - Math.PI / 2;
+        const text = place(b.id).titre;
+        const bg = placeColor[b.id];
+        const ink = b.id === 'project-2' ? C.ink : C.white;
+        return (
+          <group key={b.id} position={[0, 4.05 - i * 0.6, 0]} rotation={[0, angle, 0]}>
+            <Sign text={`${text}  →`} p={[1.45, 0, 0.035]} s={[2.7, 0.5]} color={ink} bg={bg} />
+            <Sign
+              text={`←  ${text}`}
+              p={[1.45, 0, -0.035]}
+              s={[2.7, 0.5]}
+              rotation={[0, Math.PI, 0]}
+              color={ink}
+              bg={bg}
+            />
+          </group>
+        );
+      })}
       <Box p={[0, 0.1, 0]} s={[0.6, 0.2, 0.6]} color={C.stone} />
     </group>
   );
@@ -180,9 +401,9 @@ function Terraces() {
             position={[b.position[0], b.elevation, b.position[1]]}
             rotation={[0, b.rotation, 0]}
           >
-            <Box p={[0, -0.75, -b.size[1] / 2 - 1.5]} s={[b.size[0] + 4, 1.5, 0.7]} color='#cbb594' />
+            <Box p={[0, -0.75, -b.size[1] / 2 - 1.5]} s={[b.size[0] + 4, 1.5, 0.7]} color={C.stoneDark} />
             <Box p={[0, 0.05, -b.size[1] / 2 - 1.5]} s={[b.size[0] + 4.3, 0.16, 0.9]} color={C.cream} />
-            <Box p={[-b.size[0] / 2 - 1.7, -0.6, -1]} s={[0.65, 1.2, b.size[1] - 1]} color='#cbb594' />
+            <Box p={[-b.size[0] / 2 - 1.7, -0.6, -1]} s={[0.65, 1.2, b.size[1] - 1]} color={C.stoneDark} />
           </group>
         ))}
     </>
@@ -197,7 +418,7 @@ function Pergola() {
         )),
       )}
       {[-2, -1, 0, 1, 2].map((x) => (
-        <Box key={x} p={[x, 3.5, 0]} s={[0.2, 0.2, 4]} color='#d68f55' />
+        <Box key={x} p={[x, 3.5, 0]} s={[0.2, 0.2, 4]} color={C.wood} />
       ))}
       <Beam a={[-2.3, 3.35, -1.5]} b={[2.3, 3.35, -1.5]} width={0.2} color={C.cream} />
       <Beam a={[-2.3, 3.35, 1.5]} b={[2.3, 3.35, 1.5]} width={0.2} color={C.cream} />
@@ -207,17 +428,20 @@ function Pergola() {
 export default function Environment() {
   return (
     <>
-      <Planting />
-      <Monument />
+      <Trees />
+      <Shrubs />
       <Wayfinding />
-      <Terraces />
-      <Pergola />
-      {benches.map((b, i) => (
-        <Bench key={i} {...b} />
-      ))}
-      {lamps.map((p, i) => (
-        <Lamp key={i} p={p} />
-      ))}
+      <StaticBatch>
+        <Monument />
+        <Terraces />
+        <Pergola />
+        {benches.map((b, i) => (
+          <Bench key={i} {...b} />
+        ))}
+        {lamps.map((p, i) => (
+          <Lamp key={i} p={p} />
+        ))}
+      </StaticBatch>
     </>
   );
 }
