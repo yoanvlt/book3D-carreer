@@ -1,0 +1,343 @@
+[
+  {
+    "taille": "1440x900",
+    "qualite": "low",
+    "scenes": {},
+    "portes": [
+      {
+        "id": "profile",
+        "entree": true,
+        "lecture": "step-0",
+        "interieur": {
+          "fps": 0,
+          "drawCalls": 53,
+          "dpr": 0.85,
+          "triangles": 24034,
+          "position": [
+            -3.9,
+            0,
+            7
+          ],
+          "camera": [
+            2.34,
+            6.2,
+            11.17
+          ],
+          "mode": "interior",
+          "doorStage": null,
+          "quality": "low",
+          "phase": "explore",
+          "interior": "profile",
+          "station": "step-0",
+          "nearby": null,
+          "reading": "step-0"
+        },
+        "sortie": true,
+        "exterieur": {
+          "fps": 5,
+          "drawCalls": 100,
+          "dpr": 0.75,
+          "triangles": 226626,
+          "position": [
+            -25.99,
+            1.36,
+            29.34
+          ],
+          "camera": [
+            -23.87,
+            14.17,
+            46.97
+          ],
+          "mode": "exterior",
+          "doorStage": null,
+          "quality": "low",
+          "phase": "explore",
+          "interior": null,
+          "station": null,
+          "nearby": "profile",
+          "reading": null
+        }
+      },
+      {
+        "id": "project-1",
+        "entree": true,
+        "lecture": "step-0",
+        "interieur": {
+          "fps": 1,
+          "drawCalls": 70,
+          "dpr": 0.75,
+          "triangles": 23510,
+          "position": [
+            -3.9,
+            0,
+            7
+          ],
+          "camera": [
+            2.34,
+            6.2,
+            11.17
+          ],
+          "mode": "interior",
+          "doorStage": null,
+          "quality": "low",
+          "phase": "explore",
+          "interior": "project-1",
+          "station": "step-0",
+          "nearby": null,
+          "reading": "step-0"
+        },
+        "sortie": true,
+        "exterieur": {
+          "fps": 5,
+          "drawCalls": 60,
+          "dpr": 0.75,
+          "triangles": 209794,
+          "position": [
+            -27.32,
+            2.97,
+            -0.75
+          ],
+          "camera": [
+            -18.44,
+            15.79,
+            14.55
+          ],
+          "mode": "exterior",
+          "doorStage": null,
+          "quality": "low",
+          "phase": "explore",
+          "interior": null,
+          "station": null,
+          "nearby": "project-1",
+          "reading": null
+        }
+      },
+      {
+        "id": "project-2",
+        "entree": true,
+        "lecture": "step-0",
+        "interieur": {
+          "fps": 1,
+          "drawCalls": 69,
+          "dpr": 0.75,
+          "triangles": 23454,
+          "position": [
+            -3.9,
+            0,
+            7
+          ],
+          "camera": [
+            2.34,
+            6.2,
+            11.17
+          ],
+          "mode": "interior",
+          "doorStage": null,
+          "quality": "low",
+          "phase": "explore",
+          "interior": "project-2",
+          "station": "step-0",
+          "nearby": null,
+          "reading": "step-0"
+        },
+        "sortie": true,
+        "exterieur": {
+          "fps": 6,
+          "drawCalls": 57,
+          "dpr": 0.75,
+          "triangles": 193894,
+          "position": [
+            -0.75,
+            4.33,
+            -22.63
+          ],
+          "camera": [
+            -2.17,
+            17.14,
+            -4.91
+          ],
+          "mode": "exterior",
+          "doorStage": null,
+          "quality": "low",
+          "phase": "explore",
+          "interior": null,
+          "station": null,
+          "nearby": "project-2",
+          "reading": null
+        }
+      },
+      {
+        "id": "project-3",
+        "entree": true,
+        "lecture": "step-0",
+        "interieur": {
+          "fps": 1,
+          "drawCalls": 70,
+          "dpr": 0.75,
+          "triangles": 24278,
+          "position": [
+            -3.9,
+            0,
+            7
+          ],
+          "camera": [
+            2.34,
+            6.2,
+            11.17
+          ],
+          "mode": "interior",
+          "doorStage": null,
+          "quality": "low",
+          "phase": "explore",
+          "interior": "project-3",
+          "station": "step-0",
+          "nearby": null,
+          "reading": "step-0"
+        },
+        "sortie": true,
+        "exterieur": {
+          "fps": 6,
+          "drawCalls": 58,
+          "dpr": 0.75,
+          "triangles": 195602,
+          "position": [
+            26.26,
+            3.34,
+            -15.49
+          ],
+          "camera": [
+            21.35,
+            16.14,
+            1.6
+          ],
+          "mode": "exterior",
+          "doorStage": null,
+          "quality": "low",
+          "phase": "explore",
+          "interior": null,
+          "station": null,
+          "nearby": "project-3",
+          "reading": null
+        }
+      },
+      {
+        "id": "missions",
+        "entree": true,
+        "lecture": "step-0",
+        "interieur": {
+          "fps": 0,
+          "drawCalls": 69,
+          "dpr": 0.75,
+          "triangles": 22978,
+          "position": [
+            -3.9,
+            0,
+            7
+          ],
+          "camera": [
+            2.34,
+            6.2,
+            11.17
+          ],
+          "mode": "interior",
+          "doorStage": null,
+          "quality": "low",
+          "phase": "explore",
+          "interior": "missions",
+          "station": "step-0",
+          "nearby": null,
+          "reading": "step-0"
+        },
+        "sortie": true,
+        "exterieur": {
+          "fps": 4,
+          "drawCalls": 106,
+          "dpr": 0.75,
+          "triangles": 240134,
+          "position": [
+            1.59,
+            1.64,
+            21.77
+          ],
+          "camera": [
+            -1.59,
+            14.44,
+            39.23
+          ],
+          "mode": "exterior",
+          "doorStage": null,
+          "quality": "low",
+          "phase": "explore",
+          "interior": null,
+          "station": null,
+          "nearby": "missions",
+          "reading": null
+        }
+      },
+      {
+        "id": "veolia",
+        "entree": true,
+        "lecture": "step-0",
+        "interieur": {
+          "fps": 1,
+          "drawCalls": 70,
+          "dpr": 0.75,
+          "triangles": 24518,
+          "position": [
+            -3.9,
+            0,
+            7
+          ],
+          "camera": [
+            2.34,
+            6.2,
+            11.17
+          ],
+          "mode": "interior",
+          "doorStage": null,
+          "quality": "low",
+          "phase": "explore",
+          "interior": "veolia",
+          "station": "step-0",
+          "nearby": null,
+          "reading": "step-0"
+        },
+        "sortie": true,
+        "exterieur": {
+          "fps": 4,
+          "drawCalls": 84,
+          "dpr": 0.75,
+          "triangles": 209068,
+          "position": [
+            29.4,
+            0.77,
+            30.03
+          ],
+          "camera": [
+            24.53,
+            13.58,
+            46.96
+          ],
+          "mode": "exterior",
+          "doorStage": null,
+          "quality": "low",
+          "phase": "explore",
+          "interior": null,
+          "station": null,
+          "nearby": "veolia",
+          "reading": null
+        }
+      }
+    ],
+    "passeport": [
+      "profile",
+      "project-1",
+      "project-2",
+      "project-3",
+      "missions",
+      "veolia"
+    ],
+    "carteDeFin": true,
+    "erreurs": []
+  }
+]
