@@ -1,0 +1,273 @@
+diff --git a/package.json b/package.json
+index 0ff513a..1f48ec5 100644
+--- a/package.json
++++ b/package.json
+@@ -18,6 +18,9 @@
+     "@fontsource-variable/bricolage-grotesque": "^5.3.0",
+     "@react-three/drei": "^10.7.6",
+     "@react-three/fiber": "^9.4.0",
++    "@react-three/postprocessing": "^3.2.2",
++    "n8ao": "^2.0.2",
++    "postprocessing": "^6.39.6",
+     "react": "^19.2.0",
+     "react-dom": "^19.2.0",
+     "three": "^0.181.0"
+diff --git a/src/App.tsx b/src/App.tsx
+index b6149ba..753eba1 100644
+--- a/src/App.tsx
++++ b/src/App.tsx
+@@ -9,6 +9,7 @@ import HelpDialog from './ui/HelpDialog';
+ import Hero from './ui/Hero';
+ import InteriorHUD from './ui/InteriorHUD';
+ import Map from './ui/Map';
++import Joystick from './ui/Joystick';
+ import PlaceDialog from './ui/PlaceDialog';
+ import ReadableVersion from './ui/ReadableVersion';
+ import SceneBoundary from './ui/SceneBoundary';
+@@ -34,6 +35,7 @@ export default function App() {
+       <Header />
+       <Hero />
+       <ExploreHud />
++      <Joystick />
+       <BuildingPresentation />
+       <InteriorHUD />
+       <div id='scene-curtain' aria-hidden='true' />
+diff --git a/src/scene/V5Extras.tsx b/src/scene/V5Extras.tsx
+new file mode 100644
+index 0000000..ee2a786
+--- /dev/null
++++ b/src/scene/V5Extras.tsx
+@@ -0,0 +1,92 @@
++import { useMemo, useRef } from 'react';
++import { useFrame } from '@react-three/fiber';
++import { EffectComposer, N8AO, SMAA } from '@react-three/postprocessing';
++import * as THREE from 'three';
++
++/** Prototype V5 : occlusion ambiante (contact entre les volumes, coins, pieds des arbres). */
++export function Effects({ enabled }: { enabled: boolean }) {
++  if (!enabled) return null;
++  return (
++    <EffectComposer multisampling={0} enableNormalPass={false}>
++      <N8AO aoRadius={2.2} distanceFalloff={1.2} intensity={2.6} color='#1d3a4a' quality='medium' halfRes />
++      <SMAA />
++    </EffectComposer>
++  );
++}
++
++/** Prototype V5 : mer de nuages sous l'île et quelques nuages qui dérivent autour. */
++export function Clouds() {
++  const puff = useMemo(() => new THREE.IcosahedronGeometry(1, 1), []);
++  const mat = useMemo(
++    () =>
++      new THREE.MeshStandardMaterial({
++        color: '#ffffff',
++        roughness: 1,
++        flatShading: true,
++        emissive: '#dbefff',
++        emissiveIntensity: 0.35,
++      }),
++    [],
++  );
++  const clouds = useMemo(() => {
++    const rnd = (() => {
++      let s = 7;
++      return () => (s = (s * 16807) % 2147483647) / 2147483647;
++    })();
++    const list: {
++      p: [number, number, number];
++      s: number;
++      parts: [number, number, number, number][];
++      drift: number;
++    }[] = [];
++    // Couronne basse : la « mer de nuages » où flotte l'île.
++    for (let i = 0; i < 46; i++) {
++      const a = (i / 46) * Math.PI * 2 + rnd() * 0.2,
++        r = 70 + rnd() * 70;
++      list.push({
++        p: [Math.cos(a) * r, -16 - rnd() * 10, Math.sin(a) * r],
++        s: 6 + rnd() * 6,
++        parts: [],
++        drift: 0.01,
++      });
++    }
++    // Nuages hauts qui passent.
++    for (let i = 0; i < 9; i++) {
++      const a = rnd() * Math.PI * 2,
++        r = 55 + rnd() * 45;
++      list.push({
++        p: [Math.cos(a) * r, 26 + rnd() * 16, Math.sin(a) * r],
++        s: 3 + rnd() * 2.5,
++        parts: [],
++        drift: 0.025,
++      });
++    }
++    for (const c of list) {
++      const n = 4 + Math.floor(rnd() * 3);
++      for (let k = 0; k < n; k++)
++        c.parts.push([(k - n / 2) * 1.1 + rnd() * 0.6, rnd() * 0.6, (rnd() - 0.5) * 1.4, 0.7 + rnd() * 0.7]);
++    }
++    return list;
++  }, []);
++  const group = useRef<THREE.Group>(null!);
++  useFrame((_, dt) => {
++    group.current.rotation.y += dt * 0.006;
++  });
++  return (
++    <group ref={group}>
++      {clouds.map((c, i) => (
++        <group key={i} position={c.p} scale={c.s}>
++          {c.parts.map(([x, y, z, s], k) => (
++            <mesh
++              key={k}
++              geometry={puff}
++              material={mat}
++              position={[x, y, z]}
++              scale={[s * 1.25, s * 0.8, s]}
++            />
++          ))}
++        </group>
++      ))}
++    </group>
++  );
++}
+diff --git a/src/scene/World.tsx b/src/scene/World.tsx
+index ba86233..5dfa1ce 100644
+--- a/src/scene/World.tsx
++++ b/src/scene/World.tsx
+@@ -12,6 +12,7 @@ import CameraRig from './CameraRig';
+ import { SkyDome } from './Atmosphere';
+ import { scene } from '../design/tokens';
+ import * as THREE from 'three';
++import { Clouds, Effects } from './V5Extras';
+ import { useGame, setState, getState, player, cameraMode, passage } from '../state';
+ 
+ function Runtime() {
+@@ -112,6 +113,7 @@ export default function World() {
+           <Terrain />
+           <Buildings />
+           <Environment />
++          <Clouds />
+         </>
+       )}
+       <Robot />
+@@ -120,6 +122,7 @@ export default function World() {
+       <CameraRig />
+       <CinematicCamera />
+       <Runtime />
++      <Effects enabled={quality === 'high'} />
+     </Canvas>
+   );
+ }
+diff --git a/src/style.css b/src/style.css
+index 990385c..d7224a4 100644
+--- a/src/style.css
++++ b/src/style.css
+@@ -945,3 +945,29 @@ kbd {
+     animation-duration: 0.01ms !important;
+   }
+ }
++
++/* Prototype V5 : joystick tactile */
++.joystick {
++  position: fixed;
++  left: 20px;
++  bottom: calc(24px + env(safe-area-inset-bottom));
++  width: 128px;
++  height: 128px;
++  border-radius: 50%;
++  background: rgb(255 255 255 / 0.55);
++  border: 2px solid rgb(255 255 255 / 0.9);
++  box-shadow: 0 10px 30px rgb(29 79 112 / 0.25);
++  backdrop-filter: blur(8px);
++  touch-action: none;
++  z-index: 30;
++  display: grid;
++  place-items: center;
++}
++.joystick-knob {
++  width: 54px;
++  height: 54px;
++  border-radius: 50%;
++  background: #ff5a2c;
++  box-shadow: 0 4px 0 #c63f17;
++  pointer-events: none;
++}
+diff --git a/src/ui/Joystick.tsx b/src/ui/Joystick.tsx
+new file mode 100644
+index 0000000..d0a594f
+--- /dev/null
++++ b/src/ui/Joystick.tsx
+@@ -0,0 +1,73 @@
++import { useEffect, useRef, useState } from 'react';
++import { useGame, view } from '../state';
++
++/**
++ * Prototype V5 : joystick tactile. Il traduit la direction du pouce en touches ZQSD,
++ * ce qui réutilise tel quel le contrôleur clavier. Visible seulement sur écran tactile ou étroit.
++ */
++const touch = typeof window !== 'undefined' && (matchMedia('(pointer: coarse)').matches || innerWidth < 760);
++if (touch) {
++  // Portrait : caméra plus haute et plus loin pour voir devant le robot.
++  view.distance = 26;
++  view.pitch = 0.74;
++}
++
++const press = (key: string, down: boolean) =>
++  window.dispatchEvent(new KeyboardEvent(down ? 'keydown' : 'keyup', { key }));
++
++export default function Joystick() {
++  const state = useGame();
++  const base = useRef<HTMLDivElement>(null);
++  const [knob, setKnob] = useState<[number, number]>([0, 0]);
++  const held = useRef(new Set<string>());
++  const set = (keys: string[]) => {
++    for (const k of held.current) if (!keys.includes(k)) press(k, false);
++    for (const k of keys) if (!held.current.has(k)) press(k, true);
++    held.current = new Set(keys);
++  };
++  useEffect(() => () => set([]), []);
++  const visible =
++    touch && state.phase === 'explore' && !state.map && !state.help && !state.detail && !state.reading;
++  if (!visible) return null;
++  const move = (e: React.PointerEvent) => {
++    const r = base.current!.getBoundingClientRect();
++    let x = e.clientX - (r.left + r.width / 2),
++      y = e.clientY - (r.top + r.height / 2);
++    const len = Math.hypot(x, y),
++      max = r.width / 2 - 18;
++    if (len > max) {
++      x = (x / len) * max;
++      y = (y / len) * max;
++    }
++    setKnob([x, y]);
++    const keys: string[] = [];
++    if (len > 10) {
++      if (y < -max * 0.35) keys.push('z');
++      if (y > max * 0.35) keys.push('s');
++      if (x < -max * 0.35) keys.push('q');
++      if (x > max * 0.35) keys.push('d');
++      if (len > max * 0.92) keys.push('shift');
++    }
++    set(keys);
++  };
++  const end = () => {
++    setKnob([0, 0]);
++    set([]);
++  };
++  return (
++    <div
++      ref={base}
++      className='joystick'
++      onPointerDown={(e) => {
++        e.currentTarget.setPointerCapture(e.pointerId);
++        move(e);
++      }}
++      onPointerMove={(e) => e.buttons && move(e)}
++      onPointerUp={end}
++      onPointerCancel={end}
++      aria-label='Joystick : glisser pour marcher'
++    >
++      <span className='joystick-knob' style={{ transform: `translate(${knob[0]}px, ${knob[1]}px)` }} />
++    </div>
++  );
++}
