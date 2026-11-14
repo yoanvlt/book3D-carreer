@@ -1,0 +1,639 @@
+diff --git a/package.json b/package.json
+index bc4be51..7dd39a6 100644
+--- a/package.json
++++ b/package.json
+@@ -11,6 +11,11 @@
+     "test": "node --test tests/*.test.mjs"
+   },
+   "dependencies": {
++    "@fontsource-variable/bricolage-grotesque": "^5.3.0",
++    "@fontsource-variable/dm-sans": "^5.3.0",
++    "@fontsource-variable/jetbrains-mono": "^5.3.0",
++    "@fontsource-variable/manrope": "^5.3.0",
++    "@fontsource/instrument-serif": "^5.3.0",
+     "@react-three/drei": "^10.7.6",
+     "@react-three/fiber": "^9.4.0",
+     "react": "^19.2.0",
+diff --git a/src/App.tsx b/src/App.tsx
+index 5bd472e..56905fb 100644
+--- a/src/App.tsx
++++ b/src/App.tsx
+@@ -6,6 +6,7 @@ import { useGame, setState, enter, openBuilding, resetPlayer, travel, skipJourne
+ import { buildings } from './world/config';
+ import Map from './ui/Map';
+ import Dialog from './ui/Dialog';
++import { themed } from './theme';
+ 
+ const World=lazy(()=>import('./scene/World'));
+ class SceneBoundary extends Component<{children:ReactNode},{failed:boolean}>{
+@@ -21,15 +22,21 @@ export default function App(){
+   return <main className={`app ${home?'is-home':'is-exploring'} ${busy?'is-transitioning':''}`}>
+     <div className='world' aria-label='Campus 3D interactif'><SceneBoundary><Suspense fallback={null}><World/></Suspense></SceneBoundary></div>
+     <header className='topbar'><button className='brand-button' disabled={busy||!!state.interior} aria-label='Revenir à la vue aérienne' onClick={goHome}><Brand/></button><span className='header-caption'>LE PORTFOLIO À EXPLORER</span><div className='header-actions'><button className='text-button' disabled={busy} aria-label='Ouvrir le plan' onClick={()=>showPanel('map')}><svg viewBox='0 0 24 24' aria-hidden='true'><path d='m3 5 6-2 6 2 6-2v16l-6 2-6-2-6 2Zm6-2v16m6-14v16'/></svg><span>Le plan</span><kbd>M</kbd></button><button className='help-button' disabled={busy} aria-label='Commandes et réglages' onClick={()=>showPanel('help')}>?</button></div></header>
+-    <section className={`hero ${!home?'hero-hidden':''}`} aria-hidden={!home} inert={!home}>
++    {themed?<section className={`hero hero4 ${!home?'hero-hidden':''}`} aria-hidden={!home} inert={!home}>
++      <p className='hero4-role'>Data, IA et systèmes d’information</p>
++      <h1 className='hero4-title'>Yoan Viollet</h1>
++      <p className='hero4-text'>Mon parcours et mes projets, rangés dans une petite ville que l’on visite à pied.</p>
++      <div className='hero4-actions'><button className='hero4-primary desktop-only' onClick={start} disabled={!state.ready}>Explorer la ville</button><button className='hero4-primary mobile-only' onClick={()=>showPanel('map')}>Voir les lieux</button><button className='hero4-secondary' onClick={()=>showPanel('map')}>Plan</button></div>
++      <p className='hero4-keys desktop-only'><kbd>ZQSD</kbd> marcher <kbd>E</kbd> entrer <kbd>M</kbd> plan</p>
++    </section>:<section className={`hero ${!home?'hero-hidden':''}`} aria-hidden={!home} inert={!home}>
+       <div className='eyebrow hero-eyebrow'><span className='tiny-sun'>✳</span> BIENVENUE DANS MON UNIVERS</div>
+       <h1>Un parcours.<br/>Tout un <em>monde.</em></h1>
+       <div className='hero-rule'/><p className='intro-name'>Yoan Viollet<span>DATA · IA · PROJETS</span></p>
+       <p className='hero-description'>Les idées prennent vie, les projets prennent place.<br className='wide-only'/> Découvrez mon parcours, à votre rythme.</p>
+       <div className='hero-buttons'><button className='primary desktop-only' onClick={start} disabled={!state.ready}>Entrer dans la ville <Arrow/></button><button className='primary mobile-only' onClick={()=>showPanel('map')}>Explorer les lieux <Arrow/></button><button className='secondary' onClick={()=>showPanel('map')}>Voir le plan <span>↗</span></button></div>
+       <p className='hero-hint desktop-only'><span className='keyboard-icon'>⌘</span> Une visite libre, au clavier et à la souris.</p>
+-    </section>
+-    {home&&<><div className='world-note'><span className='note-line'/><span>LE CAMPUS DES POSSIBLES<small>Six lieux, autant d’histoires.</small></span></div><footer className='home-footer'><span>UN PETIT MONDE, DE GRANDES IDÉES.</span><span className='footer-center'><i/> OUVERT À LA CURIOSITÉ</span><span>ÉDITION 03 <span className='footer-slash'>/</span> 2026</span></footer></>}
++    </section>}
++    {home&&!themed&&<><div className='world-note'><span className='note-line'/><span>LE CAMPUS DES POSSIBLES<small>Six lieux, autant d’histoires.</small></span></div><footer className='home-footer'><span>UN PETIT MONDE, DE GRANDES IDÉES.</span><span className='footer-center'><i/> OUVERT À LA CURIOSITÉ</span><span>ÉDITION 03 <span className='footer-slash'>/</span> 2026</span></footer></>}
+     {!home&&!state.interior&&<>
+       <div className='location-label'><span className='eyebrow'>VOUS EXPLOREZ</span><strong>{nearby?nearby.subtitle:'La place des possibles'}</strong></div>
+       <nav className='quick-nav' aria-label='Navigation rapide'><span className='quick-title'>LES LIEUX</span>{buildings.map(b=><button key={b.id} disabled={busy} title={b.name} aria-label={`Rejoindre ${b.name}`} className={state.nearby===b.id?'active':''} onClick={()=>travel(b.id)} style={{'--place-color':b.color} as React.CSSProperties}><span>{b.number}</span><i/>{state.visited.includes(b.id)&&<sup>✓</sup>}</button>)}</nav>
+diff --git a/src/main.tsx b/src/main.tsx
+index 3177ea8..af05f1e 100644
+--- a/src/main.tsx
++++ b/src/main.tsx
+@@ -1,6 +1,18 @@
++import './theme';
++import '@fontsource-variable/dm-sans';
++import '@fontsource-variable/manrope';
++import '@fontsource-variable/bricolage-grotesque';
++import '@fontsource/instrument-serif';
++import '@fontsource/instrument-serif/400-italic.css';
++import '@fontsource-variable/jetbrains-mono';
+ import React from 'react';
+ import { createRoot } from 'react-dom/client';
+ import App from './App';
+ import './style.css';
++import './theme.css';
+ 
+-createRoot(document.getElementById('root')!).render(<React.StrictMode><App /></React.StrictMode>);
++const fonts = ['600 16px "Bricolage Grotesque Variable"', '16px "Instrument Serif"', '600 16px "JetBrains Mono Variable"', '16px "DM Sans Variable"'];
++// Les panneaux 3D sont dessinés sur canvas : les polices doivent être prêtes avant le premier rendu.
++Promise.all(fonts.map(f => document.fonts.load(f).catch(() => null))).finally(() =>
++  createRoot(document.getElementById('root')!).render(<React.StrictMode><App /></React.StrictMode>),
++);
+diff --git a/src/scene/Atmosphere.tsx b/src/scene/Atmosphere.tsx
+new file mode 100644
+index 0000000..71ae4b9
+--- /dev/null
++++ b/src/scene/Atmosphere.tsx
+@@ -0,0 +1,80 @@
++import { useMemo, useRef } from 'react';
++import { useFrame, useThree } from '@react-three/fiber';
++import * as THREE from 'three';
++import { theme, themed, remapHex } from '../theme';
++
++/** Ciel en dégradé : zénith → horizon → dessous de l'île. */
++export function SkyDome() {
++  const sky = theme.sky;
++  const material = useMemo(() => {
++    if (!sky) return null;
++    return new THREE.ShaderMaterial({
++      side: THREE.BackSide,
++      depthWrite: false,
++      fog: false,
++      uniforms: {
++        top: { value: new THREE.Color(sky.top) },
++        horizon: { value: new THREE.Color(sky.horizon) },
++        bottom: { value: new THREE.Color(sky.bottom) },
++      },
++      vertexShader: `varying vec3 vDir; void main(){ vDir = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }`,
++      fragmentShader: `uniform vec3 top; uniform vec3 horizon; uniform vec3 bottom; varying vec3 vDir;
++        void main(){ float y = vDir.y;
++          vec3 c = y > 0.0 ? mix(horizon, top, pow(smoothstep(0.0, 0.85, y), 0.75)) : mix(horizon, bottom, smoothstep(0.0, 0.35, -y));
++          gl_FragColor = vec4(c, 1.0);
++          #include <tonemapping_fragment>
++          #include <colorspace_fragment>
++        }`,
++    });
++  }, [sky]);
++  const ref = useRef<THREE.Mesh>(null!);
++  useFrame(({ camera }) => { if (ref.current) ref.current.position.copy(camera.position); });
++  if (!material) return null;
++  return <mesh ref={ref} material={material} renderOrder={-1} frustumCulled={false}><sphereGeometry args={[600, 32, 16]} /></mesh>;
++}
++
++const linear = new THREE.Color();
++function remapColor(color: THREE.Color) {
++  color.set(remapHex('#' + color.getHexString(THREE.SRGBColorSpace)));
++}
++
++/**
++ * Applique la palette de la direction choisie à tous les matériaux de la scène,
++ * y compris ceux créés après coup (intérieurs, clones de transparence).
++ */
++export function ThemeApplier() {
++  const { scene } = useThree();
++  const clock = useRef(0);
++  useFrame((_, dt) => {
++    if (!themed) return;
++    clock.current -= dt;
++    if (clock.current > 0) return;
++    clock.current = 0.25;
++    scene.traverse(object => {
++      if (object instanceof THREE.InstancedMesh) {
++        if (!object.userData.themed && object.instanceColor) {
++          for (let i = 0; i < object.count; i++) { object.getColorAt(i, linear); remapColor(linear); object.setColorAt(i, linear); }
++          object.instanceColor.needsUpdate = true;
++          object.userData.themed = true;
++        }
++        return;
++      }
++      if (!(object instanceof THREE.Mesh)) return;
++      const materials = Array.isArray(object.material) ? object.material : [object.material];
++      for (const m of materials) {
++        if (!(m instanceof THREE.MeshStandardMaterial) || m.userData.themed) continue;
++        m.userData.themed = true;
++        if (m.map) {
++          if (theme.signGlow) { m.emissiveMap = m.map; m.emissive.set('#ffffff'); m.emissiveIntensity = theme.signGlow; m.needsUpdate = true; }
++          continue;
++        }
++        if (m.vertexColors) continue;
++        const source = '#' + m.color.getHexString(THREE.SRGBColorSpace);
++        const glow = theme.glow[source];
++        remapColor(m.color);
++        if (glow) { m.emissive.set(glow.emissive); m.emissiveIntensity = glow.intensity; }
++      }
++    });
++  });
++  return null;
++}
+diff --git a/src/scene/Controller.tsx b/src/scene/Controller.tsx
+index 501db21..631ede6 100644
+--- a/src/scene/Controller.tsx
++++ b/src/scene/Controller.tsx
+@@ -5,6 +5,7 @@ import { getState, setState, player, view, interact, resetPlayer, showPanel, dis
+ import { WORLD, CAMERA, buildings, entrance } from '../world/config';
+ import { heightAt } from '../world/terrain';
+ import { moveWithCollisions } from '../world/collision';
++import { maxCameraDistance } from '../theme';
+ 
+ export default function Controller(){
+   const keys=useRef(new Set<string>()),nearTimer=useRef(0),velocity=useRef({x:0,z:0});const {gl}=useThree();
+@@ -31,7 +32,7 @@ export default function Controller(){
+     const start=(e:PointerEvent)=>{if(getState().phase!=='explore'||getState().map||getState().detail||getState().reading||getState().help)return;dragging=true;lastX=e.clientX;lastY=e.clientY;gl.domElement.setPointerCapture(e.pointerId);};
+     const drag=(e:PointerEvent)=>{if(getState().phase!=='explore'){dragging=false;return;}if(!dragging)return;view.yaw-=(e.clientX-lastX)*.005;view.pitch=Math.max(.25,Math.min(1.14,view.pitch+(e.clientY-lastY)*.003));lastX=e.clientX;lastY=e.clientY;};
+     const end=()=>{dragging=false;};
+-    const wheel=(e:WheelEvent)=>{if(getState().phase==='explore'&&!getState().map&&!getState().help&&!getState().reading&&!getState().detail){e.preventDefault();view.distance=Math.max(10,Math.min(19,view.distance+e.deltaY*.008));}};
++    const wheel=(e:WheelEvent)=>{if(getState().phase==='explore'&&!getState().map&&!getState().help&&!getState().reading&&!getState().detail){e.preventDefault();view.distance=Math.max(10,Math.min(maxCameraDistance,view.distance+e.deltaY*.008));}};
+     window.addEventListener('keydown',down);window.addEventListener('keyup',up);window.addEventListener('blur',clear);document.addEventListener('visibilitychange',clear);
+     gl.domElement.addEventListener('pointerdown',start);gl.domElement.addEventListener('pointermove',drag);gl.domElement.addEventListener('pointerup',end);gl.domElement.addEventListener('pointercancel',end);gl.domElement.addEventListener('wheel',wheel,{passive:false});
+     return()=>{window.removeEventListener('keydown',down);window.removeEventListener('keyup',up);window.removeEventListener('blur',clear);document.removeEventListener('visibilitychange',clear);gl.domElement.removeEventListener('pointerdown',start);gl.domElement.removeEventListener('pointermove',drag);gl.domElement.removeEventListener('pointerup',end);gl.domElement.removeEventListener('pointercancel',end);gl.domElement.removeEventListener('wheel',wheel);};
+diff --git a/src/scene/Interior.tsx b/src/scene/Interior.tsx
+index 17e5165..0daebeb 100644
+--- a/src/scene/Interior.tsx
++++ b/src/scene/Interior.tsx
+@@ -5,6 +5,7 @@ import * as THREE from 'three';
+ import { buildings, COLORS as C } from '../world/config';
+ import { stationsFor, type Station } from '../world/narrative';
+ import { useGame, getState } from '../state';
++import { theme } from '../theme';
+ import { Box, Cylinder, Ball, Beam, Sign } from './Primitives';
+ 
+ function Exhibit({station:s,color}:{station:Station;color:string}){
+@@ -53,8 +54,8 @@ export default function Interior(){
+   const {interior}=useGame();if(!interior)return null;
+   const b=buildings.find(b=>b.id===interior)!;
+   return <>
+-    <color attach='background' args={['#36535c']}/>
+-    <Box p={[0,-.5,0]} s={[90,.8,90]} color='#36535c'/>
++    <color attach='background' args={[theme.interior.background]}/>
++    <Box p={[0,-.5,0]} s={[90,.8,90]} color={theme.interior.background}/>
+     <Box p={[0,-.12,0]} s={[22,.24,36]} color='#e9d3b0'/>
+     <Box p={[0,.018,0]} s={[2.4,.025,32]} color={b.color}/>
+     {[-14,-7,0,7,14].map(z=><Box key={z} p={[0,.025,z]} s={[22,.02,.035]} color='#bfa78b'/>)}
+@@ -69,6 +70,6 @@ export default function Interior(){
+     <Sign text={b.id==='profile'?'LA MAISON PORTRAIT':b.subtitle.toUpperCase()} p={[0,6.8,-17.75]} s={[15,1.15]} color={C.cream} bg='#385965'/>
+     {b.id==='profile'?<PortraitArchitecture/>:<ThematicArchitecture id={b.id} color={b.color}/>}
+     {stationsFor(b.id).map(station=><Exhibit key={station.id} station={station} color={b.color}/>)}
+-    <directionalLight position={[0,12,10]} intensity={1} color='#ffdbb6'/>
++    <directionalLight position={[0,12,10]} intensity={theme.interior.lightIntensity} color={theme.interior.light}/>
+   </>;
+ }
+diff --git a/src/scene/Primitives.tsx b/src/scene/Primitives.tsx
+index 6e082a2..6020864 100644
+--- a/src/scene/Primitives.tsx
++++ b/src/scene/Primitives.tsx
+@@ -1,6 +1,7 @@
+ import { useMemo, useEffect, type ReactNode } from 'react';
+ import * as THREE from 'three';
+ import { COLORS } from '../world/config';
++import { remapHex, theme } from '../theme';
+ type V3=[number,number,number];
+ const materials = new Map<string,THREE.MeshStandardMaterial>();
+ export function material(color:string,metalness=0){const key=color+metalness;let m=materials.get(key);if(!m){m=new THREE.MeshStandardMaterial({color,roughness:metalness ? .32:.78,metalness});materials.set(key,m);}return m;}
+@@ -9,7 +10,7 @@ export function Box({p=[0,0,0],s=[1,1,1],color=COLORS.cream,r=[0,0,0],metal=0,ch
+ export function Cylinder({p=[0,0,0],s=[1,1,1],color=COLORS.cream,r=[0,0,0]}:{p?:V3;s?:V3;color?:string;r?:V3}){return <mesh position={p} scale={s} rotation={r} geometry={cylinder} material={material(color)} castShadow receiveShadow dispose={null}/>;}
+ export function Ball({p=[0,0,0],s=[1,1,1],color=COLORS.coral}:{p?:V3;s?:V3;color?:string}){return <mesh position={p} scale={s} geometry={ball} material={material(color)} castShadow receiveShadow dispose={null}/>;}
+ export function Sign({text,p,s=[4,1],color=COLORS.ink,bg=COLORS.cream,rotation=[0,0,0]}:{text:string;p:V3;s?:[number,number];color?:string;bg?:string;rotation?:V3}){
+-  const texture=useMemo(()=>{const c=document.createElement('canvas');c.width=1024;c.height=Math.round(1024*s[1]/s[0]);const ctx=c.getContext('2d')!;ctx.fillStyle=bg;ctx.fillRect(0,0,c.width,c.height);ctx.fillStyle=color;ctx.font=`600 ${Math.min(c.height*.58,c.width/(text.length*.65))}px Arial`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(text,c.width/2,c.height*.53);const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;t.anisotropy=4;return t;},[text,color,bg,s[0],s[1]]);
++  const texture=useMemo(()=>{const c=document.createElement('canvas');c.width=1024;c.height=Math.round(1024*s[1]/s[0]);const ctx=c.getContext('2d')!;ctx.fillStyle=remapHex(bg);ctx.fillRect(0,0,c.width,c.height);ctx.fillStyle=remapHex(color);ctx.font=`${theme.id==='current'?'600':'700'} ${Math.min(c.height*.58,c.width/(text.length*.65))}px ${({current:'Arial',a:'"Bricolage Grotesque Variable", Arial',b:'"Instrument Serif", Georgia',c:'"JetBrains Mono Variable", monospace'} as Record<string,string>)[theme.id]}`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(text,c.width/2,c.height*.53);const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;t.anisotropy=4;return t;},[text,color,bg,s[0],s[1]]);
+   useEffect(()=>()=>texture.dispose(),[texture]);
+   return <mesh position={p} rotation={rotation}><planeGeometry args={s}/><meshStandardMaterial map={texture} roughness={.8} side={THREE.DoubleSide}/></mesh>;
+ }
+diff --git a/src/scene/Terrain.tsx b/src/scene/Terrain.tsx
+index 2b2f946..19e7060 100644
+--- a/src/scene/Terrain.tsx
++++ b/src/scene/Terrain.tsx
+@@ -4,6 +4,8 @@ import * as THREE from 'three';
+ import { heightAt } from '../world/terrain';
+ import { COLORS as C, type Point } from '../world/config';
+ import { material, Box } from './Primitives';
++import { theme } from '../theme';
++const T=theme.terrain;
+ 
+ function TerrainMesh(){
+   const geometry=useMemo(()=>{
+@@ -14,7 +16,7 @@ function TerrainMesh(){
+       const d=edgeRadius*i/rings,x=Math.cos(a)*d,z=Math.sin(a)*d;
+       let h=heightAt(x,z);const edge=Math.max(0,Math.min(1,(d-60)/(edgeRadius-60)));h=h*(1-edge)-6.6*edge;
+       vertices.push(x,h,z);
+-      color.set(d>60?'#c78354':(h>4.4?'#d99453':'#edb978'));
++      color.set(d>60?T.edge:(h>4.4?T.high:T.low));
+       const noise=Math.sin(x*1.31+z*.7)*Math.cos(z*1.53)*.012;color.offsetHSL(0,0,noise);colors.push(color.r,color.g,color.b);
+       if(i<rings&&j<segments){const k=i*(segments+1)+j;indices.push(k,k+1,k+segments+1,k+1,k+segments+2,k+segments+1);}
+     }
+@@ -23,7 +25,7 @@ function TerrainMesh(){
+   },[]);
+   return <mesh geometry={geometry} receiveShadow><meshStandardMaterial vertexColors roughness={1} flatShading/></mesh>;
+ }
+-export function Path({points,width=3.5,color=C.path,offset=.15}:{points:Point[];width?:number;color?:string;offset?:number}){
++export function Path({points,width=3.5,color=T.path,offset=.15}:{points:Point[];width?:number;color?:string;offset?:number}){
+   const geometry=useMemo(()=>{
+     const curve=new THREE.CatmullRomCurve3(points.map(([x,z])=>new THREE.Vector3(x,0,z)),false,'centripetal');
+     const vertices:number[]=[],indices:number[]=[];
+@@ -48,15 +50,15 @@ function Garden({x,z,rx,rz,angle=0}:{x:number;z:number;rx:number;rz:number;angle
+     }const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(vertices,3));g.setIndex(indices);g.computeVertexNormals();return g;
+   },[x,z,rx,rz,angle]);
+   useEffect(()=>()=>geometry.dispose(),[geometry]);
+-  return <mesh geometry={geometry} receiveShadow material={material('#91aa5e')} dispose={null}/>;
++  return <mesh geometry={geometry} receiveShadow material={material(T.garden)} dispose={null}/>;
+ }
+ const gardens=[[-41,39,9,5,-.4],[-25,44,13,4,0],[4,45,13,4,.1],[46,18,4,15,-.1],[-48,20,5,13,0],[5,-47,12,4,.2],[-41,-23,4,11,-.3],[-25,-37,11,3,.05],[23,-35,11,4,.3],[43,-5,4,12,0],[38,28,4,7,-.55],[24,39,9,3.6,0],[-23,37,8,4,-.5],[-42,12,3.5,10,0],[-16,-5,3.2,4.4,-.2],[16,3,3.3,4,.3],[-13,-17,2.5,3,0]];
+ export default function Terrain(){return <>
+-  <mesh rotation={[-Math.PI/2,0,0]} position={[0,-6.6,0]} receiveShadow><planeGeometry args={[1200,1200]}/><meshStandardMaterial color='#e6c4a0' roughness={1}/></mesh>
++  <mesh rotation={[-Math.PI/2,0,0]} position={[0,-6.6,0]} receiveShadow><planeGeometry args={[1200,1200]}/><meshStandardMaterial color={T.base} roughness={1}/></mesh>
+   <TerrainMesh/>
+   {gardens.map(([x,z,rx,rz,angle],i)=><Garden key={i} {...{x,z,rx,rz,angle}}/>)}
+-  {streets.map((points,i)=><group key={i}><Path points={points} width={6.5} color='#c58d63' offset={.09}/><Path points={points} width={5.7}/></group>)}
++  {streets.map((points,i)=><group key={i}><Path points={points} width={6.5} color={T.streetEdge} offset={.09}/><Path points={points} width={5.7}/></group>)}
+   {approaches.map((points,i)=><Path key={i} points={points} width={3.6}/>)}
+-  <Box p={[0,.69,0]} s={[16,.12,12]} color={C.path}/>
++  <Box p={[0,.69,0]} s={[16,.12,12]} color={T.path}/>
+   {[-5,0,5].map(x=><Box key={x} p={[x,.76,0]} s={[.06,.02,12]} color='#d3af87'/>)}
+ </>;}
+diff --git a/src/scene/World.tsx b/src/scene/World.tsx
+index 99d9f63..43e3e7d 100644
+--- a/src/scene/World.tsx
++++ b/src/scene/World.tsx
+@@ -10,6 +10,8 @@ import Environment from './Environment';
+ import Robot from './Robot';
+ import Controller from './Controller';
+ import CameraRig from './CameraRig';
++import { SkyDome, ThemeApplier } from './Atmosphere';
++import { theme } from '../theme';
+ import { useGame, setState, getState, player, cameraMode, passage } from '../state';
+ 
+ function Runtime(){
+@@ -27,9 +29,9 @@ function Runtime(){
+   });
+   return null;
+ }
+-export default function World(){const {quality,interior}=useGame();return <Canvas shadows={quality==='high'?'soft':false} dpr={quality==='high'?[1,1.5]:1} camera={{position:[78,86,100],fov:41,near:.1,far:420}} gl={{antialias:true,powerPreference:'high-performance',toneMapping:THREE.ACESFilmicToneMapping,toneMappingExposure:1.15}} onCreated={({gl})=>{gl.setClearColor('#e8cdaa');}}>
+-  <hemisphereLight args={['#d3eaff','#b99679',1.4]}/>
+-  <directionalLight position={[-35,65,28]} intensity={2.8} color='#fff0d5' castShadow={quality==='high'} shadow-mapSize={[2048,2048]} shadow-camera-left={-65} shadow-camera-right={65} shadow-camera-top={65} shadow-camera-bottom={-65} shadow-camera-near={1} shadow-camera-far={180} shadow-normalBias={.045} shadow-bias={-.00015} shadow-radius={3}/>
+-  {interior?<Interior/>:<><color attach='background' args={['#e8cdaa']}/><Terrain/><Buildings/><Environment/></>}<Robot/><Transitions/><Controller/><CameraRig/><CinematicCamera/><Runtime/>
++export default function World(){const {quality,interior}=useGame();return <Canvas shadows={quality==='high'?'soft':false} dpr={quality==='high'?[1,1.5]:1} camera={{position:[78,86,100],fov:41,near:.1,far:theme.sky?1400:420}} gl={{antialias:true,powerPreference:'high-performance',toneMapping:theme.toneMapping,toneMappingExposure:theme.exposure}} onCreated={({gl})=>{gl.setClearColor(theme.sky?theme.sky.horizon:'#e8cdaa');}}>
++  <hemisphereLight args={[theme.hemi.sky,theme.hemi.ground,theme.hemi.intensity]}/>
++  <directionalLight position={theme.sun.position} intensity={theme.sun.intensity} color={theme.sun.color} castShadow={quality==='high'} shadow-mapSize={[2048,2048]} shadow-camera-left={-65} shadow-camera-right={65} shadow-camera-top={65} shadow-camera-bottom={-65} shadow-camera-near={1} shadow-camera-far={180} shadow-normalBias={.045} shadow-bias={-.00015} shadow-radius={3}/>
++  {interior?<Interior/>:<>{theme.sky?<SkyDome/>:<color attach='background' args={['#e8cdaa']}/>}{theme.fog&&<fog attach='fog' args={[theme.fog.color,theme.fog.near,theme.fog.far]}/>}<Terrain/><Buildings/><Environment/></>}<Robot/><Transitions/><Controller/><CameraRig/><CinematicCamera/><Runtime/><ThemeApplier/>
+ </Canvas>;}
+ 
+diff --git a/src/style.css b/src/style.css
+index ec34149..adfd695 100644
+--- a/src/style.css
++++ b/src/style.css
+@@ -1,11 +1,10 @@
+-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;450;500;550;600;650;700&family=Manrope:wght@400;500;600;650;700;750;800&display=swap');
+ 
+-:root{font-family:'DM Sans',sans-serif;color:#293e42;background:#ead3b2;font-synthesis:none;font-weight:400;--ink:#293e42;--paper:#fbf5e9;--coral:#d9603b;--muted:#68716a;--line:#d9d3c3}
++:root{font-family:'DM Sans Variable',sans-serif;color:#293e42;background:#ead3b2;font-synthesis:none;font-weight:400;--ink:#293e42;--paper:#fbf5e9;--coral:#d9603b;--muted:#68716a;--line:#d9d3c3}
+ *{box-sizing:border-box}body{margin:0}button,input,select{font:inherit}button{cursor:pointer;color:inherit;border:0;background:none}button:disabled{cursor:wait;opacity:.55}button:focus-visible,a:focus-visible,select:focus-visible,input:focus-visible,[role=button]:focus-visible{outline:3px solid #2b7484;outline-offset:5px}button{-webkit-tap-highlight-color:transparent}button,select{touch-action:manipulation}button svg{display:block}kbd{font-family:inherit}::selection{background:#e6a783;color:var(--ink)}
+-.app,.world{width:100%;height:100dvh;min-height:480px;overflow:hidden}.app{position:relative}.world{position:absolute;inset:0;touch-action:none}.world canvas{display:block;width:100%;height:100%;outline:0}.app:after{content:'';position:absolute;inset:0;pointer-events:none;box-shadow:inset 0 0 140px #6e422510;z-index:1}.topbar{position:absolute;top:0;left:0;right:0;display:flex;align-items:center;justify-content:space-between;padding:28px 3.7%;z-index:5}.brand-button{padding:0}.brand{display:flex;align-items:center;gap:10px;font-family:Manrope,sans-serif;font-size:23px;letter-spacing:-1.1px;font-weight:800}.brand svg{width:34px;height:34px}.brand-dot{color:var(--coral)}.header-caption{font-size:10px;letter-spacing:2.5px;font-weight:600;margin-left:42px}.header-actions{display:flex;gap:22px;align-items:center}.text-button{display:flex;align-items:center;gap:10px;font-size:13px;padding:9px 0}.text-button svg{width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:1.4}.text-button kbd{border:1px solid #34454a40;padding:2px 5px;border-radius:3px;font-size:10px;opacity:.7}.help-button{width:30px;height:30px;border:1px solid #34454a50;border-radius:50%;font-size:14px}.help-button:hover,.text-button:hover{color:var(--coral)}
+-.hero{position:absolute;left:5.5%;top:50%;transform:translateY(-49%);z-index:3;max-width:560px;transition:opacity .55s,transform .8s;pointer-events:none}.hero button{pointer-events:auto}.hero-hidden{opacity:0;transform:translateY(-44%);pointer-events:none}.hero-hidden button{pointer-events:none}.eyebrow{font-size:10px;letter-spacing:2.1px;font-weight:650;display:block}.hero-eyebrow{display:flex;align-items:center;gap:12px;margin-bottom:30px}.tiny-sun{font-size:24px;color:var(--coral);line-height:1}h1{font-family:'Manrope',sans-serif;font-weight:650;letter-spacing:-4.8px;font-size:clamp(57px,4.8vw,96px);line-height:1.08;margin:0 0 31px}h1 em{font-style:normal;color:var(--coral)}.hero-rule{height:1px;background:#8f827459;width:48px;margin-bottom:22px}.intro-name{font-size:17px;font-weight:650;margin:0 0 15px;display:flex;align-items:center;gap:18px}.intro-name span{font-size:9px;letter-spacing:1.5px;border-left:1px solid #948a7566;padding-left:18px;font-weight:500}.hero-description{font-size:14px;line-height:1.9;margin:0 0 30px;color:#58605a}.hero-buttons{display:flex;align-items:center;gap:23px}.primary{display:flex;align-items:center;justify-content:space-between;gap:25px;background:var(--ink);color:#fff7e8;border-radius:5px;padding:9px 10px 9px 23px;min-height:57px;font-size:13px;font-weight:500;transition:background .2s,transform .2s}.primary:hover{background:#42595a;transform:translateY(-2px)}.button-arrow{display:grid;place-items:center;width:37px;height:37px;background:#fff2d519;border-radius:3px;font-size:23px;font-weight:400}.secondary{font-size:12px;border-bottom:1px solid #34454a65;padding:12px 0 10px;display:inline-flex;gap:20px;align-items:center}.secondary:hover{color:var(--coral);border-color:var(--coral)}.hero-hint{font-size:10px;color:#74756a;display:flex;gap:9px;align-items:center;margin-top:24px;letter-spacing:.2px}.keyboard-icon{font-size:17px}.world-note{position:absolute;right:7%;bottom:19%;display:flex;gap:14px;align-items:center;pointer-events:none;z-index:2;font-size:9px;font-weight:600;letter-spacing:1.5px}.world-note small{display:block;font-size:11px;letter-spacing:0;font-weight:400;margin-top:6px}.note-line{height:1px;width:33px;background:var(--ink)}.home-footer{position:absolute;bottom:0;left:3.7%;right:3.7%;height:71px;display:flex;align-items:center;justify-content:space-between;border-top:1px solid #8c765c3b;font-size:9px;letter-spacing:1.6px;z-index:3}.footer-center{display:flex;gap:8px;align-items:center}.footer-center i{height:5px;width:5px;border-radius:100%;background:#c57651}.footer-slash{margin:0 14px;opacity:.5}.mobile-only{display:none}
+-.location-label{position:absolute;left:3.7%;top:115px;z-index:3;pointer-events:none}.location-label .eyebrow{font-size:9px;color:#647167;letter-spacing:1.9px}.location-label strong{font-family:Manrope,sans-serif;font-size:19px;font-weight:650;display:block;margin-top:8px}.is-exploring .topbar{background:none}.quick-nav{position:absolute;right:3.7%;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:8px;z-index:3}.quick-title{font-size:8px;letter-spacing:1px;margin-bottom:7px}.quick-nav button{width:46px;height:43px;background:#fff7eae8;border:1px solid #fff8ec80;border-radius:4px;position:relative;box-shadow:0 3px 7px #6545270b;font-size:12px;transition:transform .2s,background .2s}.quick-nav button:hover{transform:translateX(-4px)}.quick-nav button.active{background:var(--ink);color:var(--paper)}.quick-nav i{position:absolute;width:3px;height:13px;left:0;top:14px;background:var(--place-color)}.quick-nav sup{position:absolute;right:4px;top:3px;font-size:8px;color:#658a5e}.explore-footer{position:absolute;bottom:28px;left:3.7%;right:3.7%;display:flex;align-items:center;justify-content:space-between;z-index:3;gap:20px}.map-pill{background:var(--paper);border:1px solid #d7c4aa;padding:12px 15px;border-radius:4px;display:flex;gap:14px;align-items:center;font-size:11px}.map-pill>span{font-size:22px;line-height:1}.map-pill kbd{font-size:9px;opacity:.6}.controls-hint{font-size:10px;display:flex;gap:8px;align-items:center;color:#3b504a;background:#fff3dcbb;padding:10px 15px;border-radius:3px}.controls-hint kbd{border:1px solid #b9ac9580;border-bottom-width:2px;padding:3px 6px;border-radius:3px}.controls-hint>span{margin:0 4px;color:#8f8c74}.visited-count{font-size:20px;font-family:Manrope,sans-serif}.visited-count>span{font-size:8px;letter-spacing:1px;margin-left:5px}.interaction{position:absolute;left:50%;transform:translateX(-50%);bottom:115px;display:flex;align-items:center;gap:19px;background:var(--paper);padding:13px 19px 13px 12px;border-radius:5px;box-shadow:0 6px 25px #523b2820;font-size:12px;z-index:4}.interaction kbd{display:grid;place-items:center;background:var(--ink);color:var(--paper);width:35px;height:35px;border-radius:3px;font-size:15px}.interaction strong{display:block;font-size:15px;margin-top:2px}.interaction>span:last-child{font-size:22px;margin-left:14px}.transition-caption{position:absolute;bottom:18%;left:50%;transform:translateX(-50%);background:#fff6e8db;border-radius:3px;display:flex;gap:12px;align-items:center;padding:12px 22px;font-size:12px;z-index:4}.transition-caption i{width:6px;height:6px;background:var(--coral);border-radius:50%;animation:pulse 1s infinite}.loading{position:absolute;left:50%;bottom:15%;transform:translateX(-50%);z-index:8;display:flex;gap:13px;align-items:center;background:var(--paper);padding:13px 20px;border-radius:3px;font-size:12px}.loading-orbit{width:17px;height:17px;border:2px solid #e2d7c5;border-top-color:var(--coral);border-radius:50%;animation:spin 1s linear infinite}
+-.modal-backdrop{position:absolute;inset:0;background:#283e434d;z-index:20;display:flex;align-items:center;justify-content:center;padding:35px;animation:appear .2s ease}.dialog{background:var(--paper);width:100%;max-width:1000px;border:1px solid #fffcf7;box-shadow:0 30px 100px #283e4330;max-height:calc(100dvh - 70px);overflow:auto;padding:35px;border-radius:8px}.dialog-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;margin-bottom:27px}.dialog-heading .eyebrow{color:var(--coral);font-size:9px}.dialog h2{font-family:Manrope,sans-serif;font-size:29px;letter-spacing:-1px;line-height:1.3;font-weight:650;margin:10px 0 0}.close{width:35px;height:35px;border:1px solid var(--line);border-radius:50%;font-size:24px;font-weight:400;line-height:1;flex-shrink:0}.close:hover{background:var(--ink);color:var(--paper)}.map-layout{display:grid;grid-template-columns:1.1fr 1fr;gap:28px}.map-drawing{display:flex;flex-direction:column;justify-content:center;background:#f2ead8;border-radius:4px;overflow:hidden}.map-drawing svg{width:100%;height:auto;display:block}.map-pin{cursor:pointer}.map-pin:hover{filter:brightness(1.1)}.map-caption{display:flex;align-items:center;gap:6px;padding:12px 16px 16px;font-size:9px}.map-caption i{width:6px;height:6px;border-radius:50%;background:var(--ink)}.map-caption>span{margin-left:auto;color:#8b8777}.destination{display:flex;align-items:center;gap:16px;width:100%;text-align:left;border-top:1px solid var(--line);padding:19px 5px;transition:padding .15s,background .15s}.destination:last-of-type{border-bottom:1px solid var(--line)}.destination:hover{padding-left:12px;background:#e9dfcb66}.dest-number{font-size:20px;font-family:Manrope,sans-serif;font-weight:500;width:30px}.destination strong{font-size:14px;font-weight:550}.destination small{display:block;font-size:11px;color:#7e8075;margin-top:5px}.dest-arrow{margin-left:auto;font-size:21px}.map-note{font-size:10px;line-height:1.7;color:#777a70;margin:15px 5px 0}.detail-dialog{max-width:540px}.detail-art{position:relative;height:145px;border-radius:4px;overflow:hidden;background:color-mix(in srgb,var(--place-color),#fff1d9 65%);margin-bottom:23px;padding:18px}.detail-number{font-family:Manrope,sans-serif;font-size:90px;line-height:1;font-weight:500;color:var(--place-color);opacity:.7;letter-spacing:-7px}.detail-art>span:last-child{position:absolute;bottom:16px;right:16px;font-size:7px;letter-spacing:1.5px}.building-illustration{position:absolute;right:55px;top:15px;width:120px;height:105px;transform:skewY(-12deg)}.building-illustration i{position:absolute;bottom:15px;width:25px;background:var(--place-color);border:3px solid #fff5e4}.building-illustration i:nth-child(1){left:0;height:50px}.building-illustration i:nth-child(2){left:27px;height:80px}.building-illustration i:nth-child(3){left:54px;height:65px}.building-illustration i:nth-child(4){left:81px;height:40px}.illustration-project-3 i{border-radius:15px 15px 0 0}.illustration-missions i{height:58px!important;border-radius:20px 20px 0 0}.detail-description{font-size:14px;line-height:1.85;margin:0 0 20px;color:#56605c}.tags{display:flex;gap:7px;flex-wrap:wrap}.tags span{font-size:10px;border:1px solid #dcd3c2;border-radius:3px;padding:6px 10px}.coming-next{padding:19px 0;margin:21px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}.coming-next>span{font-size:8px;letter-spacing:1.4px;font-weight:600;color:var(--coral)}.coming-next p{font-size:11px;line-height:1.7;color:#7a7d70;margin-bottom:0}.detail-dialog .primary{width:100%}.help-dialog{max-width:580px}.controls-list{margin:0 0 24px}.controls-list>div{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--line);padding:12px 0;font-size:12px;gap:10px}.controls-list dt{color:#6c746d}.controls-list dd{margin:0;text-align:right}.controls-list kbd{background:#ece5d5;padding:3px 5px;border-radius:3px;font-size:10px}.settings-row{display:flex;gap:20px;align-items:center;justify-content:space-between;font-size:12px}.settings-row select{border:1px solid var(--line);border-radius:3px;padding:9px;background:#f4eddf;color:var(--ink);max-width:62%;font-size:11px}.motion-setting{display:flex;align-items:center;gap:10px;font-size:12px;margin:21px 0}.motion-setting input{accent-color:var(--coral);width:16px;height:16px}.performance{font-size:10px;color:#7e8076;margin-bottom:15px}.performance span{font-weight:600;color:var(--ink);margin-right:8px}.webgl-fallback{position:absolute;top:35%;right:10%;max-width:360px;padding:26px;background:var(--paper);border-radius:6px;z-index:9;font-size:13px;line-height:1.7}.webgl-fallback button{padding:9px 0;border-bottom:1px solid}.sr-only{position:absolute;width:1px;height:1px;padding:0;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}.diagnostics{position:absolute;bottom:0;left:0;background:#fff;font-size:10px;z-index:30;max-width:95vw;pointer-events:none;padding:3px;color:#111}.is-transitioning .quick-nav,.is-transitioning .location-label,.is-transitioning .explore-footer{opacity:.3;pointer-events:none}@keyframes spin{to{transform:rotate(360deg)}}@keyframes pulse{50%{opacity:.3}}@keyframes appear{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
++.app,.world{width:100%;height:100dvh;min-height:480px;overflow:hidden}.app{position:relative}.world{position:absolute;inset:0;touch-action:none}.world canvas{display:block;width:100%;height:100%;outline:0}.app:after{content:'';position:absolute;inset:0;pointer-events:none;box-shadow:inset 0 0 140px #6e422510;z-index:1}.topbar{position:absolute;top:0;left:0;right:0;display:flex;align-items:center;justify-content:space-between;padding:28px 3.7%;z-index:5}.brand-button{padding:0}.brand{display:flex;align-items:center;gap:10px;font-family:'Manrope Variable',sans-serif;font-size:23px;letter-spacing:-1.1px;font-weight:800}.brand svg{width:34px;height:34px}.brand-dot{color:var(--coral)}.header-caption{font-size:10px;letter-spacing:2.5px;font-weight:600;margin-left:42px}.header-actions{display:flex;gap:22px;align-items:center}.text-button{display:flex;align-items:center;gap:10px;font-size:13px;padding:9px 0}.text-button svg{width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:1.4}.text-button kbd{border:1px solid #34454a40;padding:2px 5px;border-radius:3px;font-size:10px;opacity:.7}.help-button{width:30px;height:30px;border:1px solid #34454a50;border-radius:50%;font-size:14px}.help-button:hover,.text-button:hover{color:var(--coral)}
++.hero{position:absolute;left:5.5%;top:50%;transform:translateY(-49%);z-index:3;max-width:560px;transition:opacity .55s,transform .8s;pointer-events:none}.hero button{pointer-events:auto}.hero-hidden{opacity:0;transform:translateY(-44%);pointer-events:none}.hero-hidden button{pointer-events:none}.eyebrow{font-size:10px;letter-spacing:2.1px;font-weight:650;display:block}.hero-eyebrow{display:flex;align-items:center;gap:12px;margin-bottom:30px}.tiny-sun{font-size:24px;color:var(--coral);line-height:1}h1{font-family:'Manrope Variable',sans-serif;font-weight:650;letter-spacing:-4.8px;font-size:clamp(57px,4.8vw,96px);line-height:1.08;margin:0 0 31px}h1 em{font-style:normal;color:var(--coral)}.hero-rule{height:1px;background:#8f827459;width:48px;margin-bottom:22px}.intro-name{font-size:17px;font-weight:650;margin:0 0 15px;display:flex;align-items:center;gap:18px}.intro-name span{font-size:9px;letter-spacing:1.5px;border-left:1px solid #948a7566;padding-left:18px;font-weight:500}.hero-description{font-size:14px;line-height:1.9;margin:0 0 30px;color:#58605a}.hero-buttons{display:flex;align-items:center;gap:23px}.primary{display:flex;align-items:center;justify-content:space-between;gap:25px;background:var(--ink);color:#fff7e8;border-radius:5px;padding:9px 10px 9px 23px;min-height:57px;font-size:13px;font-weight:500;transition:background .2s,transform .2s}.primary:hover{background:#42595a;transform:translateY(-2px)}.button-arrow{display:grid;place-items:center;width:37px;height:37px;background:#fff2d519;border-radius:3px;font-size:23px;font-weight:400}.secondary{font-size:12px;border-bottom:1px solid #34454a65;padding:12px 0 10px;display:inline-flex;gap:20px;align-items:center}.secondary:hover{color:var(--coral);border-color:var(--coral)}.hero-hint{font-size:10px;color:#74756a;display:flex;gap:9px;align-items:center;margin-top:24px;letter-spacing:.2px}.keyboard-icon{font-size:17px}.world-note{position:absolute;right:7%;bottom:19%;display:flex;gap:14px;align-items:center;pointer-events:none;z-index:2;font-size:9px;font-weight:600;letter-spacing:1.5px}.world-note small{display:block;font-size:11px;letter-spacing:0;font-weight:400;margin-top:6px}.note-line{height:1px;width:33px;background:var(--ink)}.home-footer{position:absolute;bottom:0;left:3.7%;right:3.7%;height:71px;display:flex;align-items:center;justify-content:space-between;border-top:1px solid #8c765c3b;font-size:9px;letter-spacing:1.6px;z-index:3}.footer-center{display:flex;gap:8px;align-items:center}.footer-center i{height:5px;width:5px;border-radius:100%;background:#c57651}.footer-slash{margin:0 14px;opacity:.5}.mobile-only{display:none}
++.location-label{position:absolute;left:3.7%;top:115px;z-index:3;pointer-events:none}.location-label .eyebrow{font-size:9px;color:#647167;letter-spacing:1.9px}.location-label strong{font-family:'Manrope Variable',sans-serif;font-size:19px;font-weight:650;display:block;margin-top:8px}.is-exploring .topbar{background:none}.quick-nav{position:absolute;right:3.7%;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:8px;z-index:3}.quick-title{font-size:8px;letter-spacing:1px;margin-bottom:7px}.quick-nav button{width:46px;height:43px;background:#fff7eae8;border:1px solid #fff8ec80;border-radius:4px;position:relative;box-shadow:0 3px 7px #6545270b;font-size:12px;transition:transform .2s,background .2s}.quick-nav button:hover{transform:translateX(-4px)}.quick-nav button.active{background:var(--ink);color:var(--paper)}.quick-nav i{position:absolute;width:3px;height:13px;left:0;top:14px;background:var(--place-color)}.quick-nav sup{position:absolute;right:4px;top:3px;font-size:8px;color:#658a5e}.explore-footer{position:absolute;bottom:28px;left:3.7%;right:3.7%;display:flex;align-items:center;justify-content:space-between;z-index:3;gap:20px}.map-pill{background:var(--paper);border:1px solid #d7c4aa;padding:12px 15px;border-radius:4px;display:flex;gap:14px;align-items:center;font-size:11px}.map-pill>span{font-size:22px;line-height:1}.map-pill kbd{font-size:9px;opacity:.6}.controls-hint{font-size:10px;display:flex;gap:8px;align-items:center;color:#3b504a;background:#fff3dcbb;padding:10px 15px;border-radius:3px}.controls-hint kbd{border:1px solid #b9ac9580;border-bottom-width:2px;padding:3px 6px;border-radius:3px}.controls-hint>span{margin:0 4px;color:#8f8c74}.visited-count{font-size:20px;font-family:'Manrope Variable',sans-serif}.visited-count>span{font-size:8px;letter-spacing:1px;margin-left:5px}.interaction{position:absolute;left:50%;transform:translateX(-50%);bottom:115px;display:flex;align-items:center;gap:19px;background:var(--paper);padding:13px 19px 13px 12px;border-radius:5px;box-shadow:0 6px 25px #523b2820;font-size:12px;z-index:4}.interaction kbd{display:grid;place-items:center;background:var(--ink);color:var(--paper);width:35px;height:35px;border-radius:3px;font-size:15px}.interaction strong{display:block;font-size:15px;margin-top:2px}.interaction>span:last-child{font-size:22px;margin-left:14px}.transition-caption{position:absolute;bottom:18%;left:50%;transform:translateX(-50%);background:#fff6e8db;border-radius:3px;display:flex;gap:12px;align-items:center;padding:12px 22px;font-size:12px;z-index:4}.transition-caption i{width:6px;height:6px;background:var(--coral);border-radius:50%;animation:pulse 1s infinite}.loading{position:absolute;left:50%;bottom:15%;transform:translateX(-50%);z-index:8;display:flex;gap:13px;align-items:center;background:var(--paper);padding:13px 20px;border-radius:3px;font-size:12px}.loading-orbit{width:17px;height:17px;border:2px solid #e2d7c5;border-top-color:var(--coral);border-radius:50%;animation:spin 1s linear infinite}
++.modal-backdrop{position:absolute;inset:0;background:#283e434d;z-index:20;display:flex;align-items:center;justify-content:center;padding:35px;animation:appear .2s ease}.dialog{background:var(--paper);width:100%;max-width:1000px;border:1px solid #fffcf7;box-shadow:0 30px 100px #283e4330;max-height:calc(100dvh - 70px);overflow:auto;padding:35px;border-radius:8px}.dialog-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;margin-bottom:27px}.dialog-heading .eyebrow{color:var(--coral);font-size:9px}.dialog h2{font-family:'Manrope Variable',sans-serif;font-size:29px;letter-spacing:-1px;line-height:1.3;font-weight:650;margin:10px 0 0}.close{width:35px;height:35px;border:1px solid var(--line);border-radius:50%;font-size:24px;font-weight:400;line-height:1;flex-shrink:0}.close:hover{background:var(--ink);color:var(--paper)}.map-layout{display:grid;grid-template-columns:1.1fr 1fr;gap:28px}.map-drawing{display:flex;flex-direction:column;justify-content:center;background:#f2ead8;border-radius:4px;overflow:hidden}.map-drawing svg{width:100%;height:auto;display:block}.map-pin{cursor:pointer}.map-pin:hover{filter:brightness(1.1)}.map-caption{display:flex;align-items:center;gap:6px;padding:12px 16px 16px;font-size:9px}.map-caption i{width:6px;height:6px;border-radius:50%;background:var(--ink)}.map-caption>span{margin-left:auto;color:#8b8777}.destination{display:flex;align-items:center;gap:16px;width:100%;text-align:left;border-top:1px solid var(--line);padding:19px 5px;transition:padding .15s,background .15s}.destination:last-of-type{border-bottom:1px solid var(--line)}.destination:hover{padding-left:12px;background:#e9dfcb66}.dest-number{font-size:20px;font-family:'Manrope Variable',sans-serif;font-weight:500;width:30px}.destination strong{font-size:14px;font-weight:550}.destination small{display:block;font-size:11px;color:#7e8075;margin-top:5px}.dest-arrow{margin-left:auto;font-size:21px}.map-note{font-size:10px;line-height:1.7;color:#777a70;margin:15px 5px 0}.detail-dialog{max-width:540px}.detail-art{position:relative;height:145px;border-radius:4px;overflow:hidden;background:color-mix(in srgb,var(--place-color),#fff1d9 65%);margin-bottom:23px;padding:18px}.detail-number{font-family:'Manrope Variable',sans-serif;font-size:90px;line-height:1;font-weight:500;color:var(--place-color);opacity:.7;letter-spacing:-7px}.detail-art>span:last-child{position:absolute;bottom:16px;right:16px;font-size:7px;letter-spacing:1.5px}.building-illustration{position:absolute;right:55px;top:15px;width:120px;height:105px;transform:skewY(-12deg)}.building-illustration i{position:absolute;bottom:15px;width:25px;background:var(--place-color);border:3px solid #fff5e4}.building-illustration i:nth-child(1){left:0;height:50px}.building-illustration i:nth-child(2){left:27px;height:80px}.building-illustration i:nth-child(3){left:54px;height:65px}.building-illustration i:nth-child(4){left:81px;height:40px}.illustration-project-3 i{border-radius:15px 15px 0 0}.illustration-missions i{height:58px!important;border-radius:20px 20px 0 0}.detail-description{font-size:14px;line-height:1.85;margin:0 0 20px;color:#56605c}.tags{display:flex;gap:7px;flex-wrap:wrap}.tags span{font-size:10px;border:1px solid #dcd3c2;border-radius:3px;padding:6px 10px}.coming-next{padding:19px 0;margin:21px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}.coming-next>span{font-size:8px;letter-spacing:1.4px;font-weight:600;color:var(--coral)}.coming-next p{font-size:11px;line-height:1.7;color:#7a7d70;margin-bottom:0}.detail-dialog .primary{width:100%}.help-dialog{max-width:580px}.controls-list{margin:0 0 24px}.controls-list>div{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--line);padding:12px 0;font-size:12px;gap:10px}.controls-list dt{color:#6c746d}.controls-list dd{margin:0;text-align:right}.controls-list kbd{background:#ece5d5;padding:3px 5px;border-radius:3px;font-size:10px}.settings-row{display:flex;gap:20px;align-items:center;justify-content:space-between;font-size:12px}.settings-row select{border:1px solid var(--line);border-radius:3px;padding:9px;background:#f4eddf;color:var(--ink);max-width:62%;font-size:11px}.motion-setting{display:flex;align-items:center;gap:10px;font-size:12px;margin:21px 0}.motion-setting input{accent-color:var(--coral);width:16px;height:16px}.performance{font-size:10px;color:#7e8076;margin-bottom:15px}.performance span{font-weight:600;color:var(--ink);margin-right:8px}.webgl-fallback{position:absolute;top:35%;right:10%;max-width:360px;padding:26px;background:var(--paper);border-radius:6px;z-index:9;font-size:13px;line-height:1.7}.webgl-fallback button{padding:9px 0;border-bottom:1px solid}.sr-only{position:absolute;width:1px;height:1px;padding:0;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}.diagnostics{position:absolute;bottom:0;left:0;background:#fff;font-size:10px;z-index:30;max-width:95vw;pointer-events:none;padding:3px;color:#111}.is-transitioning .quick-nav,.is-transitioning .location-label,.is-transitioning .explore-footer{opacity:.3;pointer-events:none}@keyframes spin{to{transform:rotate(360deg)}}@keyframes pulse{50%{opacity:.3}}@keyframes appear{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+ @media(min-width:2000px){.topbar{padding-top:38px}.brand{font-size:28px}.brand svg{width:42px;height:42px}.header-caption{font-size:12px}.hero{max-width:700px}.hero-description{font-size:17px}.intro-name{font-size:21px}.intro-name span{font-size:11px}.hero-eyebrow{font-size:12px;margin-bottom:38px}.primary{font-size:16px;min-height:66px;padding-left:27px}.button-arrow{width:44px;height:44px}.secondary{font-size:15px}.hero-hint{font-size:12px}.home-footer{height:90px;font-size:11px}.dialog{max-width:1160px;padding:42px}.detail-dialog{max-width:610px}.help-dialog{max-width:650px}.text-button{font-size:16px}.world-note{font-size:11px}.world-note small{font-size:13px}}
+ @media(max-width:1450px){h1{font-size:61px;letter-spacing:-3.4px}.hero{left:5%;max-width:430px}.hero-eyebrow{font-size:9px;letter-spacing:1.3px;margin-bottom:24px}.hero-description{font-size:12px}.intro-name{font-size:15px}.intro-name span{font-size:8px;padding-left:12px}.hero-buttons{gap:20px}.primary{font-size:12px;padding-left:18px;gap:18px;min-height:52px}.hero-hint{font-size:9px}.header-caption{font-size:9px}.world-note{bottom:17%;right:5%}.controls-hint{font-size:9px;padding:8px}.visited-count>span{font-size:7px}}
+ @media(max-width:1000px) and (min-width:761px){h1{font-size:48px;letter-spacing:-2.5px}.hero{max-width:335px}.hero-buttons{gap:14px}.hero-description br{display:none}.intro-name{align-items:flex-start;flex-direction:column;gap:8px}.intro-name span{border:0;padding:0}.header-caption{display:none}.controls-hint{display:none}.hero-eyebrow{font-size:8px;letter-spacing:1px}.world-note{display:none}}
+@@ -19,7 +18,7 @@
+ /* V2: unobstructed exploration chrome, exhibition navigation and cinematic controls. */
+ #scene-curtain{position:absolute;inset:0;background:#253e46;opacity:0;pointer-events:none;z-index:25}
+ .journey-caption{position:absolute;left:50%;bottom:100px;transform:translateX(-50%);display:flex;align-items:center;gap:25px;padding:12px 17px;background:var(--paper);z-index:6;border-left:3px solid var(--coral);font-size:12px;white-space:nowrap}.journey-caption button{border-bottom:1px solid;padding:7px 0}.notice{position:absolute;left:50%;top:100px;transform:translateX(-50%);padding:15px;background:var(--paper);z-index:12;font-size:12px;max-width:85%}
+-.interior-title{position:absolute;left:3.7%;top:110px;z-index:3;color:#fff3dc;background:#293e42e8;padding:15px 20px;border-left:3px solid var(--coral);max-width:330px}.interior-title strong{display:block;font-family:Manrope,sans-serif;font-size:21px;margin:10px 0}.interior-title>span:last-child{font-size:11px;color:#d3d7c9}.station-nav{position:absolute;bottom:30px;left:50%;transform:translateX(-50%);display:flex;gap:8px;z-index:4}.station-nav button{background:var(--paper);border-bottom:3px solid transparent;padding:12px 14px;position:relative;font-size:12px}.station-nav button.active{border-color:var(--coral);background:#eab58b}.station-nav i{position:absolute;width:4px;height:4px;background:#527e6c;border-radius:50%;right:5px;top:5px}.exit-interior{position:absolute;right:3.7%;bottom:30px;padding:13px 17px;background:var(--paper);z-index:4;border-radius:3px;font-size:12px}.draft-note{font-size:12px;border-left:3px solid var(--coral);padding:10px 15px;background:#efdec5;margin-bottom:25px}
++.interior-title{position:absolute;left:3.7%;top:110px;z-index:3;color:#fff3dc;background:#293e42e8;padding:15px 20px;border-left:3px solid var(--coral);max-width:330px}.interior-title strong{display:block;font-family:'Manrope Variable',sans-serif;font-size:21px;margin:10px 0}.interior-title>span:last-child{font-size:11px;color:#d3d7c9}.station-nav{position:absolute;bottom:30px;left:50%;transform:translateX(-50%);display:flex;gap:8px;z-index:4}.station-nav button{background:var(--paper);border-bottom:3px solid transparent;padding:12px 14px;position:relative;font-size:12px}.station-nav button.active{border-color:var(--coral);background:#eab58b}.station-nav i{position:absolute;width:4px;height:4px;background:#527e6c;border-radius:50%;right:5px;top:5px}.exit-interior{position:absolute;right:3.7%;bottom:30px;padding:13px 17px;background:var(--paper);z-index:4;border-radius:3px;font-size:12px}.draft-note{font-size:12px;border-left:3px solid var(--coral);padding:10px 15px;background:#efdec5;margin-bottom:25px}
+ @media(max-width:760px){.interior-title{top:90px;left:20px;padding:10px 14px;max-width:280px}.interior-title strong{font-size:17px}.station-nav{bottom:80px;gap:3px;max-width:95%}.station-nav button{padding:10px}.exit-interior{right:20px;bottom:20px}.journey-caption{bottom:140px;gap:15px;font-size:10px}.interaction{bottom:140px}.is-exploring .topbar{padding:15px}.is-exploring .brand-button,.is-exploring .header-actions{padding:7px}.hero{background:none;text-shadow:0 1px 9px #f1dfc6}.hero-description{background:#fbf5e9e8;padding:7px;max-width:290px}.home-footer{background:#fbf5e9cc}.quick-nav{display:none}}
+ 
+ @media(min-width:1451px) and (max-width:1999px){h1{font-size:clamp(62px,4.5vw,86px)}.hero{max-width:610px}}
+@@ -34,7 +33,7 @@ button:disabled{cursor:default;opacity:.45}button:focus-visible,summary:focus-vi
+ .discover-action:hover{background:#f4dfc4}
+ .building-presentation{position:absolute;inset:auto 4% 5%;z-index:8;display:flex;align-items:flex-end;justify-content:space-between;gap:30px;pointer-events:none}
+ .presentation-heading{max-width:440px;background:#fff6eaeF;border-left:3px solid var(--coral);padding:18px 23px;pointer-events:auto}
+-.presentation-heading .eyebrow{font-size:9px;letter-spacing:1.5px}.presentation-heading h2{font-family:Manrope,sans-serif;font-size:26px;font-weight:600;letter-spacing:-.8px;margin:9px 0}.presentation-heading p{font-size:12px;line-height:1.65;margin:0}
++.presentation-heading .eyebrow{font-size:9px;letter-spacing:1.5px}.presentation-heading h2{font-family:'Manrope Variable',sans-serif;font-size:26px;font-weight:600;letter-spacing:-.8px;margin:9px 0}.presentation-heading p{font-size:12px;line-height:1.65;margin:0}
+ .presentation-actions{display:flex;gap:10px;pointer-events:auto}.presentation-actions button{background:var(--paper);padding:15px 18px;font-size:12px;border-bottom:2px solid #d8bda0;min-height:48px}.presentation-actions kbd{margin-left:8px}.presentation-actions .presentation-enter{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+ .app:has(.building-presentation) .quick-nav,.app:has(.building-presentation) .explore-footer,.app:has(.building-presentation) .location-label{visibility:hidden}
+ #scene-curtain{background:#d7bb96}.journey-caption{max-width:94vw;white-space:normal}.journey-caption button{white-space:nowrap}
+diff --git a/src/theme.css b/src/theme.css
+new file mode 100644
+index 0000000..1b95b1d
+--- /dev/null
++++ b/src/theme.css
+@@ -0,0 +1,147 @@
++/* Prototype V4 — trois directions d'interface, activées par ?theme=a|b|c.
++   Les règles ne s'appliquent pas au rendu actuel (data-theme="current"). */
++
++html[data-theme='a'] {
++  --t-display: 'Bricolage Grotesque Variable', system-ui, sans-serif;
++  --t-ui: 'Bricolage Grotesque Variable', system-ui, sans-serif;
++  --t-ink: #1f2b33;
++  --t-muted: #50606b;
++  --t-hero-ink: #14222c;
++  --t-panel: #ffffff;
++  --t-panel-ink: #1f2b33;
++  --t-border: transparent;
++  --t-accent: #ff5a2c;
++  --t-accent-ink: #ffffff;
++  --t-accent-shade: #c63f17;
++  --t-radius: 16px;
++  --t-shadow: 0 4px 0 #1f2b3314, 0 12px 30px #1d4f7026;
++  --t-blur: none;
++}
++html[data-theme='b'] {
++  --t-display: 'Instrument Serif', Georgia, serif;
++  --t-ui: 'JetBrains Mono Variable', ui-monospace, monospace;
++  --t-ink: #fff1e2;
++  --t-muted: #f3cfb0;
++  --t-hero-ink: #fff4e6;
++  --t-panel: #1d1830cc;
++  --t-panel-ink: #fff1e2;
++  --t-border: #ffc89a40;
++  --t-accent: #ffb066;
++  --t-accent-ink: #1d1830;
++  --t-accent-shade: #d9853f;
++  --t-radius: 3px;
++  --t-shadow: 0 18px 40px #120c2059;
++  --t-blur: blur(10px);
++}
++html[data-theme='c'] {
++  --t-display: 'JetBrains Mono Variable', ui-monospace, monospace;
++  --t-ui: 'JetBrains Mono Variable', ui-monospace, monospace;
++  --t-ink: #d6e2ff;
++  --t-muted: #8ea3cc;
++  --t-hero-ink: #e9f0ff;
++  --t-panel: #0a1224e8;
++  --t-panel-ink: #d6e2ff;
++  --t-border: #2c406a;
++  --t-accent: #5ee6c8;
++  --t-accent-ink: #04141a;
++  --t-accent-shade: #2fb398;
++  --t-radius: 0;
++  --t-shadow: 0 0 0 1px #5ee6c81a, 0 20px 40px #00000066;
++  --t-blur: blur(6px);
++}
++
++html:not([data-theme='current']) {
++  --ink: var(--t-ink);
++  --paper: var(--t-panel);
++  --coral: var(--t-accent);
++}
++html:not([data-theme='current']) :root,
++html:not([data-theme='current']) body,
++html:not([data-theme='current']) .app { font-family: var(--t-ui); color: var(--t-ink); }
++html[data-theme='a'] { background: #8fd0ea; }
++html[data-theme='b'] { background: #c86d4b; }
++html[data-theme='c'] { background: #0a1224; }
++
++/* Suppression des ornements « éditoriaux » */
++html:not([data-theme='current']) :is(.header-caption, .world-note, .home-footer, .hero-hint, .button-arrow, .tiny-sun, .hero-rule, .quick-title) { display: none !important; }
++html:not([data-theme='current']) .app:after { display: none; }
++html:not([data-theme='current']) .eyebrow { letter-spacing: 0; text-transform: none; font-size: 12px; font-weight: 500; color: var(--t-muted); }
++
++/* En-tête */
++html:not([data-theme='current']) .brand { font-family: var(--t-display); letter-spacing: 0; font-weight: 700; }
++html[data-theme='b'] .brand { font-weight: 400; font-size: 28px; }
++html[data-theme='c'] .brand { font-size: 18px; }
++html:not([data-theme='current']) .is-home .topbar { color: var(--t-hero-ink); }
++html:not([data-theme='current']) :is(.text-button, .help-button) { font-size: 14px; }
++html:not([data-theme='current']) .help-button { border-color: currentColor; }
++
++/* Accueil */
++.hero4 { max-width: 520px; }
++.hero4-role { font-size: 15px; margin: 0 0 14px; color: var(--t-muted); font-weight: 500; }
++.hero4-title { font-family: var(--t-display); color: var(--t-hero-ink); margin: 0 0 18px; line-height: .95; letter-spacing: -2px; font-size: clamp(56px, 6.4vw, 104px); font-weight: 800; }
++.hero4-text { font-size: 18px; line-height: 1.5; margin: 0 0 32px; color: var(--t-hero-ink); opacity: .86; max-width: 30ch; }
++.hero4-actions { display: flex; gap: 12px; align-items: center; }
++.hero4 button { pointer-events: auto; }
++.hero4-primary { background: var(--t-accent); color: var(--t-accent-ink); font-size: 16px; font-weight: 700; padding: 16px 28px; border-radius: var(--t-radius); transition: transform .15s; }
++.hero4-primary:hover { transform: translateY(-2px); }
++.hero4-secondary { color: var(--t-hero-ink); font-size: 16px; padding: 16px 20px; border-radius: var(--t-radius); border: 1.5px solid currentColor; }
++.hero4-keys { margin-top: 26px; font-size: 13px; color: var(--t-hero-ink); opacity: .75; display: flex; gap: 8px; align-items: center; }
++.hero4-keys kbd { border: 1px solid currentColor; border-radius: 4px; padding: 1px 6px; font-size: 11px; margin-left: 6px; }
++.hero4-keys kbd:first-child { margin-left: 0; }
++
++html[data-theme='a'] .hero4-primary { box-shadow: 0 5px 0 var(--t-accent-shade); border-radius: 999px; }
++html[data-theme='a'] .hero4-primary:active { transform: translateY(3px); box-shadow: 0 2px 0 var(--t-accent-shade); }
++html[data-theme='a'] .hero4-secondary { border-radius: 999px; background: #ffffffb3; border-color: transparent; }
++html[data-theme='a'] .hero4-title { letter-spacing: -3px; }
++
++html[data-theme='b'] .hero4-title { font-weight: 400; font-style: italic; letter-spacing: -1px; font-size: clamp(72px, 8vw, 132px); }
++html[data-theme='b'] .hero4-role { font-size: 13px; color: var(--t-accent); }
++html[data-theme='b'] .hero4-text { font-family: var(--t-display); font-size: 26px; line-height: 1.25; }
++html[data-theme='b'] .hero4 { text-shadow: 0 2px 30px #2a14304d; }
++
++html[data-theme='c'] .hero4-title { font-weight: 700; letter-spacing: -2px; font-size: clamp(48px, 5vw, 80px); }
++html[data-theme='c'] .hero4-title::after { content: '_'; color: var(--t-accent); animation: blink 1.1s steps(1) infinite; }
++html[data-theme='c'] .hero4-role { color: var(--t-accent); font-size: 14px; }
++html[data-theme='c'] .hero4-role::before { content: '> '; }
++html[data-theme='c'] .hero4-text { font-size: 16px; }
++html[data-theme='c'] .hero4-secondary { border-width: 1px; border-color: var(--t-border); }
++@keyframes blink { 50% { opacity: 0; } }
++
++@media (max-width: 760px) {
++  .hero4 { left: 16px; right: 16px; top: auto; bottom: 16px; transform: none; padding: 22px; border-radius: var(--t-radius); background: var(--t-panel); color: var(--t-panel-ink); box-shadow: var(--t-shadow); backdrop-filter: var(--t-blur); max-width: none; }
++  .hero4.hero-hidden { transform: translateY(12px); }
++  .hero4 :is(.hero4-title, .hero4-text, .hero4-secondary) { color: var(--t-panel-ink); }
++  .hero4-title { font-size: 44px; margin-bottom: 10px; }
++  html[data-theme='b'] .hero4-title { font-size: 58px; }
++  .hero4-text, html[data-theme='b'] .hero4-text { font-size: 16px; margin-bottom: 18px; }
++  .hero4-role { font-size: 13px; margin-bottom: 8px; }
++  .hero4-primary { flex: 1; }
++}
++
++/* Panneaux et HUD : une seule famille de surfaces */
++html:not([data-theme='current']) :is(.location-label, .interaction, .map-pill, .controls-hint, .interior-title, .exit-interior, .journey-caption, .discover-action, .loading, .notice, .transition-caption, .station-nav button, .quick-nav button) {
++  background: var(--t-panel) !important;
++  color: var(--t-panel-ink) !important;
++  border: 1px solid var(--t-border) !important;
++  border-radius: var(--t-radius) !important;
++  box-shadow: var(--t-shadow) !important;
++  backdrop-filter: var(--t-blur);
++  font-family: var(--t-ui);
++}
++html:not([data-theme='current']) :is(.controls-hint, .map-pill, .exit-interior, .station-nav button, .journey-caption, .interaction, .discover-action) { font-size: 13px !important; }
++html:not([data-theme='current']) .location-label strong { font-family: var(--t-display); font-size: 20px; }
++html[data-theme='b'] .location-label strong { font-size: 26px; font-weight: 400; }
++html:not([data-theme='current']) :is(.quick-nav button.active, .station-nav button.active) { background: var(--t-accent) !important; color: var(--t-accent-ink) !important; }
++html:not([data-theme='current']) :is(.interaction kbd, .discover-action kbd, .controls-hint kbd, .map-pill kbd) { background: var(--t-accent); color: var(--t-accent-ink); border: 0; border-radius: calc(var(--t-radius) / 2); }
++html:not([data-theme='current']) .building-actions { gap: 10px; }
++html:not([data-theme='current']) .visited-count { font-family: var(--t-display); color: var(--t-panel-ink); background: var(--t-panel); padding: 8px 14px; border-radius: var(--t-radius); backdrop-filter: var(--t-blur); }
++html:not([data-theme='current']) .visited-count > span { font-size: 12px; letter-spacing: 0; }
++html:not([data-theme='current']) .is-exploring .topbar :is(.brand-button, .text-button, .help-button) { background: var(--t-panel); color: var(--t-panel-ink); border-radius: var(--t-radius); border: 1px solid var(--t-border); box-shadow: var(--t-shadow); backdrop-filter: var(--t-blur); }
++
++/* Dialogues */
++html:not([data-theme='current']) .dialog { background: var(--t-panel); color: var(--t-panel-ink); border: 1px solid var(--t-border); border-radius: calc(var(--t-radius) * 1.5); backdrop-filter: blur(16px); }
++html[data-theme='b'] .dialog { background: #1d1830f2; }
++html[data-theme='c'] .dialog { background: #0a1224f5; }
++html:not([data-theme='current']) .dialog :is(h2, .presentation-heading h2) { font-family: var(--t-display); letter-spacing: -.5px; }
++html:not([data-theme='current']) .primary { background: var(--t-accent); color: var(--t-accent-ink); border-radius: var(--t-radius); justify-content: center; }
++html:not([data-theme='current']) .detail-description { font-size: 16px; line-height: 1.6; }
+diff --git a/src/theme.ts b/src/theme.ts
+new file mode 100644
+index 0000000..884286c
+--- /dev/null
++++ b/src/theme.ts
+@@ -0,0 +1,127 @@
++import * as THREE from 'three';
++import { CAMERA } from './world/config';
++
++/**
++ * Prototype des directions artistiques V4.
++ * Sélection par l'URL : ?theme=a | b | c (sans paramètre : rendu actuel).
++ * Une fois une direction choisie, ce fichier deviendra la source unique des design tokens.
++ */
++export type ThemeId = 'current' | 'a' | 'b' | 'c';
++
++export interface Theme {
++  id: ThemeId;
++  name: string;
++  sky: { top: string; horizon: string; bottom: string } | null;
++  fog: { color: string; near: number; far: number } | null;
++  terrain: { low: string; high: string; edge: string; base: string; garden: string; path: string; streetEdge: string };
++  hemi: { sky: string; ground: string; intensity: number };
++  sun: { color: string; intensity: number; position: [number, number, number] };
++  interior: { background: string; light: string; lightIntensity: number };
++  toneMapping: THREE.ToneMapping;
++  exposure: number;
++  /** Couleurs de la scène actuelle remplacées explicitement (hex sRGB minuscules). */
++  palette: Record<string, string>;
++  /** Transformation des autres couleurs : multiplicateurs de saturation et de luminosité. */
++  shift: { s: number; l: number };
++  /** Matériaux rendus lumineux (fenêtres la nuit, par exemple). */
++  glow: Record<string, { emissive: string; intensity: number }>;
++  signGlow: number;
++}
++
++const base = {
++  terrain: { low: '#edb978', high: '#d99453', edge: '#c78354', base: '#e6c4a0', garden: '#91aa5e', path: '#f5dfb8', streetEdge: '#c58d63' },
++};
++
++export const themes: Record<ThemeId, Theme> = {
++  current: {
++    id: 'current', name: 'Actuel', sky: null, fog: null, terrain: base.terrain,
++    hemi: { sky: '#d3eaff', ground: '#b99679', intensity: 1.4 },
++    sun: { color: '#fff0d5', intensity: 2.8, position: [-35, 65, 28] },
++    interior: { background: '#36535c', light: '#ffdbb6', lightIntensity: 1 },
++    toneMapping: THREE.ACESFilmicToneMapping, exposure: 1.15, palette: {}, shift: { s: 1, l: 1 }, glow: {}, signGlow: 0,
++  },
++  // A — Diorama : plein jour, ciel bleu, herbe franche, couleurs primaires adoucies.
++  a: {
++    id: 'a', name: 'Diorama',
++    sky: { top: '#3f9fe0', horizon: '#d6efff', bottom: '#8fd0ea' },
++    fog: { color: '#cfeafa', near: 190, far: 520 },
++    terrain: { low: '#8fc463', high: '#7db456', edge: '#9a6a46', base: '#79c3dd', garden: '#6aa94a', path: '#fbf6ea', streetEdge: '#d8c9ab' },
++    hemi: { sky: '#d8ecff', ground: '#6e7d4f', intensity: 1.25 },
++    sun: { color: '#fff6e6', intensity: 3.1, position: [-40, 70, 34] },
++    interior: { background: '#eef3f6', light: '#ffffff', lightIntensity: 1.4 },
++    toneMapping: THREE.NeutralToneMapping, exposure: 1.0,
++    palette: {
++      '#fff1d8': '#fbf8f1', '#e6c5a0': '#e4dccb', '#273f49': '#1f2b33', '#ed8159': '#ff6a3d', '#d9603b': '#ff5a2c',
++      '#659faf': '#7fcde8', '#89ab57': '#5fae46', '#3f7858': '#2c7a4c', '#e6a34f': '#ffc23d', '#8a6547': '#7a5236',
++      '#ec8057': '#ff6a3d', '#df7852': '#ff7a4d', '#efc59e': '#ffe2b8', '#705443': '#5a3e2e', '#4b7080': '#2f6f9a',
++      '#ce904d': '#f0a92e', '#e8b05d': '#f7c64a', '#9383b8': '#8a74e8', '#b5a2d2': '#b4a6f2', '#dc945f': '#ff9d4d',
++      '#f0dfb9': '#f7f2e6', '#d64b42': '#e8423a', '#c78d59': '#c97b3f', '#e9d3b0': '#f3efe6', '#f2e1c6': '#ffffff',
++      '#385965': '#24485e', '#d7b08b': '#e3d6c2', '#2e515a': '#1e3a4a', '#df9772': '#ff8a5c', '#c79772': '#cbb594',
++    },
++    shift: { s: 1.2, l: 1 }, glow: {}, signGlow: 0,
++  },
++  // B — Heure dorée : soleil rasant, ombres violettes, ciel crépusculaire, contraste chaud/froid.
++  b: {
++    id: 'b', name: 'Heure dorée',
++    sky: { top: '#1f2d57', horizon: '#f59a5f', bottom: '#c86d4b' },
++    fog: { color: '#e79a6c', near: 170, far: 470 },
++    terrain: { low: '#9aa24f', high: '#879244', edge: '#6e3d2c', base: '#b4603f', garden: '#6f8a38', path: '#f4d9a8', streetEdge: '#9a5e3c' },
++    hemi: { sky: '#7f8fd6', ground: '#4b2f4a', intensity: 1.0 },
++    sun: { color: '#ffb066', intensity: 4.2, position: [-85, 34, 22] },
++    interior: { background: '#2a2238', light: '#ffc58a', lightIntensity: 1.6 },
++    toneMapping: THREE.AgXToneMapping, exposure: 1.35,
++    palette: {
++      '#fff1d8': '#fff0da', '#273f49': '#2a2440', '#659faf': '#5b8fd0', '#89ab57': '#7f9d3c', '#3f7858': '#3d6a3a',
++      '#e6a34f': '#ff9f2e', '#e9d3b0': '#ead2ad', '#385965': '#3a2f55', '#2e515a': '#2d2a4a', '#f2e1c6': '#f3dcc0',
++    },
++    shift: { s: 1.15, l: 1 }, glow: {}, signGlow: 0,
++  },
++  // C — Nuit data : ville de nuit, fenêtres éclairées, HUD façon terminal.
++  c: {
++    id: 'c', name: 'Nuit data',
++    sky: { top: '#050914', horizon: '#1d3157', bottom: '#0a1224' },
++    fog: { color: '#0e1a33', near: 150, far: 420 },
++    terrain: { low: '#34504b', high: '#3d5a52', edge: '#18202f', base: '#0a1224', garden: '#2f5a45', path: '#7a8aa6', streetEdge: '#2a3550' },
++    hemi: { sky: '#5b80c8', ground: '#151b2a', intensity: 1.5 },
++    sun: { color: '#b4caff', intensity: 2.4, position: [45, 75, -25] },
++    interior: { background: '#0a1020', light: '#9fc4ff', lightIntensity: 0.8 },
++    toneMapping: THREE.NeutralToneMapping, exposure: 1.45,
++    palette: {
++      '#fff1d8': '#8a93a8', '#e6c5a0': '#3b4458', '#273f49': '#0f1626', '#e9d3b0': '#2a3346', '#f2e1c6': '#3a4560',
++      '#385965': '#0f1a30', '#2e515a': '#0c1528', '#d7b08b': '#3a4458', '#f0dfb9': '#7c8598',
++    },
++    shift: { s: 0.85, l: 0.62 },
++    glow: {
++      '#659faf': { emissive: '#ffbf66', intensity: 1.6 },
++      '#90bfcb': { emissive: '#ffbf66', intensity: 1.6 },
++      '#91bbc5': { emissive: '#5ee6c8', intensity: 0.9 },
++      '#d64b42': { emissive: '#ff3b3b', intensity: 0.9 },
++      '#ed8159': { emissive: '#ff6a3d', intensity: 0.35 },
++    },
++    signGlow: 0.9,
++  },
++};
++
++const requested = typeof window === 'undefined' ? null : new URLSearchParams(window.location.search).get('theme');
++export const theme: Theme = themes[(requested as ThemeId) in themes ? (requested as ThemeId) : 'current'];
++export const themed = theme.id !== 'current';
++
++if (typeof document !== 'undefined') document.documentElement.dataset.theme = theme.id;
++
++// Caméra plus haute et plus large pour toutes les directions V4 (le rendu actuel est trop proche).
++if (themed) {
++  Object.assign(CAMERA, { distance: 21, elevation: 0.56, aerial: [92, 98, 122] });
++}
++export const maxCameraDistance = themed ? 27 : 19;
++
++const tmp = new THREE.Color();
++const hsl = { h: 0, s: 0, l: 0 };
++/** Couleur sRGB → couleur de la direction choisie. */
++export function remapHex(hex: string): string {
++  if (!themed) return hex;
++  const key = hex.toLowerCase();
++  if (theme.palette[key]) return theme.palette[key];
++  tmp.set(key).getHSL(hsl, THREE.SRGBColorSpace);
++  tmp.setHSL(hsl.h, Math.min(1, hsl.s * theme.shift.s), Math.min(1, hsl.l * theme.shift.l), THREE.SRGBColorSpace);
++  return '#' + tmp.getHexString(THREE.SRGBColorSpace);
++}
