@@ -1160,4 +1160,7 @@ kbd {
     top: 76px;
     bottom: auto;
   }
+  .interior-title {
+    max-width: calc(100vw - 32px - 110px);
+  }
 }

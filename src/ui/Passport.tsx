@@ -48,15 +48,18 @@ export default function Passport() {
   if (state.phase === 'home' || state.tour !== null) return null;
   return (
     <>
-      <div
-        className='passport panel'
-        aria-label={`Passeport : ${count} lieu${count > 1 ? 'x' : ''} visité${count > 1 ? 's' : ''} sur 6`}
-      >
-        <span className='passport-label'>Passeport</span>
-        {buildings.map((b) => (
-          <Stamp key={b.id} id={b.id} done={state.visited.includes(b.id)} />
-        ))}
-      </div>
+      {/* En petit dans le HUD extérieur ; en intérieur, le titre du lieu occupe ce coin. */}
+      {!state.interior && (
+        <div
+          className='passport panel'
+          aria-label={`Passeport : ${count} lieu${count > 1 ? 'x' : ''} visité${count > 1 ? 's' : ''} sur 6`}
+        >
+          <span className='passport-label'>Passeport</span>
+          {buildings.map((b) => (
+            <Stamp key={b.id} id={b.id} done={state.visited.includes(b.id)} />
+          ))}
+        </div>
+      )}
       {fresh && (
         <p className='stamp-toast panel' role='status'>
           Tampon obtenu : {fresh}
@@ -70,7 +73,9 @@ export default function Passport() {
 export function EndCard() {
   const state = useGame();
   const card = endCard(site);
-  if (!state.ending || !card) return null;
+  // Attend qu'aucun autre panneau ne soit ouvert (lecture d'une station, plan, aide, fiche).
+  const busy = state.reading || state.map || state.help || state.detail || state.phase !== 'explore';
+  if (!state.ending || !card || busy) return null;
   return (
     <Dialog
       title='Merci de votre visite'
