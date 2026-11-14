@@ -46,6 +46,7 @@ export default defineConfig(({ command }) => ({
           if (id.includes('vite/preload-helper') || id.includes('commonjsHelpers')) return 'react';
           if (!id.includes('node_modules')) return;
           if (/node_modules\/three\//.test(id)) return 'three';
+          if (/node_modules\/postprocessing\//.test(id)) return 'postprocessing';
           if (/@react-three\/drei|three-stdlib|troika|@babel\/runtime/.test(id)) return 'drei';
           if (/@react-three\/fiber|its-fine|zustand|react-use-measure|suspend-react/.test(id)) return 'r3f';
           if (/node_modules\/(react|react-dom|scheduler|use-sync-external-store)\//.test(id)) return 'react';

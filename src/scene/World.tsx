@@ -1,7 +1,7 @@
 import CinematicCamera from './CinematicCamera';
 import Interior from './Interior';
 import Transitions from './Transitions';
-import { useEffect, useRef } from 'react';
+import { lazy, Suspense, useEffect, useRef } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import Terrain from './Terrain';
 import Buildings from './Buildings';
@@ -12,7 +12,10 @@ import CameraRig from './CameraRig';
 import { SkyDome } from './Atmosphere';
 import { scene } from '../design/tokens';
 import * as THREE from 'three';
-import { Clouds, Effects } from './V5Extras';
+import { Clouds } from './Sky';
+
+// Contours (postprocessing) : téléchargés seulement en qualité Soignée.
+const Effects = lazy(() => import('./Effects'));
 import { useGame, setState, getState, player, cameraMode, passage } from '../state';
 
 function Runtime() {
@@ -122,7 +125,11 @@ export default function World() {
       <CameraRig />
       <CinematicCamera />
       <Runtime />
-      <Effects enabled={quality === 'high'} />
+      {quality === 'high' && (
+        <Suspense fallback={null}>
+          <Effects />
+        </Suspense>
+      )}
     </Canvas>
   );
 }

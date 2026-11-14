@@ -218,3 +218,12 @@ test('Collisions : glisser le long d’un mur tourné et d’un banc au lieu de 
     );
   }
 });
+
+test('Nuages : aucun ne masque le pied de l’île ni le titre, sur les quatre écrans', async () => {
+  const clouds = await source.import('world/clouds');
+  const list = clouds.makeClouds();
+  assert.ok(list.length >= 25, `${list.length} nuages gardés`);
+  assert.ok(list.some((c) => c.y < 0) && list.some((c) => c.y > 20), 'mer de nuages et nuages hauts');
+  for (const [w, h] of clouds.CHECKED_SCREENS)
+    for (const c of list) assert.equal(clouds.cloudConflicts(c, w, h), false);
+});
