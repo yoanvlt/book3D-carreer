@@ -74,13 +74,11 @@ for (const [width, height] of sizes) {
   page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
   page.on('pageerror', (e) => errors.push(e.message));
   // Le relevé de diagnostic est lu par le script, mais masqué sur les captures.
-  const shot = async (scene) => {
-    await page.evaluate(() =>
-      document.getElementById('diagnostics')?.style.setProperty('visibility', 'hidden'),
-    );
-    await page.screenshot({ path: `${out}/${scene}-${width}x${height}.png` });
-    await page.evaluate(() => document.getElementById('diagnostics')?.style.removeProperty('visibility'));
-  };
+  const shot = (scene) =>
+    page.screenshot({
+      path: `${out}/${scene}-${width}x${height}.png`,
+      style: '#diagnostics { visibility: hidden !important; }',
+    });
   const entry = { taille: `${width}x${height}`, qualite: quality, scenes: {} };
   await page.goto(url);
   await page.waitForSelector('.loading', { state: 'detached', timeout: 180000 });
