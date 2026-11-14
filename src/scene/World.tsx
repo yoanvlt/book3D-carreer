@@ -1,3 +1,5 @@
+import Interior from './Interior';
+import Transitions from './Transitions';
 import { useEffect, useRef } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
@@ -19,15 +21,14 @@ function Runtime(){
       const fps=Math.round(sample.current.frames/sample.current.elapsed);setState({fps});sample.current={elapsed:0,frames:0};
       // Opt-in, visible QA readout. No analytics or network transmission.
       const output=document.getElementById('diagnostics');
-      if(output)output.textContent=JSON.stringify({fps,drawCalls:gl.info.render.calls,triangles:gl.info.render.triangles,position:[+player.x.toFixed(2),+player.y.toFixed(2),+player.z.toFixed(2)],camera:camera.position.toArray().map(n=>+n.toFixed(2)),quality:getState().quality});
+      if(output)output.textContent=JSON.stringify({fps,drawCalls:gl.info.render.calls,triangles:gl.info.render.triangles,position:[+player.x.toFixed(2),+player.y.toFixed(2),+player.z.toFixed(2)],camera:camera.position.toArray().map(n=>+n.toFixed(2)),quality:getState().quality,phase:getState().phase,interior:getState().interior,station:getState().station});
     }
   });
   return null;
 }
-export default function World(){const {quality}=useGame();return <Canvas shadows={quality==='high'?'soft':false} dpr={quality==='high'?[1,1.5]:1} camera={{position:[78,86,100],fov:41,near:.1,far:420}} gl={{antialias:true,powerPreference:'high-performance',toneMapping:THREE.ACESFilmicToneMapping,toneMappingExposure:1.15}} onCreated={({gl})=>{gl.setClearColor('#e8cdaa');}}>
-  <fog attach='fog' args={['#e8cdaa',145,340]}/>
+export default function World(){const {quality,interior}=useGame();return <Canvas shadows={quality==='high'?'soft':false} dpr={quality==='high'?[1,1.5]:1} camera={{position:[78,86,100],fov:41,near:.1,far:420}} gl={{antialias:true,powerPreference:'high-performance',toneMapping:THREE.ACESFilmicToneMapping,toneMappingExposure:1.15}} onCreated={({gl})=>{gl.setClearColor('#e8cdaa');}}>
   <hemisphereLight args={['#d3eaff','#b99679',1.4]}/>
   <directionalLight position={[-35,65,28]} intensity={2.8} color='#fff0d5' castShadow={quality==='high'} shadow-mapSize={[2048,2048]} shadow-camera-left={-65} shadow-camera-right={65} shadow-camera-top={65} shadow-camera-bottom={-65} shadow-camera-near={1} shadow-camera-far={180} shadow-normalBias={.045} shadow-bias={-.00015} shadow-radius={3}/>
-  <Terrain/><Buildings/><Environment/><Robot/><Controller/><CameraRig/><Runtime/>
+  {interior?<Interior/>:<><color attach='background' args={['#e8cdaa']}/><Terrain/><Buildings/><Environment/></>}<Robot/><Transitions/><Controller/><CameraRig/><Runtime/>
 </Canvas>;}
 
