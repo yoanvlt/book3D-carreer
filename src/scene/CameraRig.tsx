@@ -93,7 +93,7 @@ export default function CameraRig() {
       r.look.set(aim.x, aim.y, aim.z);
       camera.lookAt(r.look);
       perspective.fov = THREE.MathUtils.damp(perspective.fov, narrow ? 48 : 41, 3, dt);
-      r.offset = (narrow ? 0 : -size.width * 0.16) * ease(r.t);
+      r.offset = (narrow ? 0 : -size.width * CAMERA.homeOffset) * ease(r.t);
       if (r.t >= 1) setState({ phase: 'home' });
     } else if (s.phase === 'home') {
       const drift = 0;
@@ -105,7 +105,7 @@ export default function CameraRig() {
       );
       r.look.set(0, 1, 0);
       camera.lookAt(r.look);
-      r.offset = narrow ? 0 : -size.width * 0.16;
+      r.offset = narrow ? 0 : -size.width * CAMERA.homeOffset;
       perspective.fov = narrow ? 48 : 41;
     } else {
       r.target.set(player.x, player.y + CAMERA.targetHeight, player.z);

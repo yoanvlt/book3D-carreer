@@ -25,7 +25,7 @@ export function homeCamera(width: number, height: number) {
   const camera = new PerspectiveCamera(narrow ? 48 : 41, width / height, 0.1, 1400);
   camera.position.set(CAMERA.aerial[0] * k, CAMERA.aerial[1] * k, CAMERA.aerial[2] * k);
   camera.lookAt(0, 1, 0);
-  camera.setViewOffset(width, height, narrow ? 0 : -width * 0.16, 0, width, height);
+  camera.setViewOffset(width, height, narrow ? 0 : -width * CAMERA.homeOffset, 0, width, height);
   camera.updateMatrixWorld();
   camera.updateProjectionMatrix();
   return camera;

@@ -1,21 +1,15 @@
 import { goHome, isBusy, showPanel, useGame } from '../state';
 import { setSound, useSound } from '../audio/sound';
+import { site } from '../content';
 
+/** Monogramme « YV » et nom, couleurs des tokens. */
 function Brand() {
   return (
     <span className='brand'>
-      <svg viewBox='0 0 34 34' aria-hidden='true'>
-        <path
-          d='M24 7a13 13 0 1 0 0 20M12 13v8m7-8v8'
-          fill='none'
-          stroke='currentColor'
-          strokeWidth='3.4'
-          strokeLinecap='round'
-        />
-      </svg>
-      <span>
-        careerverse<span className='brand-dot'>.</span>
+      <span className='monogram' aria-hidden='true'>
+        YV
       </span>
+      <span className='brand-name'>{site.nom}</span>
     </span>
   );
 }

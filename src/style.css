@@ -209,12 +209,26 @@ kbd {
   font-weight: var(--weight-heavy);
   letter-spacing: -0.02em;
 }
-.brand svg {
-  width: 30px;
-  height: 30px;
+.monogram {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: var(--accent-strong);
+  color: var(--paper);
+  font-size: 15px;
+  font-weight: var(--weight-heavy);
+  letter-spacing: -0.04em;
+  box-shadow: 0 2px 0 var(--accent-shade);
 }
-.brand-dot {
-  color: var(--accent-strong);
+.brand-name {
+  font-size: 19px;
+}
+/* En intérieur ou pendant une séquence, le logo reste net : il n'a simplement pas d'action. */
+.brand-button:disabled {
+  opacity: 1;
+  cursor: default;
 }
 .header-actions {
   display: flex;
@@ -310,10 +324,15 @@ kbd {
   margin: var(--space-5) 0 0;
   font-size: var(--text-sm);
   font-weight: var(--weight-medium);
+  line-height: 2;
 }
 .hero-keys kbd {
+  margin: 0 6px 0 2px;
   background: rgba(255, 255, 255, 0.7);
   border-color: transparent;
+}
+.hero-keys kbd:first-child {
+  margin-left: 0;
 }
 
 /* ---------- Exploration ---------- */
@@ -1004,7 +1023,7 @@ kbd {
 .jump-button {
   position: absolute;
   right: var(--space-4);
-  bottom: calc(var(--space-6) + 76px + env(safe-area-inset-bottom));
+  bottom: calc(var(--space-6) + 34px + env(safe-area-inset-bottom));
   width: 64px;
   height: 64px;
   border-radius: 50%;
@@ -1032,5 +1051,10 @@ kbd {
   }
   .interior-hud .place-card {
     bottom: calc(150px + env(safe-area-inset-bottom));
+  }
+  /* « Sortir » passe sous l'en-tête : le bas de l'écran revient au joystick et au saut. */
+  .exit-button {
+    top: 76px;
+    bottom: auto;
   }
 }

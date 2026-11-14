@@ -98,6 +98,8 @@ export const CAMERA = {
   maxDistance: 27,
   /** Écran portrait (téléphone) : caméra plus haute et plus loin pour voir devant le robot. */
   portrait: { distance: 26, elevation: 0.74, below: 0.8 },
+  /** Accueil sur écran large : décalage de l'image vers la droite, en part de la largeur (titre à gauche). */
+  homeOffset: 0.2,
   elevation: 0.56,
   minElevation: 0.25,
   maxElevation: 1.14,
