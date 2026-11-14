@@ -25,3 +25,18 @@
 @media(min-width:1451px) and (max-width:1999px){h1{font-size:clamp(62px,4.5vw,86px)}.hero{max-width:610px}}
 
 .compact-reading{margin:20px 0}.compact-reading details{border-top:1px solid var(--line);padding:12px 0}.compact-reading summary{cursor:pointer;font-size:13px;font-weight:600}.compact-reading p{font-size:12px;line-height:1.8;color:#56605c}
+
+/* V3: architectural captions leave the centre of the scene unobstructed. */
+button:disabled{cursor:default;opacity:.45}button:focus-visible,summary:focus-visible{outline:3px solid #c95e39;outline-offset:5px}
+.building-actions{position:absolute;left:50%;bottom:105px;transform:translateX(-50%);z-index:6;display:flex;gap:1px;box-shadow:0 5px 24px #293e4220;max-width:94vw}
+.building-actions .interaction{position:static;transform:none;margin:0;border-radius:0;max-width:none;animation:none}
+.discover-action{background:var(--paper);padding:17px 22px;font-size:12px;display:flex;align-items:center;gap:12px;border-left:3px solid var(--coral);white-space:nowrap}
+.discover-action:hover{background:#f4dfc4}
+.building-presentation{position:absolute;inset:auto 4% 5%;z-index:8;display:flex;align-items:flex-end;justify-content:space-between;gap:30px;pointer-events:none}
+.presentation-heading{max-width:440px;background:#fff6eaeF;border-left:3px solid var(--coral);padding:18px 23px;pointer-events:auto}
+.presentation-heading .eyebrow{font-size:9px;letter-spacing:1.5px}.presentation-heading h2{font-family:Manrope,sans-serif;font-size:26px;font-weight:600;letter-spacing:-.8px;margin:9px 0}.presentation-heading p{font-size:12px;line-height:1.65;margin:0}
+.presentation-actions{display:flex;gap:10px;pointer-events:auto}.presentation-actions button{background:var(--paper);padding:15px 18px;font-size:12px;border-bottom:2px solid #d8bda0;min-height:48px}.presentation-actions kbd{margin-left:8px}.presentation-actions .presentation-enter{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.app:has(.building-presentation) .quick-nav,.app:has(.building-presentation) .explore-footer,.app:has(.building-presentation) .location-label{visibility:hidden}
+#scene-curtain{background:#d7bb96}.journey-caption{max-width:94vw;white-space:normal}.journey-caption button{white-space:nowrap}
+@media(max-width:1000px){.building-presentation{gap:16px}.presentation-heading{max-width:340px}.presentation-actions{flex-direction:column}.presentation-heading h2{font-size:23px}}
+@media(max-width:760px){.building-actions{bottom:105px;flex-direction:column;width:max-content}.discover-action{padding:13px 18px}.building-actions .interaction{white-space:normal;padding:13px 18px}.building-presentation{left:20px;right:20px;bottom:25px;display:block}.presentation-heading{max-width:none;padding:13px 16px}.presentation-heading h2{font-size:22px}.presentation-actions{flex-direction:row;margin-top:8px;gap:6px}.presentation-actions button{flex:1;font-size:11px;padding:10px}.presentation-actions kbd{display:none}.journey-caption{gap:10px;flex-wrap:wrap;bottom:120px;width:max-content}.journey-caption>span{flex-basis:100%}}

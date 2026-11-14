@@ -1,8 +1,10 @@
-# CareerVerse — itération V2
+# CareerVerse — itération V3
 
-Portfolio 3D de Yoan Viollet, développé sur le dépôt existant. Branche de travail : `feature/careerverse-v2`. Le CDC V4 est conservé ; les nouvelles exigences V2 priment pour la caméra, la ville, le bâtiment-avatar et les intérieurs. La direction artistique reste soumise à la validation de Yoan.
+Portfolio 3D de Yoan Viollet. Cette itération conserve la ville, les six architectures et les contenus V2 ; elle porte sur les présentations, les transitions et la fiabilité des interactions.
 
-## Lancer
+Branche : `feature/careerverse-v3-cinematics`. Le [CDC V4](CareerVerse_Cahier_des_Charges_V4.md) est conservé. La validation graphique de Yoan reste nécessaire.
+
+## Installation et lancement
 
 Node.js 22.12+ et npm :
 
@@ -11,7 +13,7 @@ npm ci
 npm run dev
 ```
 
-Ouvrir l’URL Vite avec le chemin `/book3D-carreer/`. Les dépendances sont déjà installées dans le dossier de travail. Ne pas ouvrir `index.html` directement.
+Ouvrir l’URL affichée par Vite, avec le chemin **/book3D-carreer/**. Ne pas ouvrir directement index.html.
 
 ```powershell
 npm run typecheck
@@ -20,20 +22,21 @@ npm run build
 npm run preview
 ```
 
-Le build statique se trouve dans `dist/`. La base Vite `/book3D-carreer/` et le workflow GitHub Pages sont conservés. Aucun backend ni compte requis. Aucun push, déploiement ou merge automatique dans `main`.
+Le build est généré dans `dist/`. La base Vite et le workflow GitHub Pages existants sont préservés. Aucun backend, nouvelle dépendance, merge dans main ou déploiement n’est nécessaire pour tester cette version.
 
-## Ce qui change
+## V3 implémentée
 
-- Caméra extérieure : recherche de positions à distance confortable autour du robot, élévation de secours, amortissement et balayage du corps de caméra avec glissement contre les obstacles. Le rayon de visibilité ne sert plus à rabattre la caméra sur le personnage. Distance cible minimale : 9 unités ; zoom manuel entre 10 et 19.
-- Suppression des deux dégradés blancs de la barre supérieure et du brouillard Three.js. Petits fonds locaux sous les commandes.
-- Urbanisme asymétrique : deux rues sinueuses, montée vers les ateliers, traverses, parvis, placette rectangulaire, relief continu et plantations par groupes. Le plan utilise le même réseau de chemins que la scène.
-- Six silhouettes refaites : maison-portrait humaine monumentale, pavillon de verre à étages décalés, fabrique voûtée et roue mécanique, observatoire à plateformes, galerie à toitures pliées, installation Veolia à deux cuves et tuyauteries rouges.
-- Robot : accélération/freinage, transfert de poids, course inclinée, balancement, attente et réaction gestuelle aux stations/portes.
-- Navigation : A* favorisant les rues, trajet visible du robot, suivi de caméra, possibilité de passer et préférence de réduction des mouvements. Les 30 liaisons orientées entre les bâtiments font l’objet de tests de collision.
-- Six portes animées et six scènes intérieures réellement explorables. Franchissement du seuil, bref fondu de raccord, reprise du contrôle et retour au parvis.
-- Profil : quatre stations scénographiées, sculptures, écrans, éclairage d’activation, progression mémorisée durant la session et lecture à la demande.
-- Autres lieux : huit stations provisoires chacun, intérieurs thématiques partageant la même logique. Aucun résultat ou projet professionnel inventé.
-- Sur mobile : plan, fiches et lecture des stations sans clavier. Dans les intérieurs, les boutons de stations et de sortie permettent également une visite guidée.
+- Deux actions devant chaque porte : **Découvrir le bâtiment** et **Entrer**.
+- Six présentations architecturales configurées individuellement, de 7,5 à 9 secondes, suivies d’un retour de caméra. Possibilité de passer, revenir ou enchaîner sur l’entrée.
+- Présentation statique en réduction des mouvements ; cadrage adapté au rapport largeur/hauteur. Prévisualisation 3D depuis les fiches mobiles et retour aux contenus sans clavier.
+- Transitions de porte explicites : approche, ouverture, franchissement, raccord de 280 ms, émergence, fermeture. Les deux côtés de la porte partagent la même progression.
+- Actions concurrentes verrouillées pendant les transitions. Échap interrompt un trajet ou termine une présentation ; le franchissement d’une porte reste atomique.
+- Stations détectées dans de larges zones de circulation, avec une seule station active. Les quatre stations Profil sont accessibles depuis l’allée centrale.
+- Navigation intérieure calculée autour des socles, plantes et structures. Collisions des socles augmentées du rayon du robot.
+- Trajets guidés avec accélération, freinage final, ralentissement aux virages, orientation d’arrivée progressive et annulation.
+- Caméra intérieure : contournement du robot lors des demi-tours plutôt qu’interpolation directe à travers sa position. Commandes clavier orientées selon la caméra effective.
+- Robot : inclinaison liée à l’accélération, transfert de poids en virage, gestes amortis et regard vers le bâtiment présenté.
+- Retour aérien animé conservant la position du robot ; sélection d’une destination depuis l’accueil après la descente de caméra.
 
 ## Commandes
 
@@ -41,44 +44,45 @@ Le build statique se trouve dans `dist/`. La base Vite `/book3D-carreer/` et le 
 |---|---|
 | Marcher | ZQSD, WASD ou flèches |
 | Courir | Maj |
-| Regarder | Glisser sur la scène |
+| Regarder | Cliquer-glisser sur la scène |
 | Zoom extérieur | Molette |
-| Entrer / lire une station / sortir près du seuil | E |
+| Présenter le bâtiment proche | V ou Découvrir le bâtiment |
+| Entrer / lire une station / sortir au seuil | E |
 | Plan | M |
-| Recentrer | C |
-| Revenir à la place | R |
-| Fermer une lecture ou un panneau | Échap |
-| Trajet guidé | Plan ou destinations latérales |
-| Parcours intérieur guidé | Numéros des stations / Rejoindre la sortie |
+| Recentrer la caméra | C |
+| Revenir à la place ; dans un intérieur, rejoindre la sortie | R |
+| Fermer un panneau / terminer une présentation / annuler un trajet | Échap |
+| Parcours intérieur guidé | Numéros des stations |
+| Sortie depuis une station | Rejoindre la sortie |
 
-Le retour par R et le bouton de vue aérienne sont des réinitialisations explicites. Le saut d’un trajet est réservé au bouton « Passer » et au mode de réduction des mouvements.
+Les trajets peuvent être passés explicitement. Le mode de réduction des mouvements les passe automatiquement. Sur mobile, utiliser le plan et les fiches ; la marche au clavier n’est pas exigée.
 
-## Organisation du code
+## Organisation
 
-- `src/world/config.ts` : destinations, dimensions, palette et réglages généraux.
-- `src/world/terrain.ts`, `urban.ts`, `landscape.ts` : relief, rues et plantations.
-- `src/world/collision.ts`, `camera.ts`, `navigation.ts` : obstacles, caméra physique et itinéraires.
-- `src/world/narrative.ts` : contenu des stations, positions et collisions intérieures.
-- `src/scene/Buildings.tsx` : six architectures et portes coulissantes.
-- `src/scene/Interior.tsx` : scénographie, objets exposés et écrans réactifs.
-- `src/scene/Transitions.tsx` : trajets et raccords extérieur/intérieur.
-- `src/scene/Controller.tsx`, `Robot.tsx`, `CameraRig.tsx` : commandes, animation procédurale et cadrage.
-- `src/state.ts` : état de visite, progression, actions et transitions.
-- `src/ui/` : plan, dialogues accessibles et navigation intérieure.
-- `tests/world.test.mjs` : tests exécutés sur les vrais modules TypeScript transpiles temporairement.
+| Module | Responsabilité |
+|---|---|
+| `src/state.ts` | Actions gardées, phase exclusive, progression et demande d’entrée après présentation |
+| `src/world/motion.ts` | Unique contrôleur de déplacement automatique et séquence des portes |
+| `src/world/cinematics.ts` | Plans architecturaux locaux, adaptation au format, interpolation et liaisons de caméra |
+| `src/world/camera.ts` | Recherche de cadrages, balayage extérieur, déplacements intérieurs |
+| `src/world/narrative.ts` | Textes existants, zones narratives, collisions et routes intérieures |
+| `src/world/navigation.ts` | Itinéraires extérieurs A* existants |
+| `src/scene/CameraRig.tsx` | Accueil, suivi, descente, retour aérien et raccords de scènes |
+| `src/scene/CinematicCamera.tsx` | Présentation et retour à la pose sauvegardée |
+| `src/scene/Transitions.tsx` | Exécution du contrôleur automatique avant le clavier et la caméra |
+| `src/scene/SlidingDoor.tsx` | Porte commune aux scènes extérieure et intérieure |
+| `src/scene/Buildings.tsx`, `Interior.tsx` | Architectures préservées et scénographie des stations |
+| `src/ui/BuildingPresentation.tsx` | Commandes et légende architecturale |
+| `tests/*.test.mjs` | Tests des vrais modules TypeScript, transpilés temporairement dans .cache |
 
-Pour ajouter du contenu, modifier `stationsFor()` dans `narrative.ts`. Les titres des projets, leurs descriptions et leur signalétique restent configurables dans `config.ts`. Les huit étapes projet sont prêtes à recevoir des contenus validés.
+Les bâtiments se configurent dans `config.ts`, les trajectoires dans `cinematics.ts`, les contenus dans `narrative.ts`. Aucun contenu professionnel n’a été ajouté ou inventé.
 
-## Limites assumées
+## Vérification et limites
 
-Les cinq parcours hors Profil sont des bases visitables, pas des études de cas finalisées. Le Profil présente une introduction éditoriale : les détails du CV, documents téléchargeables, dates et preuves doivent encore être fournis ou validés.
+Voir [V3_SUIVI.md](V3_SUIVI.md) pour le diagnostic, les modes de caméra, les transitions, les tests et la campagne visuelle restante.
 
-Les intérieurs sont des espaces scénographiques séparés, agrandis pour la lecture ; ils ne reproduisent pas au centimètre le volume extérieur. Ils partagent un plan de circulation, avec des décors thématiques différents. Le fondu au seuil masque le changement de scène.
+Les tests automatisés, TypeScript et le build doivent passer. Le démarrage et la réponse HTTP du serveur Vite ont été vérifiés. **Aucune validation visuelle V3 dans un navigateur, capture Full HD/QHD, mesure FPS ou inspection de console WebGL n’a été possible dans cette session : l’outil navigateur était indisponible.** Les contrôles géométriques aux quatre rapports d’écran ne remplacent pas cette validation.
 
-Les collisions extérieures utilisent des volumes conservateurs ; certains renfoncements visuels ne sont pas praticables. Le champ de caméra peut temporairement être masqué pendant un contournement. La validation visuelle humaine reste nécessaire, notamment pour les mouvements rapides près des angles.
+Les cinq parcours hors Profil restent provisoires. Les intérieurs sont des espaces scénographiques séparés, agrandis pour la lecture. Les collisions extérieures utilisent des enveloppes conservatrices ; leur vérification ne prouve pas l’absence d’occultation par chaque feuille ou détail décoratif. Un bref raccord coloré couvre le changement de scène au seuil.
 
-Les trajets suivent une grille fine pondérée par les rues : leurs changements de direction sont amortis visuellement mais ce n’est pas une simulation de navigation de foule. Un trajet bloqué est interrompu proprement avec un message.
-
-Les polices Google nécessitent une connexion ; une police système prend le relais hors ligne. Three.js produit un avertissement de taille de chunk au build. Qualité manuelle disponible dans les réglages. Les FPS affichés sont une mesure instantanée locale, pas une garantie de 60 FPS sur tous les appareils.
-
-Voir `artifacts/VALIDATION_V2.md` pour les contrôles et captures effectués.
+Les polices Google ont une police système de secours. La qualité graphique reste réglable manuellement. Le build signale le poids du chunk Three.js ; aucune performance de 60 FPS n’est revendiquée.

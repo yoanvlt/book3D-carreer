@@ -3,8 +3,8 @@ import { roads } from '../world/urban';
 import { trees } from '../world/landscape';
 import { player, useGame, travel, setState } from '../state';
 
-export default function Map(){const {visited}=useGame();const mobile=window.matchMedia('(max-width: 760px)').matches;
-  const select=(id:BuildingId)=>{if(mobile){setState({map:false,detail:id});}else travel(id);};
+export default function Map(){const {visited,ready}=useGame();const mobile=window.matchMedia('(max-width: 760px)').matches;
+  const select=(id:BuildingId)=>{if(mobile||!ready){setState({map:false,detail:id});}else travel(id);};
   return <div className='map-layout'>
     <div className='map-drawing'><svg viewBox='-58 -58 116 116' aria-label='Plan illustré du campus, six destinations' role='img'>
       <defs><pattern id='paper' width='4' height='4' patternUnits='userSpaceOnUse'><circle cx='1' cy='1' r='.12' fill='#bba98b'/></pattern></defs>
