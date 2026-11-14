@@ -22,6 +22,8 @@ type State = {
   detail: BuildingId | null;
   nearby: BuildingId | null;
   quality: 'high' | 'low';
+  /** Faux dès que le visiteur choisit lui-même la qualité graphique. */
+  qualityAuto: boolean;
   visited: BuildingId[];
   ready: boolean;
   reducedMotion: boolean;
@@ -43,6 +45,7 @@ let state: State = {
   detail: null,
   nearby: null,
   quality: 'high',
+  qualityAuto: true,
   visited: [],
   ready: false,
   reducedMotion: window.matchMedia('(prefers-reduced-motion: reduce)').matches,

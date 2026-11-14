@@ -57,7 +57,7 @@ function Exhibit({ id, station, mood }: { id: BuildingId; station: Station; mood
       {/* Socle */}
       <Bevel p={[0, 0.36, 0]} s={[3.4, 0.72, 1.45]} color={mood.wall} radius={0.08} />
       <Box p={[0, 0.74, 0]} s={[3.6, 0.08, 1.6]} color={accent} />
-      <group ref={sculpture}>
+      <group ref={sculpture} userData={{ dynamic: true }}>
         {station.object === 'portrait' ? (
           <>
             <Box p={[0, 1.35, 0]} s={[0.7, 1, 0.45]} color={accent} />
@@ -102,7 +102,7 @@ function Exhibit({ id, station, mood }: { id: BuildingId; station: Station; mood
       <group position={[0, 0, -0.55]} rotation={[0, -side * 0.38, 0]} visible={!!content}>
         <Box p={[0, 1.6, -0.1]} s={[0.18, 3.2, 0.18]} color={C.ink} />
         <Bevel p={[0, 3.75, -0.2]} s={[5.3, 2.75, 0.22]} color={C.ink} radius={0.1} />
-        <mesh position={[0, 3.75, -0.08]}>
+        <mesh position={[0, 3.75, -0.08]} userData={{ dynamic: true }}>
           <planeGeometry args={[5, 2.45]} />
           <meshStandardMaterial ref={glow} color={mood.screen} emissive={accent} emissiveIntensity={0.12} />
         </mesh>
@@ -655,9 +655,11 @@ export default function Interior() {
       <Room id={b.id} mood={mood}>
         <Theme id={b.id} mood={mood} />
       </Room>
-      {stationsFor(b.id).map((station) => (
-        <Exhibit key={station.id} id={b.id} station={station} mood={mood} />
-      ))}
+      <StaticBatch>
+        {stationsFor(b.id).map((station) => (
+          <Exhibit key={station.id} id={b.id} station={station} mood={mood} />
+        ))}
+      </StaticBatch>
     </>
   );
 }

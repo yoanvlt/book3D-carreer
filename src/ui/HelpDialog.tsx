@@ -41,7 +41,7 @@ export default function HelpDialog() {
         <select
           id='quality'
           value={state.quality}
-          onChange={(e) => setState({ quality: e.target.value as 'high' | 'low' })}
+          onChange={(e) => setState({ quality: e.target.value as 'high' | 'low', qualityAuto: false })}
         >
           <option value='high'>Soignée · ombres activées</option>
           <option value='low'>Légère · sans ombres</option>

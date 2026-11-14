@@ -39,11 +39,20 @@ export default defineConfig(({ command }) => ({
   build: {
     rollupOptions: {
       output: {
-        manualChunks: {
-          three: ['three'],
-          react: ['react', 'react-dom', '@react-three/fiber'],
+        // L'accueil ne charge que React et l'interface ; la scène (Three, R3F, drei) arrive
+        // avec le chunk World, chargé à la demande, dans des fichiers séparés mis en cache.
+        manualChunks(id) {
+          // L'assistant de chargement de Vite doit rester avec ce que l'accueil charge déjà.
+          if (id.includes('vite/preload-helper') || id.includes('commonjsHelpers')) return 'react';
+          if (!id.includes('node_modules')) return;
+          if (/node_modules\/three\//.test(id)) return 'three';
+          if (/@react-three\/drei|three-stdlib|troika|@babel\/runtime/.test(id)) return 'drei';
+          if (/@react-three\/fiber|its-fine|zustand|react-use-measure|suspend-react/.test(id)) return 'r3f';
+          if (/node_modules\/(react|react-dom|scheduler|use-sync-external-store)\//.test(id)) return 'react';
         },
       },
     },
+    // Three.js seul pèse environ 720 ko minifié (190 ko gzip) ; il est isolé et mis en cache.
+    chunkSizeWarningLimit: 800,
   },
 }));

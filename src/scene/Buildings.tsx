@@ -610,19 +610,26 @@ function BuildingModel({ b }: { b: Building }) {
   useLayoutEffect(() => {
     const batch = batchMeshes(root.current);
     const owned: THREE.MeshStandardMaterial[] = [];
+    const clones: THREE.MeshStandardMaterial[] = [];
     const originals = new Map<THREE.Mesh, THREE.Material>();
     root.current.traverse((object) => {
       if (!(object instanceof THREE.Mesh) || !object.visible) return;
       if (!(object.material instanceof THREE.MeshStandardMaterial)) return;
+      // Panneaux et maillages regroupés ont déjà un matériau propre ; seuls les partagés sont clonés.
+      if (object.material.map || object.userData.batched) {
+        owned.push(object.material);
+        return;
+      }
       originals.set(object, object.material);
       const clone = object.material.clone();
       object.material = clone;
       owned.push(clone);
+      clones.push(clone);
     });
     faded.current = owned;
     return () => {
       originals.forEach((m, mesh) => (mesh.material = m));
-      owned.forEach((m) => m.dispose());
+      clones.forEach((m) => m.dispose());
       faded.current = [];
       batch.restore();
     };

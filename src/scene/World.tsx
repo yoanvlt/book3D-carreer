@@ -15,7 +15,7 @@ import * as THREE from 'three';
 import { useGame, setState, getState, player, cameraMode, passage } from '../state';
 
 function Runtime() {
-  const sample = useRef({ elapsed: 0, frames: 0 });
+  const sample = useRef({ elapsed: 0, frames: 0, slow: 0 });
   useEffect(() => {
     setState({ ready: true });
     const media = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -23,21 +23,37 @@ function Runtime() {
     media.addEventListener('change', update);
     return () => media.removeEventListener('change', update);
   }, []);
+  const totals = useRef({ calls: 0, triangles: 0 });
   useFrame(({ gl, camera }, dt) => {
+    // Compte toutes les passes d'une image (ombres comprises) : Three remet sinon le compteur
+    // à zéro après la passe d'ombre.
+    gl.info.autoReset = false;
+    totals.current = { calls: gl.info.render.calls, triangles: gl.info.render.triangles };
+    gl.info.reset();
     if (document.hidden) return;
     sample.current.elapsed += dt;
     sample.current.frames++;
     if (sample.current.elapsed > 2) {
       const fps = Math.round(sample.current.frames / sample.current.elapsed);
-      setState({ fps });
-      sample.current = { elapsed: 0, frames: 0 };
+      // Repli automatique : deux relevés lents d'affilée en qualité soignée, sauf choix explicite.
+      const s = getState();
+      const slow =
+        s.quality === 'high' && s.qualityAuto && s.phase !== 'home' && fps < 28 ? sample.current.slow + 1 : 0;
+      if (slow >= 2)
+        setState({
+          fps,
+          quality: 'low',
+          notice: 'Qualité légère activée pour garder la visite fluide. Vous pouvez la changer dans l’aide.',
+        });
+      else setState({ fps });
+      sample.current = { elapsed: 0, frames: 0, slow: slow >= 2 ? 0 : slow };
       // Opt-in, visible QA readout. No analytics or network transmission.
       const output = document.getElementById('diagnostics');
       if (output)
         output.textContent = JSON.stringify({
           fps,
-          drawCalls: gl.info.render.calls,
-          triangles: gl.info.render.triangles,
+          drawCalls: totals.current.calls,
+          triangles: totals.current.triangles,
           position: [+player.x.toFixed(2), +player.y.toFixed(2), +player.z.toFixed(2)],
           camera: camera.position.toArray().map((n) => +n.toFixed(2)),
           mode: cameraMode(),

@@ -4,6 +4,7 @@ import * as THREE from 'three';
 import { heightAt } from '../world/terrain';
 import type { Point } from '../world/config';
 import { material, Box } from './Primitives';
+import StaticBatch from './StaticBatch';
 import { color as C } from '../design/tokens';
 const T = {
   low: C.grass,
@@ -172,22 +173,24 @@ export default function Terrain() {
         <meshStandardMaterial color={T.base} roughness={1} />
       </mesh>
       <TerrainMesh />
-      {gardens.map(([x, z, rx, rz, angle], i) => (
-        <Garden key={i} {...{ x, z, rx, rz, angle }} />
-      ))}
-      {streets.map((points, i) => (
-        <group key={i}>
-          <Path points={points} width={6.5} color={T.streetEdge} offset={0.09} />
-          <Path points={points} width={5.7} />
-        </group>
-      ))}
-      {approaches.map((points, i) => (
-        <Path key={i} points={points} width={3.6} />
-      ))}
-      <Box p={[0, 0.69, 0]} s={[16, 0.12, 12]} color={T.path} />
-      {[-5, 0, 5].map((x) => (
-        <Box key={x} p={[x, 0.76, 0]} s={[0.06, 0.02, 12]} color={C.stoneDark} />
-      ))}
+      <StaticBatch>
+        {gardens.map(([x, z, rx, rz, angle], i) => (
+          <Garden key={i} {...{ x, z, rx, rz, angle }} />
+        ))}
+        {streets.map((points, i) => (
+          <group key={i}>
+            <Path points={points} width={6.5} color={T.streetEdge} offset={0.09} />
+            <Path points={points} width={5.7} />
+          </group>
+        ))}
+        {approaches.map((points, i) => (
+          <Path key={i} points={points} width={3.6} />
+        ))}
+        <Box p={[0, 0.69, 0]} s={[16, 0.12, 12]} color={T.path} />
+        {[-5, 0, 5].map((x) => (
+          <Box key={x} p={[x, 0.76, 0]} s={[0.06, 0.02, 12]} color={C.stoneDark} />
+        ))}
+      </StaticBatch>
     </>
   );
 }

@@ -74,16 +74,19 @@ for (const [width, height] of sizes) {
   page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
   page.on('pageerror', (e) => errors.push(e.message));
   // Le relevé de diagnostic est lu par le script, mais masqué sur les captures.
-  const shot = (scene) =>
-    page.screenshot({
-      path: `${out}/${scene}-${width}x${height}.png`,
-      style: '#diagnostics { visibility: hidden !important; }',
-    });
+  // Le relevé de diagnostic est lu par le script mais masqué sur les captures. Avec le rendu
+  // logiciel (1 à 5 images par seconde), on attend qu'une image sans le relevé soit produite.
+  const shot = async (scene) => {
+    await page.evaluate(() => document.getElementById('diagnostics')?.setAttribute('hidden', ''));
+    await page.waitForTimeout(1500);
+    await page.screenshot({ path: `${out}/${scene}-${width}x${height}.png` });
+    await page.evaluate(() => document.getElementById('diagnostics')?.removeAttribute('hidden'));
+  };
   const entry = { taille: `${width}x${height}`, qualite: quality, scenes: {} };
   await page.goto(url);
   await page.waitForSelector('.loading', { state: 'detached', timeout: 180000 });
   await page.waitForFunction(() => !!window.__careerverse);
-  await call(page, 'setState', { quality });
+  await call(page, 'setState', { quality, qualityAuto: false });
   await until(page, (s) => s.phase === 'home', 'accueil');
 
   if (mode === 'scenes') {
