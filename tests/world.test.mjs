@@ -8,7 +8,7 @@ import ts from 'typescript';
 
 // Compile the actual pure world modules, without a browser or a second implementation.
 const folder=join(tmpdir(),`careerverse-tests-${process.pid}`);await mkdir(folder,{recursive:true});
-for(const name of ['config','terrain','landscape','collision']){
+for(const name of ['config','terrain','urban','landscape','collision','navigation','camera','narrative']){
   const source=await readFile(new URL(`../src/world/${name}.ts`,import.meta.url),'utf8');
   const output=ts.transpileModule(source,{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ES2022}}).outputText.replace(/from '(\.\/[\w-]+)'/g,"from '$1.mjs'");
   await writeFile(join(folder,name+'.mjs'),output);
@@ -16,11 +16,16 @@ for(const name of ['config','terrain','landscape','collision']){
 const {buildings,entrance,localToWorld,WORLD}=await import(pathToFileURL(join(folder,'config.mjs')));
 const {heightAt,terrainSlope}=await import(pathToFileURL(join(folder,'terrain.mjs')));
 const {blocked,moveWithCollisions,cameraFraction,obstacles}=await import(pathToFileURL(join(folder,'collision.mjs')));
+const {findRoute,clearSegment}=await import(pathToFileURL(join(folder,'navigation.mjs')));
+const {chooseCamera,moveCamera,chooseInteriorCamera}=await import(pathToFileURL(join(folder,'camera.mjs')));
+const {streets}=await import(pathToFileURL(join(folder,'urban.mjs')));
+const {stationsFor,moveIndoors,indoorBlocked}=await import(pathToFileURL(join(folder,'narrative.mjs')));
+
 after(async()=>{await rm(folder,{recursive:true,force:true});});
 
 test('Six unique destinations, safe arrival points and future narrative stations',()=>{
   assert.equal(new Set(buildings.map(b=>b.id)).size,6);
-  for(const b of buildings){assert.equal(blocked(...entrance(b)),false,`${b.id} spawn blocked`);assert.equal(b.interior.stations.length,8);assert.equal(b.interior.status,'planned');}
+  for(const b of buildings){assert.equal(blocked(...entrance(b)),false,`${b.id} spawn blocked`);assert.equal(b.interior.stations.length,8);assert.ok(['reference','draft'].includes(b.interior.status));}
   assert.equal(blocked(...WORLD.spawn),false);
 });
 test('Every building has an exactly level platform',()=>{
@@ -62,4 +67,25 @@ test('Camera still retracts when the player is pressed against a wall',()=>{
 test('Terrain and collision functions remain deterministic',()=>{
   assert.deepEqual(moveWithCollisions([10,12],[2,3]),moveWithCollisions([10,12],[2,3]));
   assert.equal(heightAt(17,-22),heightAt(17,-22));
+});
+
+test('All 30 inter-building journeys avoid obstacles along every segment',()=>{
+  for(const a of buildings)for(const b of buildings){if(a===b)continue;const route=findRoute(entrance(a),entrance(b));assert.ok(route.length>1,`${a.id} -> ${b.id}`);for(let i=1;i<route.length;i++)assert.ok(clearSegment(route[i-1],route[i],.53),`${a.id} -> ${b.id} segment ${i}`);}
+});
+test('Spawn can reach all six doors',()=>{for(const b of buildings){const route=findRoute(WORLD.spawn,entrance(b));assert.ok(route.length>1,b.id);}});
+test('Camera finds a comfortable clear view at every facade, including opposing user yaw',()=>{
+  for(const b of buildings)for(const side of [-1,1])for(const axis of [0,1]){
+    const local=axis===0?[side*(b.size[0]/2+.9),0]:[0,side*(b.size[1]/2+.9)];const p=localToWorld(b,...local);const target={x:p[0],y:heightAt(...p)+1.65,z:p[1]};
+    for(let yaw=0;yaw<6.2;yaw+=.6){const solution=chooseCamera(target,yaw,.47,16.5,0);assert.ok(Number.isFinite(solution.score),b.id);assert.ok(Math.hypot(solution.point.x-target.x,solution.point.y-target.y,solution.point.z-target.z)>=9);assert.ok(cameraFraction(target,solution.point,.65)>.99);}
+  }
+});
+test('Camera body cannot sweep through a facade',()=>{
+  for(const b of buildings){const p=entrance(b),from={x:p[0],y:b.elevation+3,z:p[1]},to={x:b.position[0],y:b.elevation+3,z:b.position[1]};let pos=from;for(let i=0;i<100;i++)pos=moveCamera(pos,{x:pos.x+(to.x-pos.x)*.1,y:pos.y,z:pos.z+(to.z-pos.z)*.1});assert.ok(Math.hypot(pos.x-to.x,pos.z-to.z)>2);}
+});
+test('Interior walking cannot escape or tunnel through exhibition plinths',()=>{
+  for(const b of buildings){assert.ok(stationsFor(b.id).length>=4);for(const s of stationsFor(b.id)){const end=moveIndoors([s.position[0],s.position[1]+3],[0,-7],b.id);assert.equal(indoorBlocked(...end,b.id),false);assert.ok(end[1]>s.position[1]-1.3);}const edge=moveIndoors([0,14],[100,100],b.id);assert.equal(indoorBlocked(...edge,b.id),false);}
+});
+
+test('Interior camera preserves a nine-unit horizontal boom at doors, walls and corners',()=>{
+  for(const [x,z] of [[0,17],[0,-17],[10,0],[-10,0],[10,17],[-10,-17]])for(let yaw=0;yaw<6.2;yaw+=.3){const p=chooseInteriorCamera(x,z,yaw,0);assert.ok(Number.isFinite(p.score));assert.ok(Math.abs(p.x)<10&&Math.abs(p.z)<17);assert.ok(Math.hypot(p.x-x,p.z-z)>8.99);}
 });

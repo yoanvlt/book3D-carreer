@@ -5,6 +5,7 @@ export interface Obstacle { x:number; z:number; halfX:number; halfZ:number; angl
 export const obstacles:Obstacle[]=buildings.map(b=>({x:b.position[0],z:b.position[1],halfX:b.size[0]/2+.25,halfZ:b.size[1]/2+.25,angle:b.rotation,bottom:b.elevation-.2,top:b.elevation+b.height+.8}));
 export const props:Obstacle[]=[
   {x:0,z:0,halfX:2.6,halfZ:2.6,angle:0,bottom:.65,top:5.6},
+  {x:-43,z:20,halfX:2.4,halfZ:1.9,angle:-.3,bottom:heightAt(-43,20),top:heightAt(-43,20)+3.8},
   {x:-8,z:5,halfX:.4,halfZ:.4,angle:0,bottom:.65,top:3.8},
 ];
 export const allObstacles=[...obstacles,...props,

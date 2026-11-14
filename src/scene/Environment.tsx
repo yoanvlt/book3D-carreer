@@ -65,7 +65,7 @@ function Terraces(){return <>{buildings.filter(b=>b.elevation>2).map(b=><group k
   <Box p={[0,.05,-b.size[1]/2-1.5]} s={[b.size[0]+4.3,.16,.9]} color={C.cream}/>
   <Box p={[-b.size[0]/2-1.7,-.6,-1]} s={[.65,1.2,b.size[1]-1]} color='#c79772'/>
 </group>)}</>;}
-function Pergola(){return <group position={[-21,heightAt(-21,30),30]} rotation={[0,-.3,0]}>
+function Pergola(){return <group position={[-43,heightAt(-43,20),20]} rotation={[0,-.3,0]}>
   {[-2,2].flatMap(x=>[-1.5,1.5].map(z=><Box key={`${x}${z}`} p={[x,1.7,z]} s={[.16,3.4,.16]} color={C.cream}/>))}
   {[-2,-1,0,1,2].map(x=><Box key={x} p={[x,3.5,0]} s={[.2,.2,4]} color='#cb9060'/>)}
   <Beam a={[-2.3,3.35,-1.5]} b={[2.3,3.35,-1.5]} width={.2} color={C.cream}/><Beam a={[-2.3,3.35,1.5]} b={[2.3,3.35,1.5]} width={.2} color={C.cream}/>
