@@ -91,27 +91,15 @@ export const WORLD = {
   spawn: [-9, 10] as Point,
 };
 export const CAMERA = {
-  distance: 16.5,
-  elevation: 0.47,
+  distance: 21,
+  minDistance: 10,
+  maxDistance: 27,
+  elevation: 0.56,
   minElevation: 0.25,
   maxElevation: 1.14,
   stiffness: 6,
   targetHeight: 1.65,
   lookAhead: 0,
   clearance: 0.7,
-  aerial: [83, 90, 110] as [number, number, number],
-};
-export const COLORS = {
-  cream: '#fff1d8',
-  stone: '#e6c5a0',
-  sand: '#e8bd84',
-  coral: '#ed8159',
-  ink: '#273f49',
-  glass: '#659faf',
-  roof: '#f7deb8',
-  lavender: '#a89bc8',
-  green: '#659451',
-  leaf: '#89ab57',
-  darkLeaf: '#3f7858',
-  path: '#f5dfb8',
+  aerial: [92, 98, 122] as [number, number, number],
 };

@@ -152,7 +152,10 @@ test('Door lifecycle: six buildings, re-entry, repeated inputs, aligned position
         assert.equal(game.passage.fade, 0);
         assert.equal(game.passage.openness, 0);
         assert.ok(stages.has('handoff'));
-        assert.ok(Math.hypot(game.player.x, game.player.z - 14) < 0.04);
+        assert.ok(
+          Math.hypot(game.player.x - narrative.ROOM.arrival[0], game.player.z - narrative.ROOM.arrival[1]) <
+            0.04,
+        );
         assert.ok(!narrative.indoorBlocked(game.player.x, game.player.z, b.id));
         game.guideExit();
         untilIdle();

@@ -2,10 +2,11 @@ import SlidingDoor from './SlidingDoor';
 import { useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
-import { buildings, COLORS as C } from '../world/config';
+import { color as C } from '../design/tokens';
+import { buildings } from '../world/config';
 import { stationsFor, type Station } from '../world/narrative';
 import { useGame, getState } from '../state';
-import { theme } from '../theme';
+import { interiors } from '../design/tokens';
 import { isOpen, place, stationContentById } from '../content';
 import { Box, Cylinder, Ball, Beam, Sign } from './Primitives';
 
@@ -44,13 +45,13 @@ function Exhibit({
   });
   return (
     <group position={[s.position[0], 0, s.position[1] - 1.3]}>
-      <Box p={[0, 0.35, 0]} s={[3.4, 0.7, 1.45]} color='#d7b08b' />
+      <Box p={[0, 0.35, 0]} s={[3.4, 0.7, 1.45]} color='#e3d6c2' />
       <Box p={[0, 0.73, 0]} s={[3.6, 0.1, 1.6]} color={C.cream} />
       <group ref={sculpture}>
         {s.object === 'portrait' ? (
           <>
             <Box p={[0, 1.35, 0]} s={[0.7, 1, 0.45]} color={color} />
-            <Ball p={[0, 2.2, 0]} s={[0.4, 0.5, 0.4]} color='#deb18d' />
+            <Ball p={[0, 2.2, 0]} s={[0.4, 0.5, 0.4]} color='#e6b085' />
             <Box p={[0, 2.55, -0.04]} s={[0.75, 0.17, 0.6]} color={C.ink} />
           </>
         ) : s.object === 'network' ? (
@@ -91,10 +92,10 @@ function Exhibit({
       <Box p={[0, 3.4, -0.3]} s={[4.3, 1.9, 0.2]} color={C.ink} />
       <mesh position={[0, 3.4, -0.185]}>
         <planeGeometry args={[4.1, 1.7]} />
-        <meshStandardMaterial ref={light} color='#2e515a' emissive={color} emissiveIntensity={0.08} />
+        <meshStandardMaterial ref={light} color='#1e3a4a' emissive={color} emissiveIntensity={0.08} />
       </mesh>
       <group ref={title}>
-        {label && <Sign text={label} p={[0, 3.4, -0.16]} s={[3.9, 0.55]} color={C.cream} bg='#2e515a' />}
+        {label && <Sign text={label} p={[0, 3.4, -0.16]} s={[3.9, 0.55]} color={C.cream} bg='#1e3a4a' />}
       </group>
       <Cylinder p={[0, 0.015, 2.5]} s={[1.2, 0.02, 1.2]} color={color} />
     </group>
@@ -108,14 +109,14 @@ function PortraitArchitecture() {
         <group key={z}>
           {[-1, 1].map((side) => (
             <group key={side}>
-              <Box p={[side * 10.3, 3.7, z]} s={[0.45, 7.4, 0.5]} color='#df9772' />
-              <Beam a={[side * 10.3, 7.4, z]} b={[side * 6.5, 10, z]} width={0.45} color='#df9772' />
+              <Box p={[side * 10.3, 3.7, z]} s={[0.45, 7.4, 0.5]} color='#ff8a5c' />
+              <Beam a={[side * 10.3, 7.4, z]} b={[side * 6.5, 10, z]} width={0.45} color='#ff8a5c' />
             </group>
           ))}
           <Beam a={[-6.5, 10, z]} b={[6.5, 10, z]} width={0.4} color={C.cream} />
         </group>
       ))}
-      <Cylinder p={[0, 8, -14.5]} s={[2.3, 0.24, 2.3]} color={C.coral} />
+      <Cylinder p={[0, 8, -14.5]} s={[2.3, 0.24, 2.3]} color={C.orange} />
       <mesh position={[0, 8.1, -14.5]}>
         <torusGeometry args={[2.1, 0.12, 8, 32]} />
         <meshStandardMaterial color={C.cream} />
@@ -125,7 +126,7 @@ function PortraitArchitecture() {
         p={[0, 5.9, -17.68]}
         s={[15, 1.15]}
         color={C.cream}
-        bg='#385965'
+        bg='#24485e'
       />
     </>
   );
@@ -188,19 +189,19 @@ export default function Interior() {
   const b = buildings.find((b) => b.id === interior)!;
   return (
     <>
-      <color attach='background' args={[theme.interior.background]} />
-      <Box p={[0, -0.5, 0]} s={[90, 0.8, 90]} color={theme.interior.background} />
-      <Box p={[0, -0.12, 0]} s={[22, 0.24, 36]} color='#e9d3b0' />
+      <color attach='background' args={[interiors[b.id].wall]} />
+      <Box p={[0, -0.5, 0]} s={[90, 0.8, 90]} color={interiors[b.id].wall} />
+      <Box p={[0, -0.12, 0]} s={[22, 0.24, 36]} color='#f3efe6' />
       <Box p={[0, 0.018, 0]} s={[2.4, 0.025, 32]} color={b.color} />
       {[-14, -7, 0, 7, 14].map((z) => (
-        <Box key={z} p={[0, 0.025, z]} s={[22, 0.02, 0.035]} color='#bfa78b' />
+        <Box key={z} p={[0, 0.025, z]} s={[22, 0.02, 0.035]} color='#c4a786' />
       ))}
       {[-1, 1].map((side) => (
         <group key={side}>
-          <Box p={[side * 11, 2.5, 0]} s={[0.35, 5, 36]} color='#f2e1c6' />
+          <Box p={[side * 11, 2.5, 0]} s={[0.35, 5, 36]} color='#ffffff' />
           {[-13, -5, 3, 11].map((z) => (
             <group key={z}>
-              <Box p={[side * 10.79, 3.3, z]} s={[0.08, 2.2, 5.5]} color='#91bbc5' />
+              <Box p={[side * 10.79, 3.3, z]} s={[0.08, 2.2, 5.5]} color='#8cbeca' />
               <Box p={[side * 10.65, 2.1, z]} s={[0.4, 0.12, 5.9]} color={C.cream} />
             </group>
           ))}
@@ -209,7 +210,7 @@ export default function Interior() {
           <Ball p={[side * 9, 1.8, 14.8]} s={[1.1, 1.3, 1.1]} color={C.leaf} />
         </group>
       ))}
-      <Box p={[0, 3.8, -18]} s={[22, 7.6, 0.4]} color='#385965' />
+      <Box p={[0, 3.8, -18]} s={[22, 7.6, 0.4]} color='#24485e' />
       <group position={[0, 0, 17.8]} rotation={[0, Math.PI, 0]}>
         <SlidingDoor id={b.id} />
       </group>
@@ -219,10 +220,10 @@ export default function Interior() {
         p={[0, 6.8, -17.75]}
         s={[15, 1.15]}
         color={C.cream}
-        bg='#385965'
+        bg='#24485e'
       />
       {!isOpen(b.id) && (
-        <Sign text='Bientôt' p={[0, 5.2, -17.75]} s={[6, 0.9]} color={C.cream} bg='#385965' />
+        <Sign text='Bientôt' p={[0, 5.2, -17.75]} s={[6, 0.9]} color={C.cream} bg='#24485e' />
       )}
       {b.id === 'profile' ? <PortraitArchitecture /> : <ThematicArchitecture id={b.id} color={b.color} />}
       {stationsFor(b.id).map((station) => (
@@ -235,8 +236,8 @@ export default function Interior() {
       ))}
       <directionalLight
         position={[0, 12, 10]}
-        intensity={theme.interior.lightIntensity}
-        color={theme.interior.light}
+        intensity={interiors[b.id].lightIntensity}
+        color={interiors[b.id].light}
       />
     </>
   );

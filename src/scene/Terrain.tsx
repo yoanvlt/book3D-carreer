@@ -4,8 +4,16 @@ import * as THREE from 'three';
 import { heightAt } from '../world/terrain';
 import type { Point } from '../world/config';
 import { material, Box } from './Primitives';
-import { theme } from '../theme';
-const T = theme.terrain;
+import { color as C } from '../design/tokens';
+const T = {
+  low: C.grass,
+  high: C.grassHigh,
+  edge: C.earth,
+  base: C.water,
+  garden: C.garden,
+  path: C.path,
+  streetEdge: C.pathEdge,
+};
 
 function TerrainMesh() {
   const geometry = useMemo(() => {
@@ -28,7 +36,9 @@ function TerrainMesh() {
         h = h * (1 - edge) - 6.6 * edge;
         vertices.push(x, h, z);
         color.set(d > 60 ? T.edge : h > 4.4 ? T.high : T.low);
-        const noise = Math.sin(x * 1.31 + z * 0.7) * Math.cos(z * 1.53) * 0.012;
+        const noise =
+          Math.sin(x * 0.21 + z * 0.13) * Math.cos(z * 0.17 - x * 0.05) * 0.035 +
+          Math.sin(x * 1.31 + z * 0.7) * Math.cos(z * 1.53) * 0.012;
         color.offsetHSL(0, 0, noise);
         colors.push(color.r, color.g, color.b);
         if (i < rings && j < segments) {
@@ -176,7 +186,7 @@ export default function Terrain() {
       ))}
       <Box p={[0, 0.69, 0]} s={[16, 0.12, 12]} color={T.path} />
       {[-5, 0, 5].map((x) => (
-        <Box key={x} p={[x, 0.76, 0]} s={[0.06, 0.02, 12]} color='#d3af87' />
+        <Box key={x} p={[x, 0.76, 0]} s={[0.06, 0.02, 12]} color={C.stoneDark} />
       ))}
     </>
   );

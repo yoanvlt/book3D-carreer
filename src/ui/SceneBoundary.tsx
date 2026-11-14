@@ -13,7 +13,14 @@ export default class SceneBoundary extends Component<{ children: ReactNode }, { 
       <div className='webgl-fallback'>
         <strong>La 3D n’a pas pu démarrer sur ce navigateur.</strong>
         <p>Les six lieux restent accessibles depuis le plan et dans la version texte.</p>
-        <button onClick={() => showPanel('map')}>Ouvrir le plan</button> <a href='?lecture'>Version texte</a>
+        <div className='dialog-actions'>
+          <button className='button-secondary' onClick={() => showPanel('map')}>
+            Ouvrir le plan
+          </button>
+          <a className='button-primary' href='?lecture'>
+            Version texte
+          </a>
+        </div>
       </div>
     );
   }

@@ -3,8 +3,9 @@ import { RoundedBox } from '@react-three/drei';
 import { useRef, useEffect, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
-import { Box, Cylinder, Ball, Beam, Sign, Vault, material } from './Primitives';
-import { buildings, COLORS as C, type Building } from '../world/config';
+import { color as C } from '../design/tokens';
+import { Box, Cylinder, Ball, Beam, Sign, Vault, material, GLASS } from './Primitives';
+import { buildings, type Building } from '../world/config';
 import { getState, player } from '../state';
 import { place, site } from '../content';
 
@@ -14,12 +15,12 @@ function Portrait() {
       {[-1, 1].map((side) => (
         <group key={side}>
           <Box p={[side * 2.5, 0.45, 0.5]} s={[4.1, 0.9, 9.5]} color={C.ink} />
-          <Box p={[side * 2.5, 2.2, -0.1]} s={[3.5, 3.6, 7.8]} color='#4b7080' />
+          <Box p={[side * 2.5, 2.2, -0.1]} s={[3.5, 3.6, 7.8]} color='#2f6f9a' />
           {[1.2, 2.2, 3.2].map((y) => (
             <Box key={y} p={[side * 2.5, y, 3.88]} s={[2.8, 0.35, 0.12]} color={C.glass} />
           ))}
-          <Box p={[side * 6.05, 7.8, -0.3]} s={[2.2, 8.7, 5]} r={[0, 0, side * 0.14]} color={C.coral} />
-          <Box p={[side * 6.6, 3.7, 0.2]} s={[2.2, 1.4, 4.5]} color='#eabb91' />
+          <Box p={[side * 6.05, 7.8, -0.3]} s={[2.2, 8.7, 5]} r={[0, 0, side * 0.14]} color={C.orange} />
+          <Box p={[side * 6.6, 3.7, 0.2]} s={[2.2, 1.4, 4.5]} color='#f3bb88' />
           <Box p={[side * 4.3, 9.8, 4.15]} s={[0.4, 6.2, 0.25]} r={[0, 0, side * 0.23]} color={C.cream} />
         </group>
       ))}
@@ -28,22 +29,22 @@ function Portrait() {
         args={[10.5, 9.6, 8.2]}
         radius={0.65}
         smoothness={2}
-        material={material('#df7852')}
+        material={material('#ff7a4d')}
         castShadow
         receiveShadow
       />
-      <Box p={[0, 8.2, 3.68]} s={[4.5, 6.4, 0.12]} color={C.glass} metal={0.3} />
+      <Box p={[0, 8.2, 3.68]} s={[4.5, 6.4, 0.12]} color={C.glass} finish={GLASS} />
       {[-1.5, 0, 1.5].map((x) => (
         <Box key={x} p={[x, 8.2, 3.82]} s={[0.12, 6.4, 0.18]} color={C.cream} />
       ))}
       <Box p={[0, 4.9, 4.2]} s={[7, 0.4, 2]} color={C.cream} />
-      <Cylinder p={[0, 14, 0]} s={[2, 1.4, 2]} color='#eabb91' />
+      <Cylinder p={[0, 14, 0]} s={[2, 1.4, 2]} color='#f3bb88' />
       <RoundedBox
         position={[0, 18.1, 0]}
         args={[7.6, 6.9, 6.8]}
         radius={0.65}
         smoothness={2}
-        material={material('#efc59e')}
+        material={material('#ffe2b8')}
         castShadow
         receiveShadow
       />
@@ -52,21 +53,21 @@ function Portrait() {
         args={[8.2, 1.2, 7.5]}
         radius={0.3}
         smoothness={2}
-        material={material('#705443')}
+        material={material('#5a3e2e')}
         castShadow
       />
-      <Box p={[-2.7, 20.9, 3.2]} s={[2.4, 1.8, 0.65]} color='#705443' />
+      <Box p={[-2.7, 20.9, 3.2]} s={[2.4, 1.8, 0.65]} color='#5a3e2e' />
       {[-2, 2].map((x) => (
         <group key={x}>
           <Box p={[x, 18.8, 3.48]} s={[2.5, 1.5, 0.32]} color={C.ink} />
-          <Box p={[x, 18.8, 3.67]} s={[2.1, 1.1, 0.1]} color='#90bfcb' />
+          <Box p={[x, 18.8, 3.67]} s={[2.1, 1.1, 0.1]} color='#8ac3d1' />
           <Box p={[x, 18.8, 3.74]} s={[0.14, 1.1, 0.1]} color={C.cream} />
         </group>
       ))}
       <Box p={[0, 18.8, 3.65]} s={[1.7, 0.18, 0.15]} color={C.ink} />
-      <Box p={[0, 17.6, 3.55]} s={[0.8, 1.1, 0.9]} color='#d79c76' />
+      <Box p={[0, 17.6, 3.55]} s={[0.8, 1.1, 0.9]} color='#e19a6c' />
       <Box p={[0, 16.15, 3.48]} s={[3, 0.35, 0.12]} color={C.ink} />
-      <Sign text={site.nom.toUpperCase()} p={[0, 12.55, 3.69]} s={[7.5, 0.8]} color={C.cream} bg='#df7852' />
+      <Sign text={site.nom.toUpperCase()} p={[0, 12.55, 3.69]} s={[7.5, 0.8]} color={C.cream} bg='#ff7a4d' />
       <Sign text={place('profile').enseigne} p={[0, 5.4, 4.46]} s={[4.4, 0.8]} />
     </>
   );
@@ -74,14 +75,14 @@ function Portrait() {
 function Innovation() {
   return (
     <>
-      <Box p={[-4.9, 6.9, -1.6]} s={[3.2, 13.8, 8]} color='#dc945f' />
+      <Box p={[-4.9, 6.9, -1.6]} s={[3.2, 13.8, 8]} color='#ff9d4d' />
       {[0, 1, 2].map((i) => (
         <group
           key={i}
           position={[i === 1 ? 1.3 : 0, 1 + i * 4.4, 0]}
           rotation={[0, i === 1 ? -0.12 : 0.08, 0]}
         >
-          <Box p={[0, 1.8, 0]} s={[12.4, 3.6, 9.4]} color={i === 1 ? '#5193af' : '#78b5ca'} metal={0.35} />
+          <Box p={[0, 1.8, 0]} s={[12.4, 3.6, 9.4]} color={i === 1 ? '#4897b8' : '#70b9d2'} finish={GLASS} />
           <Box p={[0, 0, 0]} s={[13.2, 0.35, 10.2]} color={C.cream} />
           <Box p={[0, 3.7, 0]} s={[13.2, 0.35, 10.2]} color={C.cream} />
           {[-5, -2.5, 0, 2.5, 5].map((x) => (
@@ -92,9 +93,9 @@ function Innovation() {
           ))}
         </group>
       ))}
-      <Beam a={[-7, 0, 5.4]} b={[6, 13.8, 5.4]} width={0.38} color={C.coral} />
+      <Beam a={[-7, 0, 5.4]} b={[6, 13.8, 5.4]} width={0.38} color={C.orange} />
       <Beam a={[6, 0, 5.4]} b={[-7, 13.8, 5.4]} width={0.24} color={C.cream} />
-      <Box p={[0, 14.7, -1]} s={[9, 0.25, 7]} r={[0, 0, -0.12]} color={C.coral} />
+      <Box p={[0, 14.7, -1]} s={[9, 0.25, 7]} r={[0, 0, -0.12]} color={C.orange} />
       <Sign text={place('project-1').enseigne} p={[0, 10.2, 5.14]} s={[8, 0.9]} />
     </>
   );
@@ -102,8 +103,8 @@ function Innovation() {
 function Mechanism() {
   return (
     <>
-      <Box p={[0, 2.8, -0.2]} s={[16, 5.6, 11.5]} color='#ce904d' />
-      <Vault p={[0, 5.6, 0]} s={[7.8, 7.8, 11.5]} color='#e8b05d' />
+      <Box p={[0, 2.8, -0.2]} s={[16, 5.6, 11.5]} color='#f0a92e' />
+      <Vault p={[0, 5.6, 0]} s={[7.8, 7.8, 11.5]} color='#f7c64a' />
       {[-5.5, -2.8, 0, 2.8, 5.5].map((z) => (
         <mesh key={z} position={[0, 5.6, z]}>
           <torusGeometry args={[7.9, 0.17, 6, 32, Math.PI]} />
@@ -129,7 +130,7 @@ function Mechanism() {
       {[-6.5, 6.5].map((x) => (
         <group key={x}>
           <Box p={[x, 4, 6]} s={[0.45, 8, 0.5]} color={C.ink} />
-          <Cylinder p={[x, 9, -3]} s={[0.65, 4, 0.65]} color={C.coral} />
+          <Cylinder p={[x, 9, -3]} s={[0.65, 4, 0.65]} color={C.orange} />
         </group>
       ))}
       <Sign text={place('project-2').enseigne} p={[0, 3.9, 6.25]} s={[7, 0.75]} />
@@ -139,16 +140,16 @@ function Mechanism() {
 function Discovery() {
   return (
     <>
-      <Cylinder p={[0, 2.5, 0]} s={[6, 5, 6]} color='#9383b8' />
+      <Cylinder p={[0, 2.5, 0]} s={[6, 5, 6]} color='#8a74e8' />
       <Cylinder p={[0, 5.2, 0]} s={[6.6, 0.45, 6.6]} color={C.cream} />
       <Cylinder p={[-1, 8.7, -0.6]} s={[3.1, 7, 3.1]} color={C.glass} />
       {[6.2, 8.5, 10.8, 13].map((y, i) => (
         <group key={y} rotation={[0, i * 0.45, 0]}>
-          <Box p={[0, y, 0]} s={[11, 0.3, 4.5]} color={i % 2 ? C.cream : '#b5a2d2'} />
+          <Box p={[0, y, 0]} s={[11, 0.3, 4.5]} color={i % 2 ? C.cream : '#b4a6f2'} />
           <Box p={[5, y + 0.6, 0]} s={[0.1, 1, 4.5]} color={C.cream} />
         </group>
       ))}
-      <Cylinder p={[-1, 14.6, -0.6]} s={[4.3, 3.3, 4.3]} color='#b5a2d2' />
+      <Cylinder p={[-1, 14.6, -0.6]} s={[4.3, 3.3, 4.3]} color='#b4a6f2' />
       <mesh position={[-1, 16.3, -0.6]} castShadow>
         <sphereGeometry args={[4.3, 24, 12, 0, Math.PI * 2, 0, Math.PI / 2]} />
         <meshStandardMaterial color={C.cream} />
@@ -163,13 +164,13 @@ function Atelier() {
     <>
       {[-4.7, 0, 4.7].map((x, i) => (
         <group key={x} position={[x, 0, i === 1 ? -1 : 0]}>
-          <Box p={[0, 2.5, 0]} s={[4.3, 5, 8.2]} color={i === 1 ? C.cream : '#edb08b'} />
+          <Box p={[0, 2.5, 0]} s={[4.3, 5, 8.2]} color={i === 1 ? C.cream : '#f7ae81'} />
           <Box p={[0, 2.6, 4.18]} s={[3.9, 4.7, 0.13]} color={C.glass} />
           <Box
             p={[0, 5.8, 0]}
             s={[5, 0.35, 9]}
             r={[0, 0, i % 2 ? 0.27 : -0.27]}
-            color={i === 1 ? C.cream : C.coral}
+            color={i === 1 ? C.cream : C.orange}
           />
           {[-2, 2].map((s) => (
             <Box key={s} p={[s, 2.9, 4.35]} s={[0.16, 5.8, 0.2]} color={C.cream} />
@@ -177,43 +178,43 @@ function Atelier() {
         </group>
       ))}
       <Sign text={place('missions').enseigne} p={[0, 6.6, 4.65]} s={[10, 0.85]} />
-      <Box p={[-5.4, 0.6, 5.2]} s={[2, 1.2, 0.6]} color={C.coral} />
-      <Ball p={[-5.4, 1.8, 5.2]} s={[0.65, 0.9, 0.65]} color={C.lavender} />
+      <Box p={[-5.4, 0.6, 5.2]} s={[2, 1.2, 0.6]} color={C.orange} />
+      <Ball p={[-5.4, 1.8, 5.2]} s={[0.65, 0.9, 0.65]} color={C.violetSoft} />
     </>
   );
 }
 function Veolia() {
   return (
     <>
-      <Box p={[0, 2.3, 0]} s={[16.5, 4.6, 11.8]} color='#f0dfb9' />
+      <Box p={[0, 2.3, 0]} s={[16.5, 4.6, 11.8]} color='#f7f2e6' />
       {[-4.4, 4.4].map((x, i) => (
         <group key={x}>
-          <Cylinder p={[x, 7.8, -1]} s={[3.4, 8, 3.4]} color={i ? '#e8d8b4' : '#d2e1da'} />
+          <Cylinder p={[x, 7.8, -1]} s={[3.4, 8, 3.4]} color={i ? '#eddaaf' : '#d1e2da'} />
           <Cylinder p={[x, 11.9, -1]} s={[3.65, 0.3, 3.65]} color={C.cream} />
-          <Cylinder p={[x, 8.4, -1]} s={[3.46, 0.55, 3.46]} color='#d64b42' />
+          <Cylinder p={[x, 8.4, -1]} s={[3.46, 0.55, 3.46]} color='#e8423a' />
           <mesh position={[x, 12.05, -1]} castShadow>
             <coneGeometry args={[3.5, 1.5, 16]} />
             <meshStandardMaterial color={C.cream} />
           </mesh>
-          <Beam a={[x, 12, 1.5]} b={[x, 5.1, 1.5]} width={0.4} color='#d64b42' />
+          <Beam a={[x, 12, 1.5]} b={[x, 5.1, 1.5]} width={0.4} color='#e8423a' />
         </group>
       ))}
-      <Beam a={[-4.4, 9, 2.6]} b={[4.4, 9, 2.6]} width={0.5} color='#d64b42' />
+      <Beam a={[-4.4, 9, 2.6]} b={[4.4, 9, 2.6]} width={0.5} color='#e8423a' />
       <Box p={[0, 5.6, 4.9]} s={[16.9, 0.3, 3.4]} color={C.cream} />
       <Box p={[0, 3.9, 6.1]} s={[16, 1.6, 0.3]} color={C.cream} />
-      <Sign text={place('veolia').enseigne} p={[0, 4.05, 6.28]} s={[7, 1.5]} color='#d4313b' />
+      <Sign text={place('veolia').enseigne} p={[0, 4.05, 6.28]} s={[7, 1.5]} color='#e4212d' />
       <Sign
         text={place('veolia').enseigne}
         p={[0, 9.4, -4.5]}
         s={[7, 1.5]}
         rotation={[0, Math.PI, 0]}
-        color='#d4313b'
+        color='#e4212d'
       />
       {[-6.7, -4.6, 4.6, 6.7].map((x) => (
         <Box key={x} p={[x, 1.8, 6]} s={[1.7, 2.3, 0.12]} color={C.glass} />
       ))}
       {[-5, 0, 5].map((x) => (
-        <Box key={x} p={[x, 6.05, 5.2]} s={[3.7, 0.15, 2.4]} r={[-0.3, 0, 0]} color='#426b80' />
+        <Box key={x} p={[x, 6.05, 5.2]} s={[3.7, 0.15, 2.4]} r={[-0.3, 0, 0]} color='#3c6d86' />
       ))}
     </>
   );

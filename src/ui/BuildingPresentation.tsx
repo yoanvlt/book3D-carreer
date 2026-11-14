@@ -1,37 +1,34 @@
 import { useEffect, useRef } from 'react';
-import { useGame, endPresentation, presentation } from '../state';
-import { buildings } from '../world/config';
+import { endPresentation, presentation, useGame } from '../state';
 import { isOpen, place } from '../content';
 
+/** Présentation architecturale : nom du lieu et commandes pour revenir ou entrer. */
 export default function BuildingPresentation() {
-  const s = useGame(),
-    ref = useRef<HTMLButtonElement>(null);
+  const s = useGame();
+  const ref = useRef<HTMLButtonElement>(null);
   useEffect(() => {
     if (s.phase === 'showcase') ref.current?.focus();
-    if (s.phase === 'explore') document.querySelector<HTMLElement>('.discover-action')?.focus();
   }, [s.phase]);
   if (!s.showcase) return null;
-  const b = buildings.find((b) => b.id === s.showcase)!,
-    returning = s.phase === 'returning',
-    content = place(b.id);
+  const content = place(s.showcase);
+  const returning = s.phase === 'returning';
   return (
-    <section className='building-presentation' aria-label={`Présentation de ${content.titre}`}>
-      <div className='presentation-heading'>
-        <span className='eyebrow'>{content.titre}</span>
-        <h2>{content.sous_titre}</h2>
-        <p>{isOpen(b.id) ? content.resume : 'Bientôt. Je prépare le contenu de ce lieu.'}</p>
+    <section className='presentation' aria-label={`Présentation de ${content.titre}`}>
+      <div className='presentation-heading panel'>
+        <h2>{content.titre}</h2>
+        <p>{isOpen(s.showcase) ? content.sous_titre : 'Bientôt'}</p>
       </div>
       <div className='presentation-actions'>
-        <button ref={ref} disabled={returning} onClick={() => endPresentation()}>
-          {returning
-            ? 'Retour en douceur…'
-            : s.reducedMotion
-              ? 'Revenir à la visite'
-              : 'Passer / revenir à la visite'}{' '}
-          <kbd>Échap</kbd>
+        <button
+          ref={ref}
+          className='action-secondary panel'
+          disabled={returning}
+          onClick={() => endPresentation()}
+        >
+          <kbd>Échap</kbd> {returning ? 'Retour…' : 'Revenir'}
         </button>
-        <button className='presentation-enter' disabled={returning} onClick={() => endPresentation(true)}>
-          {presentation.preview ? 'Lire le parcours' : 'Entrer dans le bâtiment'}
+        <button className='action-primary' disabled={returning} onClick={() => endPresentation(true)}>
+          {presentation.preview ? 'Lire la fiche' : 'Entrer'}
         </button>
       </div>
     </section>

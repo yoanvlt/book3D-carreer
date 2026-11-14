@@ -1,78 +1,85 @@
+import type { CSSProperties } from 'react';
 import { guideExit, guideToStation, interact, setState, useGame } from '../state';
 import { stationsFor } from '../world/narrative';
+import { placeColor } from '../design/tokens';
 import { isOpen, place, stationContentById } from '../content';
 import Dialog from './Dialog';
 import StationBody from './RichText';
 
-/** Interface d'un intérieur : titre du lieu, stations à rejoindre, lecture et sortie. */
+/** Intérieur : nom du lieu, stations à rejoindre, lecture et sortie. */
 export default function InteriorHUD() {
   const state = useGame();
   if (!state.interior) return null;
   const id = state.interior;
   const content = place(id);
   const busy = state.phase !== 'explore';
+  const overlay = state.reading || state.map || state.help;
   // Seuls les emplacements qui ont un contenu sont proposés au visiteur.
-  const stations = stationsFor(id).filter((s) => stationContentById(id, s.id));
+  const slots = stationsFor(id);
+  const stations = slots.filter((s) => stationContentById(id, s.id));
   const active = stationContentById(id, state.station);
-  const readingIndex = stations.findIndex((s) => s.id === state.reading);
   const reading = stationContentById(id, state.reading);
-  const count = stations.filter((s) => state.seen.includes(id + ':' + s.id)).length;
+  const readingIndex = stations.findIndex((s) => s.id === state.reading);
+  const read = stations.filter((s) => state.seen.includes(id + ':' + s.id)).length;
   return (
-    <>
-      <div className='interior-title'>
-        <span className='eyebrow'>{content.titre}</span>
-        <strong>{content.sous_titre}</strong>
+    <div className='interior-hud' style={{ '--place': placeColor[id] } as CSSProperties}>
+      <div className='interior-title panel'>
+        <strong>{content.titre}</strong>
         <span>
           {isOpen(id)
-            ? `${count} station${count > 1 ? 's' : ''} lue${count > 1 ? 's' : ''} sur ${stations.length}`
+            ? `${read} station${read > 1 ? 's' : ''} sur ${stations.length}`
             : 'Bientôt. Je prépare le contenu de ce lieu.'}
           {content.apercu && ' · brouillon'}
         </span>
       </div>
-      {stations.length > 0 && (
-        <nav className='station-nav' aria-label='Stations du lieu'>
-          {stations.map((s, i) => {
-            const title = stationContentById(id, s.id)!.titre;
-            return (
-              <button
-                key={s.id}
-                disabled={busy}
-                className={state.station === s.id ? 'active' : ''}
-                onClick={() => guideToStation(stationsFor(id).indexOf(s))}
-                title={title}
-                aria-label={`Rejoindre la station ${i + 1} : ${title}`}
-              >
-                {i + 1}
-                {state.seen.includes(id + ':' + s.id) && <i />}
-              </button>
-            );
-          })}
-        </nav>
+      {!overlay && !busy && active ? (
+        <div className='place-card panel'>
+          <div className='place-card-text'>
+            <strong>{active.titre}</strong>
+            <span>Station {stations.findIndex((s) => s.id === state.station) + 1}</span>
+          </div>
+          <button className='action-primary' onClick={interact}>
+            <kbd>E</kbd> Lire
+          </button>
+        </div>
+      ) : (
+        stations.length > 0 &&
+        !overlay && (
+          <nav className='station-nav panel' aria-label='Stations du lieu'>
+            {stations.map((s, i) => {
+              const title = stationContentById(id, s.id)!.titre;
+              return (
+                <button
+                  key={s.id}
+                  disabled={busy}
+                  className={state.seen.includes(id + ':' + s.id) ? 'seen' : ''}
+                  onClick={() => guideToStation(slots.indexOf(s))}
+                  title={title}
+                  aria-label={`Aller à la station ${i + 1} : ${title}`}
+                >
+                  {i + 1}
+                </button>
+              );
+            })}
+          </nav>
+        )
       )}
-      {!busy && !state.reading && !state.map && !state.help && active && (
-        <button className='interaction' onClick={interact}>
-          <kbd>E</kbd>
-          <span>
-            Lire la station<strong>{active.titre}</strong>
-          </span>
-        </button>
-      )}
-      <button className='exit-interior' disabled={busy} onClick={guideExit}>
-        Rejoindre la sortie
+      <button className='exit-button panel' disabled={busy} onClick={guideExit}>
+        Sortir
       </button>
       {reading && (
         <Dialog
           title={reading.titre}
-          eyebrow={`Station ${readingIndex + 1} sur ${stations.length}`}
+          eyebrow={`${content.titre} · station ${readingIndex + 1} sur ${stations.length}`}
           close={() => setState({ reading: null })}
-          className='detail-dialog'
+          className='reading-dialog'
         >
           <StationBody station={reading} />
-          <button className='primary' onClick={() => setState({ reading: null })}>
-            Reprendre la visite
+          <button className='button-primary' onClick={() => setState({ reading: null })}>
+            Continuer la visite
           </button>
         </Dialog>
       )}
-    </>
+    </div>
   );
 }

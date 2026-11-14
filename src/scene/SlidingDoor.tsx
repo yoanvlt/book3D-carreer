@@ -1,8 +1,9 @@
+import { color as C } from '../design/tokens';
 import { useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import type { Group } from 'three';
 import { getState, passage } from '../state';
-import { COLORS as C, type BuildingId } from '../world/config';
+import { type BuildingId } from '../world/config';
 import { Box } from './Primitives';
 
 /** Both sides of a portal use the same explicit openness, including after a scene swap. */

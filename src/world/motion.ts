@@ -12,7 +12,7 @@ import {
 import { buildings, entrance, localToWorld, type Point } from './config';
 import { heightAt } from './terrain';
 import { moveWithCollisions } from './collision';
-import { moveIndoors } from './narrative';
+import { moveIndoors, ROOM } from './narrative';
 import { ease } from './cinematics';
 
 export const angleDifference = (a: number, b: number) => Math.atan2(Math.sin(a - b), Math.cos(a - b));
@@ -160,7 +160,7 @@ export function tickMotion(delta: number) {
     }
     if (t >= 0.28) {
       passage.fade = 0;
-      passage.to = passage.leaving ? entrance(b) : [0, 14];
+      passage.to = passage.leaving ? entrance(b) : ROOM.arrival;
       stage('emerging');
     }
   } else if (passage.stage === 'emerging') {

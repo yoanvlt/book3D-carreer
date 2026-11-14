@@ -2,10 +2,11 @@ import { useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { RoundedBox } from '@react-three/drei';
 import * as THREE from 'three';
+import { color as C } from '../design/tokens';
 import { player, getState } from '../state';
 import { Box, Cylinder, Ball, material } from './Primitives';
 import { angleDifference } from '../world/motion';
-import { COLORS as C, buildings } from '../world/config';
+import { buildings } from '../world/config';
 
 export default function Robot() {
   const root = useRef<THREE.Group>(null!),
@@ -96,9 +97,9 @@ export default function Robot() {
           material={material(C.cream)}
           castShadow
         />
-        <Box p={[0, 1.08, 0.34]} s={[0.49, 0.36, 0.035]} color={C.coral} />
+        <Box p={[0, 1.08, 0.34]} s={[0.49, 0.36, 0.035]} color={C.orange} />
         <Box p={[0, 1.09, 0.365]} s={[0.25, 0.06, 0.02]} color={C.cream} />
-        <Box p={[0, 1, -0.4]} s={[0.61, 0.6, 0.25]} color={C.coral} />
+        <Box p={[0, 1, -0.4]} s={[0.61, 0.6, 0.25]} color={C.orange} />
         <Box p={[0, 1.04, -0.54]} s={[0.39, 0.3, 0.05]} color={C.ink} />
         <Cylinder p={[0, 1.53, 0]} s={[0.19, 0.2, 0.19]} color={C.ink} />
         <group ref={head} position={[0, 1.53, 0]}>
@@ -126,7 +127,7 @@ export default function Robot() {
                 radius={0.045}
                 smoothness={2}
                 position={[x, 1.98, 0.5]}
-                material={material('#bce0e3')}
+                material={material('#b8e3e7')}
               />
             ))}
             {[-0.6, 0.6].map((x) => (
@@ -135,18 +136,18 @@ export default function Robot() {
                 p={[x, 1.94, 0]}
                 s={[0.18, 0.17, 0.18]}
                 r={[0, 0, Math.PI / 2]}
-                color={C.coral}
+                color={C.orange}
               />
             ))}
             <Cylinder p={[0.33, 2.43, -0.08]} s={[0.035, 0.32, 0.035]} color={C.ink} />
-            <Ball p={[0.33, 2.62, -0.08]} s={[0.1, 0.1, 0.1]} color={C.coral} />
+            <Ball p={[0.33, 2.62, -0.08]} s={[0.1, 0.1, 0.1]} color={C.orange} />
           </group>
         </group>
         {[-1, 1].map((side) => (
           <group key={side} ref={side < 0 ? armL : armR} position={[side * 0.52, 1.3, 0]}>
             <Ball s={[0.16, 0.16, 0.16]} color={C.ink} />
             <Box p={[0, -0.25, 0]} s={[0.2, 0.43, 0.24]} color={C.cream} />
-            <Ball p={[0, -0.51, 0.03]} s={[0.15, 0.15, 0.16]} color={C.coral} />
+            <Ball p={[0, -0.51, 0.03]} s={[0.15, 0.15, 0.16]} color={C.orange} />
           </group>
         ))}
       </group>
@@ -158,7 +159,7 @@ export default function Robot() {
             radius={0.09}
             smoothness={2}
             position={[0, -0.49, 0.09]}
-            material={material(C.coral)}
+            material={material(C.orange)}
             castShadow
           />
           <Box p={[0, -0.62, 0.09]} s={[0.34, 0.06, 0.54]} color={C.ink} />

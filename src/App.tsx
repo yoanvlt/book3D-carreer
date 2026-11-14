@@ -39,12 +39,7 @@ export default function App() {
       <div id='scene-curtain' aria-hidden='true' />
       <StatusLayer />
       {state.map && (
-        <Dialog
-          title='Plan de la ville'
-          eyebrow='Plan'
-          close={() => setState({ map: false })}
-          className='map-dialog'
-        >
+        <Dialog title='Plan de la ville' close={() => setState({ map: false })} className='map-dialog'>
           <Map />
         </Dialog>
       )}

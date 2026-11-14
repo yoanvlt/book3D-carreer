@@ -9,8 +9,9 @@ import Environment from './Environment';
 import Robot from './Robot';
 import Controller from './Controller';
 import CameraRig from './CameraRig';
-import { SkyDome, ThemeApplier } from './Atmosphere';
-import { theme } from '../theme';
+import { SkyDome } from './Atmosphere';
+import { scene } from '../design/tokens';
+import * as THREE from 'three';
 import { useGame, setState, getState, player, cameraMode, passage } from '../state';
 
 function Runtime() {
@@ -58,22 +59,22 @@ export default function World() {
     <Canvas
       shadows={quality === 'high' ? 'soft' : false}
       dpr={quality === 'high' ? [1, 1.5] : 1}
-      camera={{ position: [78, 86, 100], fov: 41, near: 0.1, far: theme.sky ? 1400 : 420 }}
+      camera={{ position: [78, 86, 100], fov: 41, near: 0.1, far: 1400 }}
       gl={{
         antialias: true,
         powerPreference: 'high-performance',
-        toneMapping: theme.toneMapping,
-        toneMappingExposure: theme.exposure,
+        toneMapping: THREE.NeutralToneMapping,
+        toneMappingExposure: scene.exposure,
       }}
       onCreated={({ gl }) => {
-        gl.setClearColor(theme.sky ? theme.sky.horizon : '#e8cdaa');
+        gl.setClearColor(scene.sky.horizon);
       }}
     >
-      <hemisphereLight args={[theme.hemi.sky, theme.hemi.ground, theme.hemi.intensity]} />
+      <hemisphereLight args={[scene.hemisphere.sky, scene.hemisphere.ground, scene.hemisphere.intensity]} />
       <directionalLight
-        position={theme.sun.position}
-        intensity={theme.sun.intensity}
-        color={theme.sun.color}
+        position={scene.sun.position}
+        intensity={scene.sun.intensity}
+        color={scene.sun.color}
         castShadow={quality === 'high'}
         shadow-mapSize={[2048, 2048]}
         shadow-camera-left={-65}
@@ -90,8 +91,8 @@ export default function World() {
         <Interior />
       ) : (
         <>
-          {theme.sky ? <SkyDome /> : <color attach='background' args={['#e8cdaa']} />}
-          {theme.fog && <fog attach='fog' args={[theme.fog.color, theme.fog.near, theme.fog.far]} />}
+          <SkyDome />
+          <fog attach='fog' args={[scene.fog.color, scene.fog.near, scene.fog.far]} />
           <Terrain />
           <Buildings />
           <Environment />
@@ -103,7 +104,6 @@ export default function World() {
       <CameraRig />
       <CinematicCamera />
       <Runtime />
-      <ThemeApplier />
     </Canvas>
   );
 }

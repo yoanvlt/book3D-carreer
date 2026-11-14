@@ -18,12 +18,7 @@ export default function HelpDialog() {
   const state = useGame();
   if (!state.help) return null;
   return (
-    <Dialog
-      title='Commandes et réglages'
-      eyebrow='Aide'
-      close={() => setState({ help: false })}
-      className='help-dialog'
-    >
+    <Dialog title='Aide et réglages' close={() => setState({ help: false })} className='help-dialog'>
       <dl className='controls-list'>
         {CONTROLS.map(([label, keys]) => (
           <div key={label}>
@@ -66,7 +61,7 @@ export default function HelpDialog() {
       <p className='help-links'>
         <a href='?lecture'>Lire le portfolio en version texte</a>
       </p>
-      <button className='secondary' onClick={resetPlayer}>
+      <button className='button-secondary' onClick={resetPlayer}>
         Revenir sur la place centrale
       </button>
     </Dialog>

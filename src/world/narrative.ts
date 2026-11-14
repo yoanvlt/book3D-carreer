@@ -36,7 +36,14 @@ export function stationsFor(id: BuildingId): Station[] {
   return stations;
 }
 
-export const ROOM = { halfWidth: 11, halfDepth: 18, spawn: [0, 11] as Point, exit: [0, 16] as Point };
+export const ROOM = {
+  halfWidth: 11,
+  halfDepth: 18,
+  spawn: [0, 11] as Point,
+  exit: [0, 16] as Point,
+  /** Point atteint après la porte : assez loin du seuil pour que la caméra voie la salle. */
+  arrival: [0, 8.5] as Point,
+};
 export function indoorBlocked(x: number, z: number, id: BuildingId) {
   if (Math.abs(x) > ROOM.halfWidth - 0.7 || Math.abs(z) > ROOM.halfDepth - 0.8) return true;
   if ([-9, 9].some((px) => Math.hypot(x - px, z - 14.8) < 1.65)) return true;

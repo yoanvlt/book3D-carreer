@@ -19,37 +19,32 @@ function Brand() {
   );
 }
 
+/** Marque (retour à la vue d'ensemble), plan et aide. */
 export default function Header() {
   const state = useGame();
   const busy = state.phase !== 'home' && state.phase !== 'explore';
   return (
     <header className='topbar'>
       <button
-        className='brand-button'
+        className='brand-button panel'
         disabled={busy || !!state.interior}
-        aria-label='Revenir à la vue aérienne'
+        aria-label='Revenir à la vue d’ensemble'
         onClick={goHome}
       >
         <Brand />
       </button>
-      <span className='header-caption'>LE PORTFOLIO À EXPLORER</span>
       <div className='header-actions'>
-        <button
-          className='text-button'
-          disabled={busy}
-          aria-label='Ouvrir le plan'
-          onClick={() => showPanel('map')}
-        >
+        <button className='plan-button panel' disabled={busy} onClick={() => showPanel('map')}>
           <svg viewBox='0 0 24 24' aria-hidden='true'>
             <path d='m3 5 6-2 6 2 6-2v16l-6 2-6-2-6 2Zm6-2v16m6-14v16' />
           </svg>
-          <span>Le plan</span>
+          <span>Plan</span>
           <kbd>M</kbd>
         </button>
         <button
-          className='help-button'
+          className='help-button panel'
           disabled={busy}
-          aria-label='Commandes et réglages'
+          aria-label='Aide et réglages'
           onClick={() => showPanel('help')}
         >
           ?

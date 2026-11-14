@@ -8,7 +8,7 @@ export default function Dialog({
   className = '',
 }: {
   title: string;
-  eyebrow: string;
+  eyebrow?: string;
   close: () => void;
   children: ReactNode;
   className?: string;
@@ -68,11 +68,13 @@ export default function Dialog({
       >
         <div className='dialog-heading'>
           <div>
-            <span className='eyebrow'>{eyebrow}</span>
+            {eyebrow && <p className='dialog-eyebrow'>{eyebrow}</p>}
             <h2 id={titleId}>{title}</h2>
           </div>
           <button className='close' aria-label='Fermer' onClick={close}>
-            ×
+            <svg viewBox='0 0 24 24' aria-hidden='true'>
+              <path d='M6 6l12 12M18 6 6 18' />
+            </svg>
           </button>
         </div>
         {children}

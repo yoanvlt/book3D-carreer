@@ -33,6 +33,8 @@ type State = {
   seen: string[];
   notice: string;
   showcase: BuildingId | null;
+  /** Le visiteur a déjà marché : l'aide clavier n'est plus affichée. */
+  moved: boolean;
 };
 let state: State = {
   phase: 'home',
@@ -52,6 +54,7 @@ let state: State = {
   seen: [],
   notice: '',
   showcase: null,
+  moved: false,
 };
 const listeners = new Set<() => void>();
 export const getState = () => state;

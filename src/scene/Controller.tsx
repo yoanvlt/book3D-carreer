@@ -16,7 +16,6 @@ import {
 import { WORLD, CAMERA, buildings, entrance } from '../world/config';
 import { heightAt } from '../world/terrain';
 import { moveWithCollisions } from '../world/collision';
-import { maxCameraDistance } from '../theme';
 
 export default function Controller() {
   const keys = useRef(new Set<string>()),
@@ -64,6 +63,11 @@ export default function Controller() {
         return;
       }
       held.add(k);
+      if (
+        !state.moved &&
+        ['w', 'z', 'a', 'q', 's', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(k)
+      )
+        window.setTimeout(() => setState({ moved: true }), 1500);
     }
     const up = (e: KeyboardEvent) => held.delete(e.key.toLowerCase());
     const clear = () => {
@@ -112,7 +116,10 @@ export default function Controller() {
         !getState().detail
       ) {
         e.preventDefault();
-        view.distance = Math.max(10, Math.min(maxCameraDistance, view.distance + e.deltaY * 0.008));
+        view.distance = Math.max(
+          CAMERA.minDistance,
+          Math.min(CAMERA.maxDistance, view.distance + e.deltaY * 0.008),
+        );
       }
     };
     window.addEventListener('keydown', down);
