@@ -878,6 +878,10 @@ kbd {
   .hero-actions .button-primary {
     flex: 1;
   }
+  /* Pas de clavier sur téléphone : les rappels de touches sont masqués. */
+  :is(.action-primary, .action-secondary, .plan-button) kbd {
+    display: none;
+  }
   .hero-actions .button-secondary {
     background: var(--paper-muted);
   }
