@@ -11,7 +11,7 @@ import { heightAt } from '../world/terrain';
 import { cumulative, pointAlong } from '../world/timing';
 import { player, getState } from '../state';
 import { material } from './Primitives';
-import type { Point } from '../world/config';
+import { buildings, localToWorld, type BuildingId, type Point } from '../world/config';
 
 const temp = new THREE.Object3D();
 
@@ -200,12 +200,157 @@ function Walkers() {
   );
 }
 
+/** Horloge des animations discrètes (drapeau, eau) ; figée en mouvement réduit. */
+const lifeTime = { value: 0 };
+
+/** Place un objet en coordonnées locales d'un bâtiment (x, y au-dessus du socle, z). */
+function onBuilding(id: BuildingId, x: number, y: number, z: number) {
+  const b = buildings.find((b) => b.id === id)!;
+  const [wx, wz] = localToWorld(b, x, z);
+  return {
+    position: [wx, b.elevation + y, wz] as [number, number, number],
+    rotation: [0, b.rotation, 0] as [number, number, number],
+  };
+}
+
+/** Drapeau qui ondule au mât de la galerie : toile subdivisée, onde dans le shader, bande blanche. */
+function Flag() {
+  const cloth = useMemo(() => {
+    const m = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.9, side: THREE.DoubleSide });
+    m.onBeforeCompile = (shader) => {
+      shader.uniforms.lifeTime = lifeTime;
+      shader.vertexShader =
+        'uniform float lifeTime;\n' +
+        shader.vertexShader.replace(
+          '#include <begin_vertex>',
+          `#include <begin_vertex>
+        float pin = (position.x + 0.8) / 1.6;
+        transformed.z += sin(position.x * 4.0 - lifeTime * 5.0) * 0.14 * pin;
+        transformed.y += sin(position.x * 3.0 - lifeTime * 4.0) * 0.03 * pin;`,
+        );
+    };
+    m.customProgramCacheKey = () => 'flag';
+    return m;
+  }, []);
+  const geometry = useMemo(() => {
+    const g = new THREE.PlaneGeometry(1.6, 1, 16, 6);
+    const colors: number[] = [];
+    const teal = new THREE.Color(C.teal);
+    const white = new THREE.Color(C.white);
+    const position = g.attributes.position;
+    for (let i = 0; i < position.count; i++) {
+      const c = Math.abs(position.getY(i)) < 0.12 ? white : teal;
+      colors.push(c.r, c.g, c.b);
+    }
+    g.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+    return g;
+  }, []);
+  const at = onBuilding('missions', -6.3, 0, 3.9);
+  return (
+    <group {...at}>
+      <mesh position={[0, 3.5, 0]} material={material(C.ink, { rough: 0.4, metal: 0.4 })} castShadow>
+        <cylinderGeometry args={[0.05, 0.07, 7, 8]} />
+      </mesh>
+      <mesh position={[0, 7.05, 0]} material={material(C.yellow, { rough: 0.3, metal: 0.5 })}>
+        <sphereGeometry args={[0.1, 10, 8]} />
+      </mesh>
+      <mesh position={[0.82, 6.35, 0]} geometry={geometry} material={cloth} castShadow />
+    </group>
+  );
+}
+
+/** Girouette au sommet de la tour du Profil : flèche, empennage, croix des points cardinaux. */
+function Weathervane() {
+  const vane = useRef<THREE.Group>(null!);
+  useFrame(({ clock }) => {
+    if (getState().reducedMotion) return;
+    const t = clock.elapsedTime;
+    vane.current.rotation.y = 0.8 + Math.sin(t * 0.21) * 0.5 + Math.sin(t * 0.67) * 0.12;
+  });
+  const at = onBuilding('profile', -5.6, 22.0, -3.2);
+  const iron = material(C.ink, { rough: 0.4, metal: 0.5 });
+  return (
+    <group {...at}>
+      {[0, Math.PI / 2].map((r) => (
+        <mesh key={r} position={[0, -0.25, 0]} rotation={[0, r, 0]} material={iron}>
+          <boxGeometry args={[0.9, 0.03, 0.03]} />
+        </mesh>
+      ))}
+      <group ref={vane}>
+        <mesh material={iron} castShadow>
+          <boxGeometry args={[1.3, 0.04, 0.04]} />
+        </mesh>
+        <mesh position={[0.68, 0, 0]} rotation={[0, 0, -Math.PI / 2]} material={iron}>
+          <coneGeometry args={[0.08, 0.2, 6]} />
+        </mesh>
+        <mesh position={[-0.58, 0.08, 0]} material={material(C.orange, { rough: 0.4, metal: 0.4 })}>
+          <boxGeometry args={[0.3, 0.26, 0.02]} />
+        </mesh>
+      </group>
+    </group>
+  );
+}
+
+/** Eau des bassins de Veolia : rides qui avancent lentement, reflets. */
+function BasinWater() {
+  const water = useMemo(() => {
+    const m = new THREE.MeshStandardMaterial({ color: '#5fa7bd', roughness: 0.18, metalness: 0.15 });
+    m.onBeforeCompile = (shader) => {
+      shader.uniforms.lifeTime = lifeTime;
+      shader.vertexShader =
+        'varying vec3 vWaterPos;\n' +
+        shader.vertexShader.replace(
+          '#include <begin_vertex>',
+          '#include <begin_vertex>\nvWaterPos = position;',
+        );
+      shader.fragmentShader =
+        'uniform float lifeTime;\nvarying vec3 vWaterPos;\n' +
+        shader.fragmentShader.replace(
+          '#include <color_fragment>',
+          `#include <color_fragment>
+        float w = sin(vWaterPos.x * 3.1 + lifeTime * 1.3) * sin(vWaterPos.y * 2.7 - lifeTime * 0.9);
+        float r = sin(length(vWaterPos.xy) * 6.0 - lifeTime * 1.6);
+        diffuseColor.rgb *= 0.9 + 0.12 * w + 0.06 * r;`,
+        );
+    };
+    m.customProgramCacheKey = () => 'basin-water';
+    return m;
+  }, []);
+  const basin = onBuilding('veolia', -5.75, 1.03, 2.6);
+  const clarifier = onBuilding('veolia', 5.8, 1.41, 2.7);
+  return (
+    <>
+      <group {...basin}>
+        <mesh rotation={[-Math.PI / 2, 0, 0]} material={water} receiveShadow>
+          <planeGeometry args={[4.8, 5.4]} />
+        </mesh>
+      </group>
+      <group {...clarifier}>
+        <mesh rotation={[-Math.PI / 2, 0, 0]} material={water} receiveShadow>
+          <circleGeometry args={[2.45, 40]} />
+        </mesh>
+      </group>
+    </>
+  );
+}
+
+function Clock() {
+  useFrame(({ clock }) => {
+    if (!getState().reducedMotion) lifeTime.value = clock.elapsedTime;
+  });
+  return null;
+}
+
 export default function Life() {
   return (
     <>
+      <Clock />
       <Fountain />
       <Birds />
       <Walkers />
+      <Flag />
+      <Weathervane />
+      <BasinWater />
     </>
   );
 }
