@@ -1,5 +1,8 @@
 import { useEffect } from 'react';
 import * as game from '../state';
+import { photo } from '../scene/photo';
+import { buildings, type BuildingId } from '../world/config';
+import { ROOM } from '../world/narrative';
 
 /** `?debug=1` : relevé de rendu (FPS, draw calls) et commandes pour les captures automatiques. */
 export const debugEnabled = new URLSearchParams(window.location.search).has('debug');
@@ -21,6 +24,31 @@ const hooks = {
   leave: game.guideExit,
   goHome: game.goHome,
   setState: game.setState,
+  /** Caméra fixe pour les captures de détail ; `photo(null)` rend la caméra au robot. */
+  photo: (
+    shot: { position: [number, number, number]; target: [number, number, number]; fov?: number } | null,
+  ) => {
+    if (!shot) photo.active = false;
+    else Object.assign(photo, { active: true, fov: 40, ...shot });
+  },
+  /** Géométrie des bâtiments, pour placer les caméras de capture. */
+  layout: () =>
+    buildings.map(({ id, position, rotation, size, height, elevation }) => ({
+      id,
+      position,
+      rotation,
+      size,
+      height,
+      elevation,
+    })),
+  /** Entre directement dans un intérieur, sans la séquence de porte. */
+  visit: (id: BuildingId | null) => {
+    game.player.x = id ? ROOM.spawn[0] : game.player.x;
+    game.player.z = id ? ROOM.spawn[1] : game.player.z;
+    game.player.y = 0;
+    game.player.teleport++;
+    game.setState({ interior: id, phase: 'explore', nearby: null, station: null });
+  },
 };
 
 export default function Debug() {

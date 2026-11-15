@@ -19,7 +19,8 @@
     "capture:apercu": "node scripts/capture-apercu.mjs",
     "temps-morts": "node scripts/temps-morts.mjs",
     "sons": "python3 scripts/sons.py",
-    "knip": "knip"
+    "knip": "knip",
+    "capture:details": "node scripts/capture-details.mjs"
   },
   "dependencies": {
     "@fontsource-variable/bricolage-grotesque": "^5.3.0",
