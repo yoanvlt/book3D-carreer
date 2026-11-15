@@ -75,15 +75,40 @@ const SHELVES: Footprint[] = [
   [-9.75, ROWS[3], 0.55, 1.6],
 ];
 export const FURNITURE: Record<BuildingId, Footprint[]> = {
-  profile: [...SHELVES, [-2.2, BACK, 2.2, 0.6], [3.4, BACK, 0.8, 0.7]],
-  'project-1': [[0, BACK, 2.6, 0.7]],
-  'project-2': [[0, BACK + 0.2, 3.2, 0.55]],
-  'project-3': [[0, BACK, 1.1, 0.9]],
+  // Bibliothèques, canapé, fauteuil, table basse, guéridon.
+  profile: [
+    ...SHELVES,
+    [-2.2, BACK, 2.2, 0.6],
+    [3.4, BACK, 0.8, 0.7],
+    [-2.2, BACK + 1.7, 0.8, 0.4],
+    [8.6, -12, 0.6, 0.6],
+  ],
+  // Paillasse, bras robotisé, baie de serveurs, imprimantes.
+  'project-1': [
+    [0, BACK, 2.6, 0.7],
+    [-8.6, -12, 0.8, 0.6],
+    [8.9, -12, 0.7, 0.6],
+  ],
+  // Établi, tour, perceuse à colonne.
+  'project-2': [
+    [0, BACK + 0.2, 3.2, 0.55],
+    [-8.4, -12.1, 1.2, 0.5],
+    [8.6, -12, 0.6, 0.6],
+  ],
+  // Estrade du télescope, son escalier, sphère armillaire.
+  'project-3': [
+    [6.6, -11.6, 2.9, 1.0],
+    [2.6, -12.1, 1.1, 0.5],
+    [-9.2, -12, 0.6, 0.6],
+  ],
+  // Socles de sculptures et banc de galerie.
   missions: [
     [-3, BACK, 0.6, 0.6],
     [3, BACK, 0.6, 0.6],
+    [0, BACK + 2.3, 1.5, 0.4],
   ],
-  veolia: [[0, BACK, 3, 0.6]],
+  // Pupitres de la salle de contrôle.
+  veolia: [[0, BACK, 3.6, 0.7]],
 };
 /** Colonnes techniques de Veolia, dans les coins du fond. */
 export const VEOLIA_COLUMNS: Point[] = [
