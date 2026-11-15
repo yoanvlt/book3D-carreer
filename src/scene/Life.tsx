@@ -11,6 +11,7 @@ import { heightAt } from '../world/terrain';
 import { cumulative, pointAlong } from '../world/timing';
 import { player, getState } from '../state';
 import { material } from './Primitives';
+import { BASIN, CLARIFIER } from './buildings/Veolia';
 import { buildings, localToWorld, type BuildingId, type Point } from '../world/config';
 
 const temp = new THREE.Object3D();
@@ -316,18 +317,18 @@ function BasinWater() {
     m.customProgramCacheKey = () => 'basin-water';
     return m;
   }, []);
-  const basin = onBuilding('veolia', -5.75, 1.03, 2.6);
-  const clarifier = onBuilding('veolia', 5.8, 1.41, 2.7);
+  const basin = onBuilding('veolia', BASIN.x, 1.03, BASIN.z);
+  const clarifier = onBuilding('veolia', CLARIFIER.x, 1.41, CLARIFIER.z);
   return (
     <>
       <group {...basin}>
         <mesh rotation={[-Math.PI / 2, 0, 0]} material={water} receiveShadow>
-          <planeGeometry args={[4.8, 5.4]} />
+          <planeGeometry args={[BASIN.w, BASIN.d]} />
         </mesh>
       </group>
       <group {...clarifier}>
         <mesh rotation={[-Math.PI / 2, 0, 0]} material={water} receiveShadow>
-          <circleGeometry args={[2.45, 40]} />
+          <circleGeometry args={[CLARIFIER.r - 0.05, 40]} />
         </mesh>
       </group>
     </>
