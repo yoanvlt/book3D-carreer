@@ -3,9 +3,9 @@
  * lanterneau vitré ; en façade, une colonnade portant un entablement, des bannières suspendues et
  * deux vitrines éclairées ; de part et d'autre, deux jardins de sculptures. Emprise 14 × 9, porte en z = 5.
  */
-import { Ball, Box, Cylinder, FINISH, Rod, Sign, Torus, times, type V3 } from '../Primitives';
+import { Ball, Box, Cylinder, FINISH, Ramp, Rod, Sign, Torus, times, type V3 } from '../Primitives';
 import { Fine } from '../StaticBatch';
-import { Downpipe, GableRoof, GlassRoof, Volume, Window } from '../kit';
+import { DoorSet, Downpipe, GableRoof, GlassRoof, Volume, Window } from '../kit';
 import { color as C } from '../../design/tokens';
 import { place } from '../../content';
 
@@ -202,15 +202,20 @@ export default function Atelier() {
       <GableRoof y={6.2} w={10.8} d={8.9} h={1.7} color={TEAL} gable={STONE} overhang={0.35} z={-0.25} />
       <GlassRoof p={[0, 7.3, -0.25]} w={6} d={2.2} h={0.8} />
       {/* Colonnade et entablement. */}
-      {[-4.4, -2.2, 2.2, 4.4].map((x) => (
-        <Column key={x} p={[x, 0, 4.3]} h={5.1} />
+      {/* Portique : quatre colonnes devant la porte, entablement porté, plafond à caissons. */}
+      <Box p={[0, 0.08, 4.65]} s={[10.4, 0.16, 1.5]} color={STONE} finish={FINISH.stone} />
+      {[-4.75, -2.75, 2.75, 4.75].map((x) => (
+        <Column key={x} p={[x, 0.16, 5.2]} h={4.95} />
       ))}
-      <Box p={[0, 5.35, 4.1]} s={[10.2, 0.5, 0.9]} color={STONE} finish={FINISH.stone} />
-      <Box p={[0, 5.8, 4.1]} s={[10.2, 0.4, 0.86]} color={TEAL} finish={FINISH.paint} />
-      <Box p={[0, 6.1, 4.15]} s={[10.6, 0.2, 1.05]} color={C.white} />
+      <Box p={[0, 5.35, 4.75]} s={[10.2, 0.5, 1.7]} color={STONE} finish={FINISH.stone} />
+      <Box p={[0, 5.8, 4.75]} s={[10.2, 0.4, 1.66]} color={TEAL} finish={FINISH.paint} />
+      <Box p={[0, 6.1, 4.8]} s={[10.6, 0.2, 1.85]} color={C.white} />
+      {[-3.75, 0, 3.75].map((x) => (
+        <Box key={x} p={[x, 5.08, 4.75]} s={[1.6, 0.04, 1.2]} color='#e2dccf' shadow={false} />
+      ))}
       <Sign
         text={place('missions').enseigne}
-        p={[0, 5.8, 4.55]}
+        p={[0, 5.8, 5.59]}
         s={[4.2, 0.36]}
         color={C.white}
         bg={TEAL}
@@ -220,7 +225,7 @@ export default function Atelier() {
         {times(16, (i, n) => (
           <Box
             key={i}
-            p={[-5 + (10 * i) / (n - 1), 5.06, 4.56]}
+            p={[-5 + (10 * i) / (n - 1), 5.06, 5.61]}
             s={[0.12, 0.1, 0.06]}
             color={C.white}
             shadow={false}
@@ -228,12 +233,60 @@ export default function Atelier() {
         ))}
       </Fine>
       {/* Bannières entre les colonnes, vitrines au pied. */}
-      {[-3.3, 3.3].map((x, i) => (
+      {[-3.75, 3.75].map((x, i) => (
         <group key={x}>
-          <Banner p={[x, 5.0, 4.15]} color={BANNERS[i * 3]} motif={i * 3} />
-          <Showcase p={[x, 0, 3.95]} object={i} />
+          <Banner p={[x, 5.0, 4.4]} color={BANNERS[i * 3]} motif={i * 3} />
+          <Showcase p={[x, 0.16, 3.95]} object={i} />
         </group>
       ))}
+      {/* Arrière : quai de manutention des œuvres avec rampe, fenêtres hautes, local technique. */}
+      <DoorSet
+        p={[1.6, 0.3, -4.5]}
+        ry={Math.PI}
+        w={2.4}
+        h={3}
+        double
+        leaf={TEAL_DARK}
+        glazed={false}
+        canopy='flat'
+        canopyColor={TEAL}
+        lamps={false}
+        number='L'
+      />
+      <Ramp
+        p={[1.6, 0, -5.0]}
+        s={[1.0, 0.3, 2.6]}
+        r={[0, -Math.PI / 2, 0]}
+        color={STONE}
+        finish={FINISH.concrete}
+      />
+      {[-3.4, 4.2].map((x) => (
+        <Window
+          key={x}
+          p={[x, 4.0, -4.5]}
+          ry={Math.PI}
+          w={1.2}
+          h={2.2}
+          cols={1}
+          rows={3}
+          wall={STONE}
+          lintel={C.white}
+        />
+      ))}
+      <group position={[-2.2, 0, -4.9]}>
+        <Box p={[0, 1.0, 0]} s={[2.2, 2.0, 0.8]} color={STONE} finish={FINISH.stone} />
+        <Box p={[0, 2.05, 0]} s={[2.3, 0.1, 0.9]} color={TEAL} />
+        <Fine>
+          <Box p={[0.4, 1.0, -0.41]} s={[0.8, 1.6, 0.02]} color={TEAL_DARK} shadow={false} />
+          <Box
+            p={[-0.5, 1.4, -0.41]}
+            s={[0.6, 0.4, 0.02]}
+            color={C.concrete}
+            finish={FINISH.slats}
+            shadow={false}
+          />
+        </Fine>
+      </group>
       <Sculptures side={-1} />
       <Sculptures side={1} />
     </>
