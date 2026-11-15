@@ -21,7 +21,7 @@ function Inlines({ items }: { items: Inline[] }) {
   );
 }
 
-export function Blocks({ blocks }: { blocks: Block[] }) {
+function Blocks({ blocks }: { blocks: Block[] }) {
   return (
     <>
       {blocks.map((block, i) =>
@@ -43,7 +43,7 @@ export function Blocks({ blocks }: { blocks: Block[] }) {
   );
 }
 
-export function MediaItem({ media }: { media: Media }) {
+function MediaItem({ media }: { media: Media }) {
   if (media.type === 'image')
     return (
       <figure className='media'>

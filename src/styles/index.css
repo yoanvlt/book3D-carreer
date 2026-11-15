@@ -1,0 +1,20 @@
+/*
+ * Interface CareerVerse, direction A « Diorama ».
+ * Les valeurs (couleurs, tailles, espacements, rayons, ombres) viennent de src/design/tokens.ts,
+ * injectées en variables CSS au démarrage. Aucun texte d'information sous 13 px.
+ *
+ * Une feuille par zone d'interface, importées dans l'ordre de la cascade : les règles des grands
+ * écrans, des écrans moyens et du téléphone (10-responsive) viennent après celles qu'elles ajustent.
+ */
+@import './01-base.css';
+@import './02-layout.css';
+@import './03-header.css';
+@import './04-home.css';
+@import './05-explore.css';
+@import './06-presentation.css';
+@import './07-interior.css';
+@import './08-dialogs.css';
+@import './09-readable.css';
+@import './10-responsive.css';
+@import './11-passport.css';
+@import './12-touch.css';

@@ -20,6 +20,7 @@ import {
   type StationContent,
 } from './schema';
 
+/** @public Utilisé par les tests ou les scripts. */
 export class ContentError extends Error {
   constructor(
     readonly file: string,
@@ -55,7 +56,7 @@ function splitFrontmatter(source: string, file: string) {
   return { data, body: match[2] };
 }
 
-/** Gras, italique et liens dans une ligne de texte. */
+/** Gras, italique et liens dans une ligne de texte. @public */
 export function parseInline(text: string): Inline[] {
   const out: Inline[] = [];
   const pattern = /\[([^\]]+)\]\(([^)\s]+)\)|\*\*([^*]+)\*\*|\*([^*]+)\*|_([^_]+)_/g;
@@ -73,7 +74,7 @@ export function parseInline(text: string): Inline[] {
 
 const VIDEO = /\.(mp4|webm|mov)$/i;
 
-/** Corps Markdown → stations. Chaque titre « ## » ouvre une station. */
+/** Corps Markdown → stations. Chaque titre « ## » ouvre une station. @public */
 export function parseStations(body: string, file: string): StationContent[] {
   const problems: string[] = [];
   const stations: StationContent[] = [];

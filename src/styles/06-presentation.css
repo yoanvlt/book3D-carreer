@@ -1,0 +1,31 @@
+/* ---------- Présentation d'un bâtiment ---------- */
+.presentation {
+  position: absolute;
+  inset: auto clamp(16px, 3.5vw, 56px) var(--space-6);
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-5);
+  z-index: 8;
+}
+.presentation-heading {
+  padding: var(--space-4) var(--space-5);
+}
+.presentation-heading h2 {
+  margin: 0;
+  font-size: var(--text-xxl);
+  font-weight: var(--weight-heavy);
+  letter-spacing: -0.02em;
+}
+.presentation-heading p {
+  margin: 2px 0 0;
+  color: var(--ink-soft);
+  font-size: var(--text-md);
+}
+.presentation-actions {
+  display: flex;
+  gap: var(--space-2);
+}
+.presentation-actions .action-secondary {
+  background: var(--paper);
+}

@@ -1,10 +1,8 @@
 // Captures des panneaux d'interface : plan, aide, présentation, lecture, fiche mobile, version texte.
 //   node scripts/capture-interface.mjs <dossier>      (URL=… pour un autre serveur)
-import { createRequire } from 'node:module';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { saveShot } from './shot.mjs';
-const require = createRequire(import.meta.url);
-const { chromium } = require('playwright');
+import { chromium } from 'playwright';
 
 const [out = 'docs/screenshots/v5/interface'] = process.argv.slice(2);
 const base = process.env.URL ?? 'http://127.0.0.1:4173/book3D-carreer/';

@@ -53,9 +53,6 @@ function stopAmbience() {
   ambience = null;
 }
 
-export function isSoundOn() {
-  return enabled;
-}
 export function setSound(on: boolean) {
   enabled = on;
   try {

@@ -1,16 +1,18 @@
 import { streets, approaches } from '../world/urban';
+import { gardens } from '../world/landscape';
 import { useMemo, useEffect } from 'react';
 import * as THREE from 'three';
 import { heightAt } from '../world/terrain';
+import { edgeRadius } from '../world/island';
+import Island, { RIM_Y } from './Island';
 import type { Point } from '../world/config';
-import { material, Box } from './Primitives';
-import StaticBatch from './StaticBatch';
+import { material, Box, Cylinder, FINISH, type Finish } from './Primitives';
+import StaticBatch, { Fine } from './StaticBatch';
 import { color as C } from '../design/tokens';
 const T = {
   low: C.grass,
   high: C.grassHigh,
   edge: C.earth,
-  base: C.water,
   garden: C.garden,
   path: C.path,
   streetEdge: C.pathEdge,
@@ -28,19 +30,22 @@ function TerrainMesh() {
     for (let i = 0; i <= rings; i++)
       for (let j = 0; j <= segments; j++) {
         const a = (j / segments) * Math.PI * 2,
-          edgeRadius = 66 + 4 * Math.sin(3 * a + 0.5) + 2 * Math.cos(5 * a);
-        const d = (edgeRadius * i) / rings,
+          rim = edgeRadius(a);
+        const d = (rim * i) / rings,
           x = Math.cos(a) * d,
           z = Math.sin(a) * d;
         let h = heightAt(x, z);
-        const edge = Math.max(0, Math.min(1, (d - 60) / (edgeRadius - 60)));
-        h = h * (1 - edge) - 6.6 * edge;
+        // Lèvre arrondie : le plateau descend vers le haut de la falaise (scene/Island.tsx).
+        const lip = Math.max(0, Math.min(1, (d - (rim - 2.6)) / 2.6)) ** 2;
+        h = h * (1 - lip) + RIM_Y * lip;
         vertices.push(x, h, z);
-        color.set(d > 60 ? T.edge : h > 4.4 ? T.high : T.low);
+        color.set(d > rim - 0.9 ? T.edge : h > 4.4 ? T.high : T.low);
+        // Herbe : grandes taches de teinte et de saturation, petit grain de lumière.
+        const patch = Math.sin(x * 0.11 + z * 0.07) * Math.cos(z * 0.09 - x * 0.04);
         const noise =
           Math.sin(x * 0.21 + z * 0.13) * Math.cos(z * 0.17 - x * 0.05) * 0.035 +
-          Math.sin(x * 1.31 + z * 0.7) * Math.cos(z * 1.53) * 0.012;
-        color.offsetHSL(0, 0, noise);
+          Math.sin(x * 1.31 + z * 0.7) * Math.cos(z * 1.53) * 0.014;
+        color.offsetHSL(patch * 0.018, patch * 0.06, noise);
         colors.push(color.r, color.g, color.b);
         if (i < rings && j < segments) {
           const k = i * (segments + 1) + j;
@@ -59,16 +64,23 @@ function TerrainMesh() {
     </mesh>
   );
 }
-export function Path({
+function Path({
   points,
   width = 3.5,
   color = T.path,
   offset = 0.15,
+  shift = 0,
+  segments = 8,
+  finish,
 }: {
   points: Point[];
   width?: number;
   color?: string;
   offset?: number;
+  /** Décalage latéral de la bande par rapport à l'axe (bordures). */
+  shift?: number;
+  segments?: number;
+  finish?: Finish;
 }) {
   const geometry = useMemo(() => {
     const curve = new THREE.CatmullRomCurve3(
@@ -79,7 +91,7 @@ export function Path({
     const vertices: number[] = [],
       indices: number[] = [];
     const lengthSegments = 240,
-      widthSegments = 8;
+      widthSegments = segments;
     for (let i = 0; i <= lengthSegments; i++) {
       const p = curve.getPoint(i / lengthSegments),
         t = curve.getTangent(i / lengthSegments);
@@ -87,8 +99,8 @@ export function Path({
         dz = (t.x * width) / 2;
       for (let j = 0; j <= widthSegments; j++) {
         const side = (2 * j) / widthSegments - 1;
-        const x = p.x + dx * side,
-          z = p.z + dz * side;
+        const x = p.x + dx * side - t.z * shift,
+          z = p.z + dz * side + t.x * shift;
         vertices.push(x, heightAt(x, z) + offset, z);
         if (i < lengthSegments && j < widthSegments) {
           const a = i * (widthSegments + 1) + j;
@@ -101,9 +113,9 @@ export function Path({
     g.setIndex(indices);
     g.computeVertexNormals();
     return g;
-  }, [points, width, offset]);
+  }, [points, width, offset, shift, segments]);
   useEffect(() => () => geometry.dispose(), [geometry]);
-  return <mesh geometry={geometry} material={material(color)} receiveShadow dispose={null} />;
+  return <mesh geometry={geometry} material={material(color, finish)} receiveShadow dispose={null} />;
 }
 function Garden({
   x,
@@ -146,49 +158,170 @@ function Garden({
   useEffect(() => () => geometry.dispose(), [geometry]);
   return <mesh geometry={geometry} receiveShadow material={material(T.garden)} dispose={null} />;
 }
-const gardens = [
-  [-41, 39, 9, 5, -0.4],
-  [-25, 44, 13, 4, 0],
-  [4, 45, 13, 4, 0.1],
-  [46, 18, 4, 15, -0.1],
-  [-48, 20, 5, 13, 0],
-  [5, -47, 12, 4, 0.2],
-  [-41, -23, 4, 11, -0.3],
-  [-25, -37, 11, 3, 0.05],
-  [23, -35, 11, 4, 0.3],
-  [43, -5, 4, 12, 0],
-  [38, 28, 4, 7, -0.55],
-  [24, 39, 9, 3.6, 0],
-  [-23, 37, 8, 4, -0.5],
-  [-42, 12, 3.5, 10, 0],
-  [-16, -5, 3.2, 4.4, -0.2],
-  [16, 3, 3.3, 4, 0.3],
-  [-13, -17, 2.5, 3, 0],
-];
+/** Place centrale pavée : bordure, rose des vents autour de la fontaine, carrés d'angle. */
+function Plaza() {
+  return (
+    <group position={[0, 0.69, 0]}>
+      <Box p={[0, 0, 0]} s={[16, 0.12, 12]} color={T.path} finish={FINISH.cobbles} />
+      {[
+        [0, 5.8, 16, 0.4],
+        [0, -5.8, 16, 0.4],
+        [7.8, 0, 0.4, 11.2],
+        [-7.8, 0, 0.4, 11.2],
+      ].map(([x, z, w, d], i) => (
+        <Box key={i} p={[x, 0.07, z]} s={[w, 0.03, d]} color={C.stoneDark} finish={FINISH.stone} />
+      ))}
+      <Cylinder p={[0, 0.065, 0]} s={[5.4, 0.02, 5.4]} color={C.stoneDark} finish={FINISH.stone} />
+      <Cylinder p={[0, 0.075, 0]} s={[5.0, 0.02, 5.0]} color={C.sand} finish={FINISH.cobbles} />
+      {Array.from({ length: 8 }, (_, i) => {
+        const a = (i / 8) * Math.PI * 2;
+        const long = i % 2 === 0;
+        return (
+          <Box
+            key={i}
+            p={[Math.sin(a) * (long ? 3.9 : 3.6), 0.09, Math.cos(a) * (long ? 3.9 : 3.6)]}
+            s={[long ? 0.3 : 0.2, 0.02, long ? 2.2 : 1.6]}
+            r={[0, a, 0]}
+            color={long ? C.stoneDark : C.stone}
+            finish={FINISH.stone}
+          />
+        );
+      })}
+      {[-1, 1].flatMap((sx) =>
+        [-1, 1].map((sz) => (
+          <Box
+            key={`${sx}${sz}`}
+            p={[sx * 6.4, 0.075, sz * 4.4]}
+            s={[1.4, 0.02, 1.4]}
+            r={[0, Math.PI / 4, 0]}
+            color={C.stoneDark}
+            finish={FINISH.stone}
+          />
+        )),
+      )}
+    </group>
+  );
+}
+
+/** Plaques d'égout le long des rues, bandes podotactiles où les allées rejoignent la rue. */
+function StreetDetails() {
+  const manholes: [number, number][] = [];
+  for (const points of streets)
+    for (let i = 0; i < points.length - 1; i += 2) {
+      const [ax, az] = points[i];
+      const [bx, bz] = points[i + 1];
+      const length = Math.hypot(bx - ax, bz - az) || 1;
+      manholes.push([(ax + bx) / 2 - ((bz - az) / length) * 1.4, (az + bz) / 2 + ((bx - ax) / length) * 1.4]);
+    }
+  return (
+    <>
+      {manholes.map(([x, z]) => (
+        <group key={`${x},${z}`} position={[x, heightAt(x, z) + 0.17, z]}>
+          <Cylinder s={[0.4, 0.03, 0.4]} color={C.slate} finish={FINISH.steel} />
+          <Fine>
+            {[-0.18, 0, 0.18].map((dx) => (
+              <Box key={dx} p={[dx, 0.02, 0]} s={[0.05, 0.02, 0.6]} color={C.ink} shadow={false} />
+            ))}
+          </Fine>
+        </group>
+      ))}
+      {approaches.map(([junction, door]) => {
+        const length = Math.hypot(door[0] - junction[0], door[1] - junction[1]) || 1;
+        const [ux, uz] = [(door[0] - junction[0]) / length, (door[1] - junction[1]) / length];
+        const [x, z] = [junction[0] + ux * 3.3, junction[1] + uz * 3.3];
+        return (
+          <Box
+            key={`${x},${z}`}
+            p={[x, heightAt(x, z) + 0.165, z]}
+            s={[3.2, 0.02, 0.6]}
+            r={[0, Math.atan2(ux, uz), 0]}
+            color='#e9dfbf'
+            finish={{ ...FINISH.cobbles, scale: 3.2 }}
+          />
+        );
+      })}
+    </>
+  );
+}
+
+/** Bordure de pierres autour d'une plate-bande (même contour que Garden). */
+function Edging({ x, z, rx, rz, angle }: { x: number; z: number; rx: number; rz: number; angle: number }) {
+  const n = 28;
+  const point = (a: number) => {
+    const r = 1 + 0.07 * Math.sin(a * 3);
+    const dx = Math.cos(a) * rx * r;
+    const dz = Math.sin(a) * rz * r;
+    return [x + dx * Math.cos(angle) - dz * Math.sin(angle), z + dx * Math.sin(angle) + dz * Math.cos(angle)];
+  };
+  return (
+    <>
+      {Array.from({ length: n }, (_, i) => {
+        const [ax, az] = point((i / n) * Math.PI * 2);
+        const [bx, bz] = point(((i + 1) / n) * Math.PI * 2);
+        const [mx, mz] = [(ax + bx) / 2, (az + bz) / 2];
+        return (
+          <Box
+            key={i}
+            p={[mx, heightAt(mx, mz) + 0.1, mz]}
+            s={[0.22, 0.16, Math.hypot(bx - ax, bz - az) + 0.05]}
+            r={[0, Math.atan2(bx - ax, bz - az), 0]}
+            color={C.stone}
+            finish={FINISH.stone}
+          />
+        );
+      })}
+    </>
+  );
+}
+
 export default function Terrain() {
   return (
     <>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -6.6, 0]} receiveShadow>
-        <planeGeometry args={[1200, 1200]} />
-        <meshStandardMaterial color={T.base} roughness={1} />
-      </mesh>
       <TerrainMesh />
+      <Island />
       <StaticBatch>
         {gardens.map(([x, z, rx, rz, angle], i) => (
           <Garden key={i} {...{ x, z, rx, rz, angle }} />
         ))}
+        {/* Rues dallées et bordures de pierre ; les bordures passent sous le dallage d'une rue qui croise. */}
         {streets.map((points, i) => (
           <group key={i}>
-            <Path points={points} width={6.5} color={T.streetEdge} offset={0.09} />
-            <Path points={points} width={5.7} />
+            <Path points={points} width={5.7} finish={FINISH.paving} />
+            {[-1, 1].map((s) => (
+              <Path
+                key={s}
+                points={points}
+                width={0.42}
+                shift={s * 3.0}
+                offset={0.13}
+                segments={1}
+                color={T.streetEdge}
+                finish={FINISH.stone}
+              />
+            ))}
           </group>
         ))}
         {approaches.map((points, i) => (
-          <Path key={i} points={points} width={3.6} />
+          <group key={i}>
+            <Path points={points} width={3.6} finish={FINISH.paving} />
+            {[-1, 1].map((s) => (
+              <Path
+                key={s}
+                points={points}
+                width={0.3}
+                shift={s * 1.9}
+                offset={0.12}
+                segments={1}
+                color={T.streetEdge}
+                finish={FINISH.stone}
+              />
+            ))}
+          </group>
         ))}
-        <Box p={[0, 0.69, 0]} s={[16, 0.12, 12]} color={T.path} />
-        {[-5, 0, 5].map((x) => (
-          <Box key={x} p={[x, 0.76, 0]} s={[0.06, 0.02, 12]} color={C.stoneDark} />
+        <Plaza />
+        <StreetDetails />
+        {gardens.map(([x, z, rx, rz, angle], i) => (
+          <Edging key={i} {...{ x, z, rx, rz, angle }} />
         ))}
       </StaticBatch>
     </>

@@ -6,6 +6,7 @@ export type Shot = { position: Vec3; target: Vec3 };
 type Composition = { duration: number; frames: [number, number, number, number][] };
 // Local architectural coordinates: x, height, front distance, target height.
 // Front-quarter reveals keep the entrance visible; no generic full-circle orbit.
+/** @public Utilisé par les tests ou les scripts. */
 export const compositions: Record<BuildingId, Composition> = {
   profile: {
     duration: 8.5,
@@ -71,7 +72,8 @@ export const mix3 = (a: Vec3, b: Vec3, t: number): Vec3 => ({
   y: a.y + (b.y - a.y) * t,
   z: a.z + (b.z - a.z) * t,
 });
-export const distance3 = (a: Vec3, b: Vec3) => Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z);
+const distance3 = (a: Vec3, b: Vec3) => Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z);
+/** @public Utilisé par les tests ou les scripts. */
 export function clearCameraSegment(a: Vec3, b: Vec3) {
   const n = Math.max(1, Math.ceil(distance3(a, b) / 0.2));
   for (let i = 0; i <= n; i++) if (cameraBodyBlocked(mix3(a, b, i / n))) return false;

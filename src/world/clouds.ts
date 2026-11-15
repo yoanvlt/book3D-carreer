@@ -6,6 +6,7 @@
  */
 import { PerspectiveCamera, Vector3 } from 'three';
 import { CAMERA } from './config';
+import { edgeRadius, undersideRadius, undersideY } from './island';
 
 export interface Cloud {
   x: number;
@@ -19,7 +20,7 @@ export interface Cloud {
 export const DRIFT = 2.5;
 
 /** Caméra d'accueil telle que la règle CameraRig (phase « home »). */
-export function homeCamera(width: number, height: number) {
+function homeCamera(width: number, height: number) {
   const narrow = width < 760;
   const k = narrow ? 1.36 : 1;
   const camera = new PerspectiveCamera(narrow ? 48 : 41, width / height, 0.1, 1400);
@@ -32,7 +33,7 @@ export function homeCamera(width: number, height: number) {
 }
 
 /** Zones d'écran (NDC) réservées : titre de l'accueil au bureau, carte d'accueil sur téléphone. */
-export function reservedZones(width: number) {
+function reservedZones(width: number) {
   return width < 760 ? [{ x0: -1, x1: 1, y0: -1, y1: -0.05 }] : [{ x0: -1, x1: -0.12, y0: -0.55, y1: 0.6 }];
 }
 
@@ -41,7 +42,7 @@ function apparent(camera: PerspectiveCamera, r: number, d: number) {
   return r / (d * Math.tan((camera.fov * Math.PI) / 180 / 2));
 }
 
-/** Vrai si le nuage masque l'île (devant elle à l'écran) ou une zone réservée. */
+/** Vrai si le nuage masque l'île (devant elle à l'écran) ou une zone réservée. @public */
 export function cloudConflicts(cloud: Cloud, width: number, height: number): boolean {
   const camera = homeCamera(width, height);
   const radius = cloud.size * 1.9 + DRIFT;
@@ -53,13 +54,13 @@ export function cloudConflicts(cloud: Cloud, width: number, height: number): boo
   if (p.z > 1) return false;
   for (const z of reservedZones(width))
     if (p.x + rx > z.x0 && p.x - rx < z.x1 && p.y + r > z.y0 && p.y - r < z.y1) return true;
-  // L'île : bord du plateau et pied de terre. Un nuage plus proche que le bord et superposé masque.
+  // L'île : bord du plateau, falaise et dessous jusqu'à la pointe (world/island.ts). Un nuage plus
+  // proche qu'un de ces points et superposé à lui le masque.
   for (let i = 0; i < 48; i++) {
     const a = (i / 48) * Math.PI * 2;
     for (const [rr, y] of [
-      [64, 0],
-      [60, -6.6],
-      [40, -6.6],
+      [edgeRadius(a), 0],
+      ...[0.15, 0.3, 0.5, 0.7, 0.9].map((t) => [undersideRadius(a, t), undersideY(t)]),
     ]) {
       const q = new Vector3(Math.cos(a) * rr, y, Math.sin(a) * rr);
       if (q.distanceTo(camera.position) < distance - radius) continue;
@@ -70,7 +71,7 @@ export function cloudConflicts(cloud: Cloud, width: number, height: number): boo
   return false;
 }
 
-/** Écrans contrôlés : 16:9, 16:10, 1366×768 et téléphone portrait. */
+/** Écrans contrôlés : 16:9, 16:10, 1366×768 et téléphone portrait. @public */
 export const CHECKED_SCREENS: [number, number][] = [
   [1920, 1080],
   [1440, 900],

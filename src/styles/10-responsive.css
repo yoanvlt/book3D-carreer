@@ -1,0 +1,153 @@
+/* ---------- Grands écrans (QHD) ---------- */
+@media (min-width: 2200px) {
+  html {
+    font-size: 18px;
+  }
+  .hero {
+    max-width: 680px;
+  }
+  .hero-text {
+    font-size: 26px;
+  }
+  .brand {
+    font-size: 26px;
+  }
+  .place-card-text strong {
+    font-size: var(--text-xl);
+  }
+}
+
+/* ---------- Écrans moyens ---------- */
+@media (max-width: 1100px) and (min-width: 761px) {
+  .hero {
+    max-width: 380px;
+  }
+  .hero-title {
+    font-size: 56px;
+  }
+  .map-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---------- Téléphone ---------- */
+@media (max-width: 760px) {
+  .desktop-only {
+    display: none !important;
+  }
+  .mobile-only {
+    display: inline-flex !important;
+  }
+  .topbar {
+    padding: var(--space-4);
+  }
+  .brand-button {
+    padding: 6px 8px;
+  }
+  .brand {
+    font-size: 19px;
+  }
+  .plan-button {
+    padding: 9px;
+  }
+  .plan-button span,
+  .plan-button kbd {
+    display: none;
+  }
+  .hero {
+    left: var(--space-4);
+    right: var(--space-4);
+    top: auto;
+    bottom: var(--space-4);
+    transform: none;
+    max-width: none;
+    padding: var(--space-5);
+    background: var(--paper);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-panel);
+  }
+  .hero-hidden {
+    transform: translateY(12px);
+  }
+  .hero-role {
+    font-size: var(--text-sm);
+    margin-bottom: var(--space-1);
+  }
+  .hero-title {
+    font-size: 44px;
+    margin-bottom: var(--space-2);
+  }
+  .hero-text {
+    font-size: var(--text-md);
+    margin-bottom: var(--space-4);
+  }
+  .hero-actions .button-primary {
+    flex: 1;
+  }
+  /* Pas de clavier sur téléphone : les rappels de touches sont masqués. */
+  :is(.action-primary, .action-secondary, .plan-button) kbd {
+    display: none;
+  }
+  .hero-actions .button-secondary {
+    background: var(--paper-muted);
+  }
+  .place-card,
+  .journey {
+    bottom: var(--space-4);
+    width: calc(100vw - 32px);
+    flex-wrap: wrap;
+  }
+  .place-card-text {
+    flex-basis: 100%;
+    margin-bottom: var(--space-2);
+  }
+  .journey {
+    white-space: normal;
+  }
+  .presentation {
+    flex-direction: column;
+    align-items: stretch;
+    inset: auto var(--space-4) var(--space-4);
+  }
+  .presentation-actions > * {
+    flex: 1;
+  }
+  .interior-title {
+    top: 76px;
+    left: var(--space-4);
+    max-width: calc(100vw - 32px);
+  }
+  .station-nav {
+    bottom: 84px;
+    max-width: calc(100vw - 32px);
+    overflow-x: auto;
+  }
+  .exit-button {
+    right: var(--space-4);
+    bottom: var(--space-4);
+  }
+  .modal-backdrop {
+    padding: var(--space-3);
+    align-items: end;
+  }
+  .dialog {
+    padding: var(--space-5);
+    max-height: calc(100dvh - 24px);
+  }
+  .dialog h2 {
+    font-size: var(--text-xl);
+  }
+  .map-layout {
+    grid-template-columns: 1fr;
+    gap: var(--space-4);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}

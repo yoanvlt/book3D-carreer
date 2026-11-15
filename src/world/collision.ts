@@ -1,7 +1,7 @@
 import { buildings, WORLD, type Point } from './config';
 import { heightAt } from './terrain';
-import { trees, benches, lamps } from './landscape';
-export interface Obstacle {
+import { trees, benches, lamps, bollards, bikeRacks, fences } from './landscape';
+interface Obstacle {
   x: number;
   z: number;
   halfX: number;
@@ -10,6 +10,7 @@ export interface Obstacle {
   bottom: number;
   top: number;
 }
+/** @public Utilisé par les tests ou les scripts. */
 export const obstacles: Obstacle[] = buildings.map((b) => ({
   x: b.position[0],
   z: b.position[1],
@@ -19,7 +20,7 @@ export const obstacles: Obstacle[] = buildings.map((b) => ({
   bottom: b.elevation - 0.2,
   top: b.elevation + b.height + 0.8,
 }));
-export const props: Obstacle[] = [
+const props: Obstacle[] = [
   { x: 0, z: 0, halfX: 2.6, halfZ: 2.6, angle: 0, bottom: 0.65, top: 5.6 },
   {
     x: -43,
@@ -53,6 +54,25 @@ export const allObstacles = [
     bottom: heightAt(...b.p),
     top: heightAt(...b.p) + 1.3,
   })),
+  ...bollards.map((p) => ({ x: p[0], z: p[1], halfX: 0.15, halfZ: 0.15, angle: 0, bottom: 0.65, top: 1.6 })),
+  ...bikeRacks.map((r) => ({
+    x: r.p[0],
+    z: r.p[1],
+    halfX: 1.6,
+    halfZ: 0.5,
+    angle: r.angle,
+    bottom: heightAt(...r.p),
+    top: heightAt(...r.p) + 1.1,
+  })),
+  ...fences.map(([a, b]) => ({
+    x: (a[0] + b[0]) / 2,
+    z: (a[1] + b[1]) / 2,
+    halfX: Math.hypot(b[0] - a[0], b[1] - a[1]) / 2,
+    halfZ: 0.08,
+    angle: -Math.atan2(b[1] - a[1], b[0] - a[0]),
+    bottom: heightAt(...a),
+    top: heightAt(...a) + 1,
+  })),
   ...lamps.map((p) => ({
     x: p[0],
     z: p[1],
@@ -80,7 +100,7 @@ export function blocked(x: number, z: number, radius = WORLD.robotRadius): boole
  * Normale de contact au point (x, z) : direction qui éloigne de l'obstacle le plus pénétré,
  * calculée dans le repère tourné de chaque boîte. Sert à glisser le long des murs en biais.
  */
-export function contactNormal(x: number, z: number, radius = WORLD.robotRadius): Point | null {
+function contactNormal(x: number, z: number, radius = WORLD.robotRadius): Point | null {
   let best: Point | null = null;
   let depth = -Infinity;
   const r = Math.hypot(x, z);

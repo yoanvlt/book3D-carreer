@@ -18,6 +18,12 @@ import Life from './Life';
 
 // Contours (postprocessing) : téléchargés seulement en qualité Soignée.
 const Effects = lazy(() => import('./Effects'));
+// Planche du kit (`?debug=1&kit`), pour le contrôle visuel des pièces et des matières.
+const KitShowcase = lazy(() => import('./KitShowcase'));
+const kitShowcase = (() => {
+  const query = new URLSearchParams(window.location.search);
+  return query.has('debug') && query.has('kit');
+})();
 import { useGame, setState, getState, player, cameraMode, passage } from '../state';
 
 function Runtime() {
@@ -127,7 +133,11 @@ export default function World() {
         shadow-bias={-0.00015}
         shadow-radius={3}
       />
-      {interior ? (
+      {kitShowcase ? (
+        <Suspense fallback={null}>
+          <KitShowcase />
+        </Suspense>
+      ) : interior ? (
         <Interior />
       ) : (
         <>

@@ -1,0 +1,30 @@
+{
+  "qualite": "high",
+  "vues": {
+    "kit-ensemble": {
+      "drawCalls": 71,
+      "triangles": 42119
+    },
+    "kit-matieres": {
+      "drawCalls": 63,
+      "triangles": 42103
+    },
+    "kit-facades": {
+      "drawCalls": 59,
+      "triangles": 42095
+    },
+    "kit-fenetres": {
+      "drawCalls": 33,
+      "triangles": 35867
+    },
+    "kit-toitures": {
+      "drawCalls": 32,
+      "triangles": 35865
+    },
+    "kit-structures": {
+      "drawCalls": 32,
+      "triangles": 35865
+    }
+  },
+  "erreurs": []
+}

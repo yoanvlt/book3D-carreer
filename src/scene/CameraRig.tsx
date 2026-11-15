@@ -7,6 +7,7 @@ import { CAMERA } from '../world/config';
 import { chooseCamera, moveCamera, chooseInteriorCamera, moveInteriorCamera, framing } from '../world/camera';
 import { heightAt } from '../world/terrain';
 import { getState, setState, player, view, finishArrival, skip } from '../state';
+import { photo } from './photo';
 
 export default function CameraRig() {
   const { camera, size } = useThree();
@@ -29,6 +30,14 @@ export default function CameraRig() {
     safe: new THREE.Vector3(),
   });
   useFrame((_, delta) => {
+    if (photo.active) {
+      camera.position.set(...photo.position);
+      camera.lookAt(...photo.target);
+      perspective.clearViewOffset();
+      perspective.fov = photo.fov;
+      perspective.updateProjectionMatrix();
+      return;
+    }
     // Une demande de passer n'est valable que pour la séquence en cours.
     const skipped = runtime.current.skip !== skip.serial;
     runtime.current.skip = skip.serial;

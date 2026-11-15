@@ -2,11 +2,9 @@
 //   node scripts/capture-tactile.mjs <dossier>      (URL=… pour un autre serveur)
 // Les gestes passent par de vrais événements tactiles (CDP Input.dispatchTouchEvent), donc par les
 // mêmes gestionnaires que sur un téléphone ; seul le rendu est logiciel.
-import { createRequire } from 'node:module';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { saveShot } from './shot.mjs';
-const require = createRequire(import.meta.url);
-const { chromium } = require('playwright');
+import { chromium } from 'playwright';
 
 const [out = 'docs/screenshots/v5/tactile'] = process.argv.slice(2);
 const base = process.env.URL ?? 'http://127.0.0.1:4173/book3D-carreer/';

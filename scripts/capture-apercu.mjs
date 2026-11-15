@@ -1,10 +1,8 @@
 // Image d'aperçu pour le partage (1200×630, public/apercu.jpg) et icône Apple (180×180).
 //   npm run build && npm run preview, puis : node scripts/capture-apercu.mjs
-import { createRequire } from 'node:module';
 import { readFile, writeFile } from 'node:fs/promises';
 import { saveShot } from './shot.mjs';
-const require = createRequire(import.meta.url);
-const { chromium } = require('playwright');
+import { chromium } from 'playwright';
 
 const base = process.env.URL ?? 'http://127.0.0.1:4173/book3D-carreer/';
 const browser = await chromium.launch({

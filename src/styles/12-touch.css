@@ -1,0 +1,65 @@
+/* ---------- Commandes tactiles ---------- */
+.joystick {
+  position: absolute;
+  left: var(--space-4);
+  bottom: calc(var(--space-5) + env(safe-area-inset-bottom));
+  width: 132px;
+  height: 132px;
+  border-radius: 50%;
+  background: rgb(255 255 255 / 0.6);
+  border: 2px solid rgb(255 255 255 / 0.9);
+  box-shadow: var(--shadow-panel);
+  touch-action: none;
+  z-index: 7;
+  display: grid;
+  place-items: center;
+}
+.joystick-knob {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: var(--shadow-raised);
+  pointer-events: none;
+}
+.jump-button {
+  position: absolute;
+  right: var(--space-4);
+  bottom: calc(var(--space-6) + 34px + env(safe-area-inset-bottom));
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--paper);
+  box-shadow: var(--shadow-panel);
+  touch-action: none;
+  z-index: 7;
+}
+.jump-button svg {
+  width: 28px;
+  height: 28px;
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 2.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+/* Avec joystick, les cartes d'action passent au-dessus des commandes. */
+@media (pointer: coarse), (max-width: 760px) {
+  .is-exploring:not(:has(.interior-hud)) .place-card,
+  .is-exploring .journey {
+    bottom: calc(150px + env(safe-area-inset-bottom));
+  }
+  .interior-hud .place-card {
+    bottom: calc(150px + env(safe-area-inset-bottom));
+  }
+  /* « Sortir » passe sous l'en-tête : le bas de l'écran revient au joystick et au saut. */
+  .exit-button {
+    top: 76px;
+    bottom: auto;
+  }
+  .interior-title {
+    max-width: calc(100vw - 32px - 110px);
+  }
+}

@@ -35,7 +35,7 @@ export function trapezoid(u: number, accel = 0.2, brake = 0.25): number {
   return 1 - (peak * (1 - t) * (1 - t)) / (2 * brake);
 }
 
-export const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
+const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
 
 /** Durée d'un trajet automatique de longueur donnée. */
 export function travelDuration(length: number, indoor: boolean): number {
