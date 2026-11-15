@@ -152,6 +152,60 @@ export const Dome = primitive(halfBall);
 export const Gable = primitive(gable);
 export const Ramp = primitive(ramp);
 
+/**
+ * Segment de cylindre (paroi courbe ouverte) de rayon 1 et de hauteur 1, couvrant l'angle `arc`
+ * centré sur +z : mis à l'échelle [r, h, r], il épouse un tambour de rayon r (fenêtres, bandeaux).
+ */
+const arcs = new Map<string, THREE.BufferGeometry>();
+export function Arc({
+  p = [0, 0, 0],
+  ry = 0,
+  radius,
+  height,
+  arc,
+  color = C.cream,
+  finish,
+  shadow = false,
+}: {
+  p?: V3;
+  ry?: number;
+  radius: number;
+  height: number;
+  arc: number;
+  color?: string;
+  finish?: Finish;
+  shadow?: boolean;
+}) {
+  const key = arc.toFixed(4);
+  let geometry = arcs.get(key);
+  if (!geometry) {
+    // thetaStart mesuré depuis +z : centrer l'arc sur +z.
+    geometry = new THREE.CylinderGeometry(
+      1,
+      1,
+      1,
+      Math.max(3, Math.ceil(arc / 0.12)),
+      1,
+      true,
+      -arc / 2,
+      arc,
+    );
+    arcs.set(key, geometry);
+  }
+  return (
+    <mesh
+      position={p}
+      rotation={[0, ry, 0]}
+      scale={[radius, height, radius]}
+      geometry={geometry}
+      material={material(color, finish)}
+      castShadow={shadow}
+      receiveShadow
+      dispose={null}
+    />
+  );
+}
+
 /** Tore (ou arc de tore) partagé par rayon, section et angle. */
 const tori = new Map<string, THREE.BufferGeometry>();
 export function Torus({

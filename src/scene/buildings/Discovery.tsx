@@ -4,7 +4,7 @@
  * Un escalier hélicoïdal extérieur monte à la terrasse ; une petite station météo s'y dresse.
  * Emprise 13 × 13, porte en z = 7.
  */
-import { Ball, Box, Cylinder, FINISH, GLASS, Pipe, Rod, Sign, Torus, times } from '../Primitives';
+import { Arc, Ball, Box, Cylinder, FINISH, GLASS, Pipe, Rod, Sign, Torus, times } from '../Primitives';
 import { Fine } from '../StaticBatch';
 import { Downpipe, LouvredDome, Planter, SolarPanel, Volume, WallLamp } from '../kit';
 import { color as C } from '../../design/tokens';
@@ -73,6 +73,72 @@ function SpiralStair({ radius, rise, a0, a1 }: { radius: number; rise: number; a
   );
 }
 
+/**
+ * Fenêtre qui épouse le tambour de rayon `radius` : vitrage courbe, traverses courbes, montants
+ * et appui, centrée sur l'angle `angle` (0 = vers la porte).
+ */
+function CurvedWindow({
+  radius,
+  angle,
+  width,
+  y,
+  h,
+  lit = false,
+}: {
+  radius: number;
+  angle: number;
+  width: number;
+  y: number;
+  h: number;
+  lit?: boolean;
+}) {
+  const arc = width / radius;
+  const glass = lit ? { glow: C.glassLit, glowIntensity: 0.5 } : GLASS;
+  return (
+    <>
+      <Arc
+        ry={angle}
+        p={[0, y, 0]}
+        radius={radius + 0.02}
+        height={h}
+        arc={arc}
+        color={lit ? C.glassLit : '#a9d7ea'}
+        finish={glass}
+      />
+      {[y - h / 2 - 0.05, y + h / 2 + 0.05].map((yy) => (
+        <Arc
+          key={yy}
+          ry={angle}
+          p={[0, yy, 0]}
+          radius={radius + 0.06}
+          height={0.1}
+          arc={arc + 0.12 / radius}
+          color={WHITE}
+        />
+      ))}
+      {[-1, 1].map((s) => {
+        const a = angle + (s * arc) / 2;
+        return (
+          <Box
+            key={s}
+            p={[Math.sin(a) * (radius + 0.05), y, Math.cos(a) * (radius + 0.05)]}
+            s={[0.07, h, 0.1]}
+            r={[0, a, 0]}
+            color={WHITE}
+            shadow={false}
+          />
+        );
+      })}
+      <Box
+        p={[Math.sin(angle) * (radius + 0.12), y - h / 2 - 0.12, Math.cos(angle) * (radius + 0.12)]}
+        s={[width + 0.15, 0.06, 0.24]}
+        r={[0, angle, 0]}
+        color={WHITE}
+      />
+    </>
+  );
+}
+
 /** Station météo : mât, anémomètre à coupelles, girouette, abri à persiennes, petit panneau solaire. */
 function WeatherStation({ p }: { p: [number, number, number] }) {
   return (
@@ -113,15 +179,9 @@ export default function Discovery() {
         const a = (i / n) * Math.PI * 2;
         if (Math.abs(Math.atan2(Math.sin(a), Math.cos(a))) < 0.5) return null;
         return (
-          <group key={i} position={[Math.sin(a) * 5.62, 0, Math.cos(a) * 5.62]} rotation={[0, a, 0]}>
-            <Box
-              p={[0, 2.4, 0]}
-              s={[0.55, 2.2, 0.08]}
-              color={i % 5 === 2 ? C.glassLit : '#a9d7ea'}
-              finish={i % 5 === 2 ? { glow: C.glassLit, glowIntensity: 0.5 } : GLASS}
-            />
-            <Box p={[0, 1.24, 0.08]} s={[0.75, 0.1, 0.2]} color={WHITE} />
-            <Box p={[0, 5.4, 0.02]} s={[0.4, 1.0, 0.06]} color={VIOLET_DARK} />
+          <group key={i}>
+            <CurvedWindow radius={5.6} angle={a} width={0.6} y={2.4} h={2.2} lit={i % 5 === 2} />
+            <Arc ry={a} p={[0, 5.4, 0]} radius={5.62} height={1.0} arc={0.4 / 5.6} color={VIOLET_DARK} />
           </group>
         );
       })}
@@ -143,19 +203,9 @@ export default function Discovery() {
       })}
       {/* Tambour blanc et coupole à lamelles. */}
       <Cylinder p={[0, 9.1, 0]} s={[4.1, 4.8, 4.1]} color={WHITE} finish={FINISH.render} />
-      {times(10, (i, n) => {
-        const a = (i / n) * Math.PI * 2 + 0.3;
-        return (
-          <Box
-            key={i}
-            p={[Math.sin(a) * 4.12, 9.6, Math.cos(a) * 4.12]}
-            s={[0.9, 0.5, 0.08]}
-            r={[0, a, 0]}
-            color='#a9d7ea'
-            finish={GLASS}
-          />
-        );
-      })}
+      {times(10, (i, n) => (
+        <CurvedWindow key={i} radius={4.1} angle={(i / n) * Math.PI * 2 + 0.3} width={0.9} y={9.6} h={0.55} />
+      ))}
       <Cylinder p={[0, 11.4, 0]} s={[4.3, 0.2, 4.3]} color={STEEL} />
       <LouvredDome p={[0, 11.5, 0]} radius={4.2} color={WHITE} rib='#c9c6d6' slit={SLIT} />
       {/* Télescope : tube sortant de la fente, bagues, contrepoids. */}
