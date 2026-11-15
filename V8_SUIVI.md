@@ -15,7 +15,7 @@ Planche `?debug=1&da` (`npm run capture:da`) : palette, matières, arbres, la ma
 - **Palette** (`src/world/palette.ts`) : 64 cases, verts tendres, pierre claire, terre cuite et ardoise ; six accents réservés aux enseignes et aux détails des lieux. L'atlas (8 × 8 cases en dégradé vertical doux, comme celui des kits) est généré au chargement : aucune image à télécharger.
 - **Matière unique** (`src/scene/diorama/material.ts`) : un petit shader, quatre variantes (lumière par sommet, lumière du sol, lumière par exemplaire, objets mobiles). Pas d'ombre en temps réel, pas de contour.
 - **Lumière précalculée une fois** (`src/geometry/bake.ts`, dans un worker) : champ de hauteurs à 0,5 m, ombre douce (5 rayons vers le soleil légèrement dispersés), occlusion ambiante par horizon dans 8 directions.
-- **Ciel** en dégradé, léger brouillon, nuages arrondis (boules lisses, dessous bleuté) ; effet miniature (tilt-shift) très léger en qualité Soignée.
+- **Ciel** en dégradé, léger brouillard, nuages arrondis (boules lisses, dessous bleuté) ; effet miniature (tilt-shift) très léger en qualité Soignée.
 
 Rien dans la planche ne contredit le brief : la construction a continué sans attendre.
 
@@ -66,7 +66,22 @@ Portes en embrasure de 1 m sur fond sombre (rien de l'intérieur n'est visible),
 
 Nom en grand, île dessinée au trait (20 traits allumés au rythme du chargement), pourcentage en chiffres alignés, étapes réelles (code, polices, modèles 3D, monde, lumière précalculée, première image), fond en dégradé grainé. Animations en CSS seulement (transform, opacity) ; affichage minimal de 0,6 s ; dévoilement en fondu, puis retrait du DOM. Le monde (géométrie et lumière) se construit dans un worker ; les shaders sont compilés avec `compileAsync`.
 
-MESURES
+Mesures (`npm run mesure:chargement`, Chromium sans écran, rendu logiciel SwiftShader, 1440 × 900, qualité Soignée, médiane de 3 ; V7 rebâtie depuis `a545e6b` et mesurée dans les mêmes conditions) :
+
+| Version | Prête (première image) | Plus longue tâche pendant le chargement | Tâches > 200 ms pendant le chargement | Transféré |
+| ------- | ---------------------: | --------------------------------------: | ------------------------------------: | --------: |
+| V7      |                  8,4 s |                                2 707 ms |                                     1 |    450 Ko |
+| V8      |              **2,2 s** |                              **125 ms** |                                 **0** |    560 Ko |
+
+Relevés bruts : `docs/screenshots/v8/chargement/mesure-v7.json` et `mesure-v8.json`. Budget du premier affichage : 2,5 Mo, tenu (560 Ko, intérieurs exclus). La plus longue tâche _après_ le dévoilement (compilation de l'effet miniature, chargé après la première image) va de 0,2 à 1,1 s selon les essais : elle ne fige pas la page de chargement, mais peut faire sauter une image juste après le dévoilement (à vérifier sur un vrai GPU, où elle est bien plus courte).
+
+Ce qui a fait la différence : un seul petit shader au lieu de dizaines de programmes, la géométrie et la lumière calculées dans un worker, l'herbe semée dans ce même worker (une première mesure, l'herbe semée sur le fil principal, donnait une tâche de 322 ms).
+
+Captures à quatre étapes (`docs/screenshots/v8/chargement/`) : le chargement réel est trop rapide pour être saisi au vol (moins de 4 s même processeur ralenti) ; chaque étape est donc figée par `?debug=1&chargement=<étape>`, avec le même code d'affichage qu'en vrai.
+
+| Modèles                                                   | Monde                                                   | Lumière précalculée                                       | Première image                                          |
+| --------------------------------------------------------- | ------------------------------------------------------- | --------------------------------------------------------- | ------------------------------------------------------- |
+| ![](docs/screenshots/v8/chargement/bureau-1-modeles.webp) | ![](docs/screenshots/v8/chargement/bureau-2-monde.webp) | ![](docs/screenshots/v8/chargement/bureau-3-lumiere.webp) | ![](docs/screenshots/v8/chargement/bureau-4-image.webp) |
 
 ## Phase 7 — Intérieurs
 
