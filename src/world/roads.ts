@@ -49,22 +49,47 @@ function segmentDistance(x: number, z: number, [ax, az]: Point, [bx, bz]: Point)
   return Math.hypot(x - ax - t * dx, z - az - t * dz);
 }
 
+/** Portée de la grille : au-delà, la distance renvoyée vaut au moins REACH (assez pour le décor). */
+const REACH = 6;
+const CELL = 4;
+/** Grille d'accélération : pour chaque case, les segments de voie à moins de REACH du bord. */
+const grid = new Map<string, [Road, number][]>();
+for (const road of roads)
+  for (let i = 1; i < road.samples.length; i++) {
+    const [a, b] = [road.samples[i - 1].p, road.samples[i].p];
+    const pad = REACH + road.width / 2;
+    for (
+      let cx = Math.floor((Math.min(a[0], b[0]) - pad) / CELL);
+      cx <= Math.floor((Math.max(a[0], b[0]) + pad) / CELL);
+      cx++
+    )
+      for (
+        let cz = Math.floor((Math.min(a[1], b[1]) - pad) / CELL);
+        cz <= Math.floor((Math.max(a[1], b[1]) + pad) / CELL);
+        cz++
+      ) {
+        const key = `${cx},${cz}`;
+        const list = grid.get(key) ?? [];
+        list.push([road, i]);
+        grid.set(key, list);
+      }
+  }
+
 /**
  * Distance signée au bord du dallage le plus proche : négative sur une chaussée, une allée ou la
- * place, positive dans l'herbe. `kinds` limite aux rues (« street ») ou aux allées.
+ * place, positive dans l'herbe (plafonnée à REACH loin des voies). `kinds` limite aux rues
+ * (« street ») ou aux allées.
  */
 export function pavementClearance(
   x: number,
   z: number,
   kinds: Road['kind'][] = ['street', 'approach'],
 ): number {
-  let best = Infinity;
-  for (const road of roads) {
+  let best = REACH;
+  for (const [road, i] of grid.get(`${Math.floor(x / CELL)},${Math.floor(z / CELL)}`) ?? []) {
     if (!kinds.includes(road.kind)) continue;
-    let d = Infinity;
-    for (let i = 1; i < road.samples.length; i++)
-      d = Math.min(d, segmentDistance(x, z, road.samples[i - 1].p, road.samples[i].p));
-    best = Math.min(best, d - road.width / 2);
+    const d = segmentDistance(x, z, road.samples[i - 1].p, road.samples[i].p) - road.width / 2;
+    if (d < best) best = d;
   }
   if (kinds.includes('street')) {
     const outside = Math.hypot(

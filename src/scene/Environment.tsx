@@ -28,36 +28,40 @@ function Terraces() {
     </>
   );
 }
-export default function Environment() {
+/** Nombre de tranches du décor, montées une par image pendant le chargement (voir World.tsx). */
+export const ENVIRONMENT_STAGES = 4;
+export default function Environment({ stage = ENVIRONMENT_STAGES }: { stage?: number }) {
   return (
     <>
-      <Trees />
-      <Hedges />
-      <GroundCover />
-      <Wayfinding />
-      <StaticBatch>
-        <Monument />
-        <Terraces />
-        <Pergola />
-        {benches.map((b, i) => (
-          <Bench key={i} {...b} />
-        ))}
-        {lamps.map((p, i) => (
-          <Lamp key={i} p={p} plate={streetPlates[i]} />
-        ))}
-        {bins.map((b, i) => (
-          <Bin key={i} {...b} />
-        ))}
-        {bollards.map((p, i) => (
-          <Bollard key={i} p={p} />
-        ))}
-        {bikeRacks.map((r, i) => (
-          <BikeRack key={i} {...r} />
-        ))}
-        {fences.map(([a, b], i) => (
-          <Fence key={i} a={a} b={b} />
-        ))}
-      </StaticBatch>
+      {stage >= 1 && <Trees />}
+      {stage >= 2 && <Hedges />}
+      {stage >= 2 && <GroundCover />}
+      {stage >= 3 && <Wayfinding />}
+      {stage >= 4 && (
+        <StaticBatch>
+          <Monument />
+          <Terraces />
+          <Pergola />
+          {benches.map((b, i) => (
+            <Bench key={i} {...b} />
+          ))}
+          {lamps.map((p, i) => (
+            <Lamp key={i} p={p} plate={streetPlates[i]} />
+          ))}
+          {bins.map((b, i) => (
+            <Bin key={i} {...b} />
+          ))}
+          {bollards.map((p, i) => (
+            <Bollard key={i} p={p} />
+          ))}
+          {bikeRacks.map((r, i) => (
+            <BikeRack key={i} {...r} />
+          ))}
+          {fences.map(([a, b], i) => (
+            <Fence key={i} a={a} b={b} />
+          ))}
+        </StaticBatch>
+      )}
     </>
   );
 }

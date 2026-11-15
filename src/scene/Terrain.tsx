@@ -1,7 +1,12 @@
 import { streets, approaches } from '../world/urban';
 import { gardens } from '../world/landscape';
 import { manholes } from '../world/decor';
-import { APPROACH_WIDTH, STREET_WIDTH, sampleRoad } from '../world/roads';
+import { APPROACH_WIDTH, STREET_WIDTH, pavementClearance, sampleRoad } from '../world/roads';
+
+const smoothstep = (a: number, b: number, x: number) => {
+  const t = Math.max(0, Math.min(1, (x - a) / (b - a)));
+  return t * t * (3 - 2 * t);
+};
 import { useMemo, useEffect } from 'react';
 import * as THREE from 'three';
 import { heightAt } from '../world/terrain';
@@ -40,6 +45,8 @@ function TerrainMesh() {
         // Lèvre arrondie : le plateau descend vers le haut de la falaise (scene/Island.tsx).
         const lip = Math.max(0, Math.min(1, (d - (rim - 2.6)) / 2.6)) ** 2;
         h = h * (1 - lip) + RIM_Y * lip;
+        // Sous le dallage et à ses abords, le terrain s'abaisse : l'herbe ne perce jamais une allée.
+        if (d < 58) h -= 0.14 * (1 - smoothstep(-0.2, 0.8, pavementClearance(x, z)));
         vertices.push(x, h, z);
         color.set(d > rim - 0.9 ? T.edge : h > 4.4 ? T.high : T.low);
         // Herbe : grandes taches de teinte et de saturation, petit grain de lumière.
@@ -238,6 +245,8 @@ function Edging({ x, z, rx, rz, angle }: { x: number; z: number; rx: number; rz:
         const [ax, az] = point((i / n) * Math.PI * 2);
         const [bx, bz] = point(((i + 1) / n) * Math.PI * 2);
         const [mx, mz] = [(ax + bx) / 2, (az + bz) / 2];
+        // Pas de bordure posée sur une allée : la plate-bande s'arrête au dallage.
+        if (pavementClearance(mx, mz) < 0.25) return null;
         return (
           <Box
             key={i}
@@ -253,56 +262,60 @@ function Edging({ x, z, rx, rz, angle }: { x: number; z: number; rx: number; rz:
   );
 }
 
-export default function Terrain() {
+/** Nombre de tranches du terrain, montées une par image pendant le chargement (voir World.tsx). */
+export const TERRAIN_STAGES = 3;
+export default function Terrain({ stage = TERRAIN_STAGES }: { stage?: number }) {
   return (
     <>
-      <TerrainMesh />
-      <Island />
-      <StaticBatch>
-        {gardens.map(([x, z, rx, rz, angle], i) => (
-          <Garden key={i} {...{ x, z, rx, rz, angle }} />
-        ))}
-        {/* Rues dallées et bordures de pierre ; les bordures passent sous le dallage d'une rue qui croise. */}
-        {streets.map((points, i) => (
-          <group key={i}>
-            <Path points={points} width={STREET_WIDTH} finish={FINISH.paving} />
-            {[-1, 1].map((s) => (
-              <Path
-                key={s}
-                points={points}
-                width={0.42}
-                shift={s * 3.0}
-                offset={0.13}
-                segments={1}
-                color={T.streetEdge}
-                finish={FINISH.stone}
-              />
-            ))}
-          </group>
-        ))}
-        {approaches.map((points, i) => (
-          <group key={i}>
-            <Path points={points} width={APPROACH_WIDTH} finish={FINISH.paving} />
-            {[-1, 1].map((s) => (
-              <Path
-                key={s}
-                points={points}
-                width={0.3}
-                shift={s * 1.9}
-                offset={0.12}
-                segments={1}
-                color={T.streetEdge}
-                finish={FINISH.stone}
-              />
-            ))}
-          </group>
-        ))}
-        <Plaza />
-        <StreetDetails />
-        {gardens.map(([x, z, rx, rz, angle], i) => (
-          <Edging key={i} {...{ x, z, rx, rz, angle }} />
-        ))}
-      </StaticBatch>
+      {stage >= 1 && <TerrainMesh />}
+      {stage >= 2 && <Island />}
+      {stage >= 3 && (
+        <StaticBatch>
+          {gardens.map(([x, z, rx, rz, angle], i) => (
+            <Garden key={i} {...{ x, z, rx, rz, angle }} />
+          ))}
+          {/* Rues dallées et bordures de pierre ; les bordures passent sous le dallage d'une rue qui croise. */}
+          {streets.map((points, i) => (
+            <group key={i}>
+              <Path points={points} width={STREET_WIDTH} finish={FINISH.paving} />
+              {[-1, 1].map((s) => (
+                <Path
+                  key={s}
+                  points={points}
+                  width={0.42}
+                  shift={s * 3.0}
+                  offset={0.13}
+                  segments={1}
+                  color={T.streetEdge}
+                  finish={FINISH.stone}
+                />
+              ))}
+            </group>
+          ))}
+          {approaches.map((points, i) => (
+            <group key={i}>
+              <Path points={points} width={APPROACH_WIDTH} finish={FINISH.paving} />
+              {[-1, 1].map((s) => (
+                <Path
+                  key={s}
+                  points={points}
+                  width={0.3}
+                  shift={s * 1.9}
+                  offset={0.12}
+                  segments={1}
+                  color={T.streetEdge}
+                  finish={FINISH.stone}
+                />
+              ))}
+            </group>
+          ))}
+          <Plaza />
+          <StreetDetails />
+          {gardens.map(([x, z, rx, rz, angle], i) => (
+            <Edging key={i} {...{ x, z, rx, rz, angle }} />
+          ))}
+        </StaticBatch>
+      )}
     </>
   );
 }
