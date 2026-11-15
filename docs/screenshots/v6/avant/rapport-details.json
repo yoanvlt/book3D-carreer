@@ -86,44 +86,44 @@
       "triangles": 39445
     },
     "interieur-project-1": {
-      "drawCalls": 160,
-      "triangles": 52955
+      "drawCalls": 115,
+      "triangles": 37039
     },
     "interieur-fond-project-1": {
-      "drawCalls": 164,
-      "triangles": 51085
+      "drawCalls": 123,
+      "triangles": 37329
     },
     "interieur-project-2": {
-      "drawCalls": 182,
-      "triangles": 48247
+      "drawCalls": 112,
+      "triangles": 32307
     },
     "interieur-fond-project-2": {
-      "drawCalls": 188,
-      "triangles": 48513
+      "drawCalls": 120,
+      "triangles": 32597
     },
     "interieur-project-3": {
-      "drawCalls": 159,
-      "triangles": 48843
+      "drawCalls": 114,
+      "triangles": 32903
     },
     "interieur-fond-project-3": {
-      "drawCalls": 147,
-      "triangles": 47541
+      "drawCalls": 121,
+      "triangles": 33121
     },
     "interieur-missions": {
-      "drawCalls": 146,
-      "triangles": 47427
+      "drawCalls": 111,
+      "triangles": 31535
     },
     "interieur-fond-missions": {
-      "drawCalls": 148,
-      "triangles": 47509
+      "drawCalls": 119,
+      "triangles": 31825
     },
     "interieur-veolia": {
-      "drawCalls": 168,
-      "triangles": 50447
+      "drawCalls": 116,
+      "triangles": 34507
     },
     "interieur-fond-veolia": {
-      "drawCalls": 171,
-      "triangles": 50557
+      "drawCalls": 124,
+      "triangles": 34797
     }
   },
   "erreurs": []
