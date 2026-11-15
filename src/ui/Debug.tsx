@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import * as game from '../state';
-import { photo, measureFootprints } from '../scene/photo';
+import { photo, measureFootprints, probe } from '../scene/photo';
 import { buildings, type BuildingId } from '../world/config';
 import { ROOM } from '../world/narrative';
 
@@ -46,6 +46,8 @@ const hooks = {
     const measured = measureFootprints(buildings.map((b) => b.id));
     return measured.map((m) => ({ ...m, size: buildings.find((b) => b.id === m.id)!.size }));
   },
+  /** Programmes de shaders compilés (mesure du chargement). */
+  programs: () => probe.renderer?.info.programs?.map((p) => p.name) ?? [],
   /** Entre directement dans un intérieur, sans la séquence de porte. */
   visit: (id: BuildingId | null) => {
     game.player.x = id ? ROOM.spawn[0] : game.player.x;

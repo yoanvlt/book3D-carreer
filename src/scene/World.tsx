@@ -1,13 +1,15 @@
 import CinematicCamera from './CinematicCamera';
 import Interior from './Interior';
 import Transitions from './Transitions';
-import { lazy, Suspense, useEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { PerformanceMonitor } from '@react-three/drei';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { probe } from './photo';
-import Terrain from './Terrain';
+import Terrain, { TERRAIN_STAGES } from './Terrain';
 import Buildings from './Buildings';
-import Environment from './Environment';
+import { buildings } from '../world/config';
+import { loadingDone, loadingStep } from '../loading';
+import Environment, { ENVIRONMENT_STAGES } from './Environment';
 import Robot from './Robot';
 import Controller from './Controller';
 import CameraRig from './CameraRig';
@@ -27,17 +29,78 @@ const kitShowcase = (() => {
 })();
 import { useGame, setState, getState, player, cameraMode, passage } from '../state';
 
+loadingStep('scene');
+
+/**
+ * Construction par tranches : une tranche (terrain, un bâtiment, une part du décor) à la fois,
+ * chacune dans sa propre tâche. Pendant le chargement, le rendu est « à la demande » : chaque
+ * tranche est d'abord compilée (compileAsync, en parallèle quand le GPU le permet), puis dessinée.
+ * La page de chargement, animée en CSS, reste fluide entre deux tranches.
+ */
+const STAGES = {
+  terrain: TERRAIN_STAGES,
+  buildings: buildings.length,
+  environment: ENVIRONMENT_STAGES,
+  sky: 1,
+};
+const TOTAL_STAGES = STAGES.terrain + STAGES.buildings + STAGES.environment + STAGES.sky;
+function Builder({ built, next }: { built: number; next: () => void }) {
+  const { gl, scene, camera, invalidate } = useThree();
+  useEffect(() => {
+    if (built >= TOTAL_STAGES) return;
+    let live = true;
+    loadingStep('geometrie', built / TOTAL_STAGES);
+    performance.mark(`careerverse:tranche-${built}`);
+    gl.compileAsync(scene, camera)
+      .catch(() => null)
+      .finally(() => {
+        if (!live) return;
+        invalidate();
+        setTimeout(next, 0);
+      });
+    return () => {
+      live = false;
+    };
+  }, [built, gl, scene, camera, invalidate, next]);
+  return null;
+}
+/** Une fois tout construit et compilé : première image, puis fondu de la page de chargement. */
+function Warmup({ active }: { active: boolean }) {
+  const { gl, scene, camera, invalidate } = useThree();
+  const done = useRef(false);
+  useEffect(() => {
+    if (!active || done.current) return;
+    done.current = true;
+    loadingStep('geometrie');
+    gl.compileAsync(scene, camera)
+      .catch(() => null)
+      .finally(() => {
+        loadingStep('shaders');
+        invalidate();
+        requestAnimationFrame(() =>
+          requestAnimationFrame(() => {
+            loadingStep('image');
+            setState({ ready: true });
+            loadingDone();
+          }),
+        );
+      });
+  }, [active, gl, scene, camera, invalidate]);
+  return null;
+}
+
 function Runtime() {
   const sample = useRef({ elapsed: 0, frames: 0, slow: 0 });
-  const { scene } = useThree();
+  const { scene, gl } = useThree();
   useEffect(() => {
     probe.scene = scene;
+    probe.renderer = gl;
     return () => {
       probe.scene = null;
+      probe.renderer = null;
     };
-  }, [scene]);
+  }, [scene, gl]);
   useEffect(() => {
-    setState({ ready: true });
     const media = window.matchMedia('(prefers-reduced-motion: reduce)');
     const update = () => setState({ reducedMotion: media.matches });
     media.addEventListener('change', update);
@@ -99,14 +162,18 @@ function pixelRange(quality: 'high' | 'low'): [number, number] {
   return quality === 'high' ? [1, Math.max(1, Math.min(2, device))] : [0.75, 1];
 }
 export default function World() {
-  const { quality, interior } = useGame();
+  const { quality, interior, ready } = useGame();
   const [factor, setFactor] = useState(0.6);
+  const [built, setBuilt] = useState(0);
+  const next = useCallback(() => setBuilt((b) => b + 1), []);
+  const stage = (offset: number, count: number) => Math.max(0, Math.min(count, built - offset));
   const [low, high] = pixelRange(quality);
   const dpr = Math.round((low + (high - low) * factor) * 20) / 20;
   return (
     <Canvas
       shadows={quality === 'high' ? 'soft' : false}
       dpr={dpr}
+      frameloop={ready ? 'always' : 'demand'}
       camera={{ position: [78, 86, 100], fov: 41, near: 0.1, far: 1400 }}
       gl={{
         antialias: true,
@@ -151,11 +218,15 @@ export default function World() {
         <>
           <SkyDome />
           <fog attach='fog' args={[scene.fog.color, scene.fog.near, scene.fog.far]} />
-          <Terrain />
-          <Buildings />
-          <Environment />
-          <Clouds />
-          <Life />
+          <Terrain stage={stage(0, STAGES.terrain)} />
+          <Buildings count={stage(STAGES.terrain, STAGES.buildings)} />
+          <Environment stage={stage(STAGES.terrain + STAGES.buildings, STAGES.environment)} />
+          {built >= TOTAL_STAGES && (
+            <>
+              <Clouds />
+              <Life />
+            </>
+          )}
         </>
       )}
       <Robot />
@@ -164,7 +235,10 @@ export default function World() {
       <CameraRig />
       <CinematicCamera />
       <Runtime />
-      {quality === 'high' && (
+      <Builder built={built} next={next} />
+      <Warmup active={built >= TOTAL_STAGES || kitShowcase} />
+      {/* Contours (Soignée) : montés après la première image, pour ne pas allonger le chargement. */}
+      {quality === 'high' && ready && (
         <Suspense fallback={null}>
           <Effects />
         </Suspense>

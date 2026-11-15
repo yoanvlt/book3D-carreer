@@ -563,7 +563,6 @@ function GroundCover() {
     grass.side = THREE.DoubleSide;
     return {
       grass,
-      flower: plantMaterial({ ghost: false, sway: 0.8 }),
       pebble: new THREE.MeshStandardMaterial({ roughness: 0.95, flatShading: true }),
     };
   }, []);
@@ -572,7 +571,7 @@ function GroundCover() {
   return (
     <>
       <Instances items={grass} geometry={geometries.tuft} material={materials.grass} shadow={false} />
-      <Instances items={flowers} geometry={geometries.flower} material={materials.flower} shadow={false} />
+      <Instances items={flowers} geometry={geometries.flower} material={materials.grass} shadow={false} />
       <Instances items={pebbles} geometry={geometries.pebble} material={materials.pebble} shadow={false} />
       <Instances items={shrubs} geometry={geometries.flower} material={materials.pebble} />
     </>

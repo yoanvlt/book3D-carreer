@@ -1,4 +1,4 @@
-// Mesure du chargement : temps jusqu'à « prête » (première image de la scène), plus longue tâche
+// Mesure du chargement : temps jusqu'à la première image complète de la ville, plus longue tâche
 // bloquante du fil principal, nombre de tâches de plus de 200 ms, poids transféré.
 //   npm run mesure:chargement -- [répétitions]
 // Variable : URL (défaut http://127.0.0.1:4173/book3D-carreer/). Chromium sans écran, rendu WebGL
@@ -19,14 +19,6 @@ const results = [];
 for (let i = 0; i < runs; i++) {
   const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
   const page = await context.newPage();
-  let bytes = 0;
-  page.on('response', async (r) => {
-    try {
-      bytes += (await r.body()).length;
-    } catch {
-      /* réponse sans corps */
-    }
-  });
   await page.addInitScript(() => {
     window.__tasks = [];
     new PerformanceObserver((list) => {
@@ -39,9 +31,18 @@ for (let i = 0; i < runs; i++) {
     timeout: 180000,
     polling: 50,
   });
+  // Première image complète : deux images rendues après « prête » (comparable entre versions).
+  await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
   const ready = Date.now() - start;
   await page.waitForTimeout(1500);
   const tasks = await page.evaluate(() => window.__tasks);
+  // Poids transféré : document, scripts, styles, polices, sons (Resource Timing).
+  const bytes = await page.evaluate(() =>
+    [...performance.getEntriesByType('navigation'), ...performance.getEntriesByType('resource')].reduce(
+      (sum, e) => sum + (e.transferSize || e.encodedBodySize || 0),
+      0,
+    ),
+  );
   results.push({
     pret_ms: ready,
     plus_longue_tache_ms: Math.round(Math.max(0, ...tasks)),

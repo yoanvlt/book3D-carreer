@@ -12,7 +12,7 @@ export const photo = {
 };
 
 /** Scène courante, pour les relevés de `?debug=1` (emprise réelle des bâtiments). */
-export const probe = { scene: null as THREE.Scene | null };
+export const probe = { scene: null as THREE.Scene | null, renderer: null as THREE.WebGLRenderer | null };
 
 /**
  * Emprise de chaque bâtiment dans son repère local (x : largeur, z : profondeur, porte vers +z),
