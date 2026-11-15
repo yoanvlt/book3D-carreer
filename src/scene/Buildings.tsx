@@ -165,6 +165,25 @@ function BuildingModel({ b }: { b: Building }) {
       <Model />
       <Portal b={b} />
       {/* Totem d'entrée au nom du lieu */}
+      {/* Parvis dessiné devant l'entrée : dallage clair bordé, au-dessus de l'allée. */}
+      <group position={[0, 0, b.size[1] / 2 + 2.25]} userData={{ outside: true }}>
+        <Box
+          p={[0, 0.09, 0]}
+          s={[5.6, 0.18, 2.6]}
+          color={C.cream}
+          finish={{ ...FINISH.paving, scale: 1.4 }}
+        />
+        <Box p={[0, 0.1, 1.28]} s={[5.8, 0.2, 0.18]} color={C.stoneDark} finish={FINISH.stone} />
+        {[-1, 1].map((s) => (
+          <Box
+            key={s}
+            p={[s * 2.85, 0.1, 0]}
+            s={[0.18, 0.2, 2.7]}
+            color={C.stoneDark}
+            finish={FINISH.stone}
+          />
+        ))}
+      </group>
       <group position={totem} userData={{ outside: true }}>
         <Box p={[0, 0.15, 0]} s={[1.9, 0.3, 0.6]} color={C.stoneDark} finish={FINISH.stone} />
         <Bevel p={[0, 1.25, 0]} s={[1.6, 2.1, 0.3]} color={scenePlaceColor[b.id]} radius={0.1} />

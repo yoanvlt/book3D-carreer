@@ -4,7 +4,7 @@ import StaticBatch from './StaticBatch';
 import { benches, bikeRacks, bins, bollards, fences, lamps, streetPlates } from '../world/landscape';
 import { buildings } from '../world/config';
 
-import { Trees, Hedges, GroundCover } from './Vegetation';
+import { Trees, Hedges, GroundCover, TreePits } from './Vegetation';
 import { Bench, BikeRack, Bin, Bollard, Fence, Lamp, Pergola } from './Furniture';
 import { Monument, Wayfinding } from './Plaza';
 
@@ -34,6 +34,7 @@ export default function Environment({ stage = ENVIRONMENT_STAGES }: { stage?: nu
   return (
     <>
       {stage >= 1 && <Trees />}
+      {stage >= 1 && <TreePits />}
       {stage >= 2 && <Hedges />}
       {stage >= 2 && <GroundCover />}
       {stage >= 3 && <Wayfinding />}

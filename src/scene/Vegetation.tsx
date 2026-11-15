@@ -461,7 +461,8 @@ function open(x: number, z: number, road = 3.4) {
 /** Herbes hautes, fleurs des plates-bandes et cailloux : semés une fois, graine fixe. */
 function GroundCover() {
   const { quality } = useGame();
-  const { grass, flowers, pebbles } = useMemo(() => {
+  const { grass, flowers, pebbles, shrubs } = useMemo(() => {
+    const shrubs: Item[] = [];
     const rnd = random(23);
     const grass: Item[] = [];
     const flowers: Item[] = [];
@@ -524,7 +525,24 @@ function GroundCover() {
         r: [rnd(), rnd() * 6, 0],
       });
     }
-    return { grass, flowers, pebbles };
+    // Massifs composés : deux ou trois arbustes au pied d'un arbre sur deux, côté opposé au chemin.
+    trees.forEach((t, n) => {
+      if (n % 2 || t.grate) return;
+      for (let k = 0; k < 3; k++) {
+        const a = n * 1.7 + k * 1.1;
+        const r = 1.1 + (k % 2) * 0.5;
+        const [x, z] = [t.p[0] + Math.cos(a) * r, t.p[1] + Math.sin(a) * r];
+        if (!open(x, z, 3.2)) continue;
+        const s = 0.42 + rnd() * 0.25;
+        shrubs.push({
+          p: [x, heightAt(x, z) + s * 0.6, z],
+          s: [s * 1.2, s, s],
+          color: k % 2 ? C.leafDark : muted('#5d9a4a'),
+          r: [0, rnd() * 6, 0],
+        });
+      }
+    });
+    return { grass, flowers, pebbles, shrubs };
   }, []);
   const geometries = useMemo(() => {
     // Touffe : cinq brins triangulaires croisés.
@@ -556,8 +574,34 @@ function GroundCover() {
       <Instances items={grass} geometry={geometries.tuft} material={materials.grass} shadow={false} />
       <Instances items={flowers} geometry={geometries.flower} material={materials.flower} shadow={false} />
       <Instances items={pebbles} geometry={geometries.pebble} material={materials.pebble} shadow={false} />
+      <Instances items={shrubs} geometry={geometries.flower} material={materials.pebble} />
     </>
   );
 }
 
-export { Trees, Hedges, GroundCover };
+/** Pieds d'arbres : disque de paillage sous chaque arbre, grille de fonte sous les arbres d'alignement. */
+function TreePits() {
+  const { mulch, grates } = useMemo(() => {
+    const mulch: Item[] = [];
+    const grates: Item[] = [];
+    for (const t of trees) {
+      const y = heightAt(...t.p);
+      if (t.grate) grates.push({ p: [t.p[0], y + 0.16, t.p[1]], s: [1.5, 0.03, 1.5], color: '#2f3b45' });
+      else mulch.push({ p: [t.p[0], y + 0.02, t.p[1]], s: [0.75 * t.s, 0.04, 0.75 * t.s], color: '#6b4a33' });
+    }
+    return { mulch, grates };
+  }, []);
+  const geometries = useMemo(
+    () => ({ disc: new THREE.CylinderGeometry(1, 1, 1, 12), square: new THREE.BoxGeometry(1, 1, 1) }),
+    [],
+  );
+  const material = useMemo(() => new THREE.MeshStandardMaterial({ roughness: 1 }), []);
+  return (
+    <>
+      <Instances items={mulch} geometry={geometries.disc} material={material} shadow={false} />
+      <Instances items={grates} geometry={geometries.square} material={material} shadow={false} />
+    </>
+  );
+}
+
+export { Trees, Hedges, GroundCover, TreePits };

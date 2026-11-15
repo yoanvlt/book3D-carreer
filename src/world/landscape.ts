@@ -2,7 +2,18 @@ import { buildings, type Point } from './config';
 import { distanceToRoad } from './urban';
 import { PLAZA, pavementClearance } from './roads';
 /** Hand-composed groves: outer edge, street corners and pockets between destinations. */
-export const trees: { p: Point; s: number; kind: number }[] = [
+/** Arbres d'alignement le long des rues, à 4,3 m de l'axe, au pied protégé par une grille. */
+const STREET_TREES: Point[] = [
+  [-33.4, 9.7],
+  [-26.6, 9.4],
+  [-18.9, 9.8],
+  [-22.5, 29],
+  [-18, 29.1],
+  [16.5, 11.5],
+  [16.7, 19.5],
+];
+/** Bosquets composés à la main (lisière, angles de rues, poches entre les lieux) et alignements. */
+export const trees: { p: Point; s: number; kind: number; grate?: boolean }[] = [
   [-49, 18, 1.4, 0],
   [-49, 25, 1.2, 1],
   [-47, 31, 1.3, 0],
@@ -75,7 +86,8 @@ export const trees: { p: Point; s: number; kind: number }[] = [
       buildings.every(
         (b) => Math.hypot(t.p[0] - b.position[0], t.p[1] - b.position[1]) > Math.hypot(...b.size) / 2 + 2,
       ),
-  );
+  )
+  .concat(STREET_TREES.map((p) => ({ p, s: 0.85, kind: 0, grate: true })));
 export const benches: { p: Point; angle: number }[] = [
   { p: [-6, 5], angle: -0.6 },
   { p: [6, 5], angle: 0.6 },
