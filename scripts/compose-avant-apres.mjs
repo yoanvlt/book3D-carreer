@@ -1,14 +1,14 @@
 // Assemble les vues de détail avant et après côte à côte (une image par vue), avec un bandeau.
 //   npm run capture:comparaisons -- [avant] [après] [sortie]
-// Défauts : docs/screenshots/v6/avant, docs/screenshots/v6/apres, docs/screenshots/v6/comparaisons.
+// Défauts : docs/screenshots/v7/avant, docs/screenshots/v7/apres, docs/screenshots/v7/comparaisons.
 // L'assemblage est fait par le navigateur (canvas), comme l'encodage WebP de shot.mjs.
 import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
 import { chromium } from 'playwright';
 
 const [
-  before = 'docs/screenshots/v6/avant',
-  after = 'docs/screenshots/v6/apres',
-  out = 'docs/screenshots/v6/comparaisons',
+  before = 'docs/screenshots/v7/avant',
+  after = 'docs/screenshots/v7/apres',
+  out = 'docs/screenshots/v7/comparaisons',
 ] = process.argv.slice(2);
 await mkdir(out, { recursive: true });
 const names = (await readdir(after)).filter((f) => f.endsWith('.webp'));

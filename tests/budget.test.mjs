@@ -1,10 +1,10 @@
-// Budget de rendu de la V6, vérifié sur les relevés des campagnes de capture versionnées
+// Budget de rendu (V6, inchangé en V7), vérifié sur les relevés des campagnes de capture versionnées
 // (le décompte des draw calls et des triangles demande un vrai rendu WebGL, impossible sous Node).
 // Après une modification de la scène, refaire les relevés :
 //   npm run build && npm run preview
-//   npm run capture -- scenes docs/screenshots/v6
-//   QUALITE=low npm run capture -- scenes docs/screenshots/v6/legere
-//   npm run capture:details -- docs/screenshots/v6/apres
+//   npm run capture -- scenes docs/screenshots/v7
+//   QUALITE=low npm run capture -- scenes docs/screenshots/v7/legere
+//   npm run capture:details -- docs/screenshots/v7/details
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
@@ -15,7 +15,7 @@ export const BUDGET = {
 };
 
 const read = async (path) =>
-  JSON.parse(await readFile(new URL(`../docs/screenshots/v6/${path}`, import.meta.url)));
+  JSON.parse(await readFile(new URL(`../docs/screenshots/v7/${path}`, import.meta.url)));
 
 test('Qualité Soignée : au plus 300 draw calls et 700 000 triangles par scène, aux quatre tailles', async () => {
   const report = await read('rapport-scenes.json');
@@ -48,7 +48,7 @@ test('Qualité Légère : au plus 180 draw calls par scène, aux quatre tailles'
 });
 
 test('Vues de détail (Soignée) : même budget, de l’accueil au pas de la porte et dans les six intérieurs', async () => {
-  const report = await read('apres/rapport-details.json');
+  const report = await read('details/rapport-details.json');
   assert.deepEqual(report.erreurs, []);
   assert.ok(Object.keys(report.vues).length >= 31);
   for (const [name, s] of Object.entries(report.vues)) {

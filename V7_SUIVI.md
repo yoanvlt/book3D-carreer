@@ -62,9 +62,14 @@ Les points de ta liste, puis ceux que le tour et les tests ont trouvés en plus.
 
 Mesures (`npm run mesure:chargement`, Chromium sans écran, rendu logiciel SwiftShader, 1440×900, qualité Soignée, médiane de 3) :
 
-_Mesures en cours (campagne de vérification)._
+| Version | Prête (première image) | Plus longue tâche | Tâches > 200 ms | Transféré |
+| ------- | ---------------------: | ----------------: | --------------: | --------: |
+| V6      |                  4,4 s |            742 ms |               3 |    441 Ko |
+| V7      |                  7,6 s |          1 671 ms |               2 |    450 Ko |
 
-**Lecture honnête** : en rendu logiciel, la V7 met plus de temps que la V6 à afficher sa première image et garde une tâche longue de plus de 200 ms. La cause mesurée est la vérification d'édition des liens des programmes de shaders, qui se fait sur le processeur en SwiftShader (46 programmes) et que `compileAsync` ne peut pas rendre parallèle sans l'extension `KHR_parallel_shader_compile`. La page de chargement, elle, reste animée (CSS sur le compositeur) et la barre avance par tranches. Sur un vrai GPU (non vérifié ici), la compilation est bien plus rapide et parallèle. Captures de la page à trois étapes : `docs/screenshots/v7/chargement/`.
+Relevés bruts : `docs/screenshots/v7/chargement/mesure-v6.json` et `mesure-v7.json`. Le premier essai V7, à froid, a été bien plus lent (13,9 s, une tâche de 7,4 s) ; les deux suivants donnent 5,9 s et 7,6 s. En qualité Légère (mesure faite pendant la phase 4), la V7 est prête en 3,8 s avec une plus longue tâche de 0,55 s.
+
+**Lecture honnête** : en rendu logiciel, la V7 met plus de temps que la V6 à afficher sa première image et garde une tâche longue de plus de 200 ms. La cause mesurée est l'édition des liens des programmes de shaders, qui se fait sur le processeur en SwiftShader (46 programmes) et que `compileAsync` ne peut pas rendre parallèle sans l'extension `KHR_parallel_shader_compile`. La page de chargement, elle, reste animée (CSS sur le compositeur) et la barre avance par tranches. Sur un vrai GPU (non vérifié ici), la compilation est bien plus rapide et parallèle. Captures de la page à trois étapes : `docs/screenshots/v7/chargement/`.
 
 ## Phase 5 — Le robot, fil conducteur
 
@@ -80,13 +85,37 @@ Défauts vus sur les captures et corrigés : à 33 % de l'aller, le robot sortai
 
 ## Budget de rendu
 
-_Relevés en cours (campagne de vérification)._
+Relevés de la campagne V7 (`docs/screenshots/v7/`), lus par `tests/budget.test.mjs`. Ombres comprises.
+
+| Qualité Soignée (budget 300 / 700 000) | 1920×1080 | 1440×900 | 1366×768 |  390×844 | V6 (max) |
+| -------------------------------------- | --------: | -------: | -------: | -------: | -------: |
+| Accueil (robot compris)                |  194/415k | 194/415k | 194/415k | 194/415k | 246/432k |
+| Exploration                            |  205/432k | 201/432k | 205/432k | 172/417k | 246/443k |
+| Porte                                  |  183/413k | 182/401k | 183/413k | 138/384k | 205/424k |
+| Intérieur                              |    84/56k |   83/56k |   84/56k |   75/53k |   91/57k |
+
+| Qualité Légère (budget 180) | 1920×1080 | 1440×900 | 1366×768 | 390×844 | V6 (max) |
+| --------------------------- | --------: | -------: | -------: | ------: | -------: |
+| Accueil                     |       137 |      137 |      137 |     137 |      147 |
+| Exploration                 |       122 |      120 |      123 |      92 |      124 |
+| Porte                       |       104 |      103 |      104 |      61 |      124 |
+| Intérieur                   |        42 |       41 |       42 |      34 |       42 |
+
+Vues de détail (31 vues, de l'accueil au pas de la porte et dans les six intérieurs) : 218 draw calls et 420 695 triangles au plus. Plus de détail, mais moins de draw calls qu'en V6 : les nouvelles pièces passent dans les regroupements statiques, et les portes sont un seul maillage par vantail. Le robot et la page de chargement ne coûtent presque rien : le robot était déjà dans la scène, ses propulseurs ajoutent 10 petits maillages visibles seulement en vol ; la page est du HTML et du CSS.
 
 ## Vu à l'écran
 
 Chromium sans écran, rendu WebGL par le processeur (SwiftShader). **Les FPS relevés ne comptent pas** : ils mesurent le processeur de la machine de capture, pas un GPU.
 
-_Campagne de captures en cours._
+- **Scènes habituelles** (`docs/screenshots/v7/`) : accueil, exploration, porte, intérieur, aux quatre tailles, en Soignée et en Légère (`legere/`). Vu : le robot plane à côté du titre sans le couvrir, au-dessus de la carte sur téléphone ; le Profil avec son médaillon et sa porte en bois encastrée ; la place et la fontaine.
+- **Tour d'inspection, avant et après** (`inspection/avant/` = V6, `inspection/apres/` = V7) : six planches de 8 vues et la vue de dessus de l'île. Vu : cuves de Veolia sur leur socle et arrière traité, fenêtres courbes du Projet 3, contreventement du Projet 1 hors des dalles, portique de la Galerie, arrière de chaque bâtiment ; vue de dessus : allées dégagées, parvis devant chaque entrée. La vue à 270° du Profil est masquée par un sapin et la pergola du jardin (placement de la caméra, pas un défaut du bâtiment).
+- **Vues de détail** (`details/`) : pour chaque bâtiment, la silhouette depuis l'accueil, la façade depuis l'allée, la porte de près ; les six intérieurs ; le dessous de l'île. Les six portes encastrées se lisent (bois, verre, sectionnelle, hublots, galerie, rideau).
+- **Robot** (`robot/`) : voir la phase 5.
+- **Page de chargement** (`chargement/`) : trois étapes au bureau et sur téléphone. La légende sous la barre est celle du moment de la capture (souvent l'étape suivante : la capture elle-même prend du temps en rendu logiciel).
+- **Console** : aucune erreur dans aucune campagne.
+- **Contrôles** : 61 tests passent (dont cohérence du décor, emprises, budget, vols du robot) ; typecheck, lint, Prettier, knip et build sont verts.
+
+Défaut vu pendant la vérification et corrigé : en mode photo (captures de détail et d'inspection), le robot de l'accueil se plaçait devant la caméra photo et flottait dans le ciel ; il reste maintenant au sol à sa place. Les vues concernées ont été refaites.
 
 ## Non vérifié
 

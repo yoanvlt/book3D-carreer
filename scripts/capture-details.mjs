@@ -9,7 +9,7 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import { saveShot } from './shot.mjs';
 import { chromium } from 'playwright';
 
-const [out = 'docs/screenshots/v6/details', format = 'webp', mode = 'batiments'] = process.argv.slice(2);
+const [out = 'docs/screenshots/v7/details', format = 'webp', mode = 'batiments'] = process.argv.slice(2);
 const base = process.env.URL ?? 'http://127.0.0.1:4173/book3D-carreer/';
 const quality = process.env.QUALITE ?? 'high';
 await mkdir(out, { recursive: true });
