@@ -6,7 +6,18 @@
  */
 import { Ball, Beam, Box, Cylinder, Dome, FINISH, GLASS, Pipe, Rod, Sign } from '../Primitives';
 import { Fine } from '../StaticBatch';
-import { Planter, Railing, RoofUnit, SolarPanel, Vent, Volume, WallLamp, Windows } from '../kit';
+import {
+  DoorSet,
+  Parapet,
+  Planter,
+  Railing,
+  RoofUnit,
+  SolarPanel,
+  Stair,
+  Vent,
+  Volume,
+  Windows,
+} from '../kit';
 import { color as C, scenePlaceColor } from '../../design/tokens';
 import { place } from '../../content';
 
@@ -117,7 +128,7 @@ function Prototypes() {
 export default function Innovation() {
   return (
     <>
-      {/* Tour de service : bardage métallique orange, fentes vitrées, antennes. */}
+      {/* Tour de service : bardage métallique orange à couvre-joints, fentes vitrées, antennes. */}
       <Volume
         p={[-5.9, 0, -1.6]}
         w={3.2}
@@ -128,6 +139,9 @@ export default function Innovation() {
         plinth={{ h: 0.6, color: C.slate }}
         parapet={{ h: 0.4, color: TOWER, coping: C.white }}
       />
+      {[-0.8, 0.8].map((x) => (
+        <Box key={x} p={[-5.9 + x, 7.3, 2.43]} s={[0.08, 13.4, 0.08]} color={C.white} shadow={false} />
+      ))}
       <Windows
         p={[-7.52, 7.6, -1.6]}
         r={[0, -Math.PI / 2, 0]}
@@ -140,10 +154,34 @@ export default function Innovation() {
         sill={false}
         lit={[3, 6]}
       />
+      <Windows
+        p={[-5.9, 7.6, -5.62]}
+        r={[0, Math.PI, 0]}
+        w={0.9}
+        h={12.4}
+        rows={9}
+        glass={C.glassDeep}
+        frame={C.white}
+        bar={0.1}
+        sill={false}
+        lit={[5]}
+      />
       {[4.4, 8.8, 13.2].map((y) => (
         <Box key={y} p={[-5.9, y, 2.44]} s={[3.25, 0.2, 0.12]} color={C.white} />
       ))}
       <Vent p={[-5.9, 2.2, 2.4]} w={1.4} h={0.9} />
+      <DoorSet
+        p={[-7.52, 0, -3.6]}
+        ry={-Math.PI / 2}
+        w={1.0}
+        h={2.2}
+        leaf={C.slate}
+        glazed={false}
+        canopy='none'
+        canopyColor={C.white}
+        lamps={false}
+        number='T'
+      />
       <group position={[-5.9, 15, -2.4]}>
         <Box p={[0, 0.2, 0]} s={[1.2, 0.4, 1.2]} color={C.slate} />
         {[-0.35, 0.35].flatMap((x) =>
@@ -164,28 +202,31 @@ export default function Innovation() {
             color={C.red}
             finish={{ glow: C.red, glowIntensity: 1.5 }}
           />
-          {[1.2, 2.4].map((y) => (
-            <Rod key={y} p={[0.5, 3 + y, -0.4]} s={[0.015, 1.2, 0.015]} color={STEEL} shadow={false} />
-          ))}
         </Fine>
       </group>
 
       {/* Rez-de-chaussée : vitrine en verre clair, plancher, mur du fond, prototypes. */}
-      <group position={[1.45, 0, 0.05]}>
-        <Box p={[0, 0.15, 0]} s={[11.8, 0.3, 11.4]} color={C.slate} />
-        <Box p={[0, 0.32, 0]} s={[11.4, 0.04, 11]} color='#e9eef1' finish={FINISH.paving} shadow={false} />
-        <Box p={[0, 2.4, -5.45]} s={[11.4, 4.2, 0.2]} color={C.white} />
-        <Box p={[0, 2.45, 0]} s={[11.5, 4.3, 11.1]} color={PALE} finish={FINISH.clearGlass} shadow={false} />
-        <Frame w={11.5} d={11.1} h={4.6} />
-        {[-2.9, 0, 2.9].map((x) => (
-          <Box key={x} p={[x, 2.45, 5.56]} s={[0.08, 4.3, 0.1]} color={STEEL} shadow={false} />
+      <group position={[1.55, 0, 0.2]}>
+        <Box p={[0, 0.15, 0]} s={[11.9, 0.3, 11.6]} color={C.slate} />
+        <Box p={[0, 0.32, 0]} s={[11.4, 0.04, 11.2]} color='#e9eef1' finish={FINISH.paving} shadow={false} />
+        <Box p={[0, 2.4, -5.55]} s={[11.4, 4.2, 0.2]} color={C.white} finish={FINISH.concrete} />
+        <Box
+          p={[0, 2.45, 0.1]}
+          s={[11.5, 4.3, 11.2]}
+          color={PALE}
+          finish={FINISH.clearGlass}
+          shadow={false}
+        />
+        <Frame w={11.5} d={11.4} h={4.6} />
+        {[-2.9, 2.9].map((x) => (
+          <Box key={x} p={[x, 2.45, 5.72]} s={[0.08, 4.3, 0.1]} color={STEEL} shadow={false} />
         ))}
       </group>
       <Prototypes />
 
-      {/* Deux plateaux vitrés décalés, dalles de béton clair et filets lumineux. */}
+      {/* Deux plateaux vitrés, décalés en profondeur sur la même largeur ; dalles et brise-soleil. */}
       {[0, 1].map((i) => (
-        <group key={i} position={[i ? 1.1 : 1.9, 4.6 + i * 4.4, 0]} rotation={[0, i ? 0.08 : -0.12, 0]}>
+        <group key={i} position={[1.55, 4.6 + i * 4.4, i ? -0.4 : 0.6]}>
           <Box p={[0, 0.18, 0]} s={[11.9, 0.36, 10.2]} color={C.white} finish={FINISH.concrete} />
           <Box p={[0, 2.3, 0]} s={[11.2, 3.9, 9.4]} color={i ? PALE : DEEP} finish={GLASS} />
           <Windows
@@ -232,53 +273,102 @@ export default function Innovation() {
             shadow={false}
           />
           <Railing a={[-5.7, 0.36, 5]} b={[5.7, 0.36, 5]} color={STEEL} />
-          {/* Brise-soleil horizontaux sur la face sud */}
           {[3.2, 3.7].map((y) => (
             <Box key={y} p={[0, y, 4.95]} s={[11.2, 0.06, 0.5]} color={C.white} shadow={false} />
           ))}
         </group>
       ))}
-      <Box p={[1.5, 13.25, 0]} s={[11.6, 0.36, 10]} color={C.white} finish={FINISH.concrete} />
+      <Box p={[1.55, 13.25, -0.4]} s={[11.9, 0.36, 10.2]} color={C.white} finish={FINISH.concrete} />
 
-      {/* Contreventement en croix sur la façade est. */}
-      <Beam a={[7.35, 0.3, -5.3]} b={[7.35, 13.2, 5.3]} width={0.32} color={TOWER} />
-      <Beam a={[7.35, 0.3, 5.3]} b={[7.35, 13.2, -5.3]} width={0.22} color={STEEL} />
-      <Fine>
-        <Box p={[7.35, 6.75, 0]} s={[0.5, 0.5, 0.5]} color={STEEL} />
-      </Fine>
+      {/* Contreventement en croix, un par niveau, dans un plan extérieur entre les dalles. */}
+      {[0.3, 4.6, 9.0].map((y0, i) => (
+        <group key={y0}>
+          <Beam
+            a={[7.65, y0 + 0.36, -4.4]}
+            b={[7.65, y0 + 4.25, 4.4]}
+            width={0.26}
+            color={i === 1 ? TOWER : STEEL}
+          />
+          <Beam a={[7.65, y0 + 0.36, 4.4]} b={[7.65, y0 + 4.25, -4.4]} width={0.2} color={STEEL} />
+          {[-4.4, 4.4].map((z) => (
+            <Box key={z} p={[7.6, y0 + 2.3, z]} s={[0.24, 4.2, 0.24]} color={STEEL} finish={FINISH.steel} />
+          ))}
+        </group>
+      ))}
 
-      {/* Auvent en porte-à-faux : grande dalle blanche, rive acier, tirants vers la tour. */}
-      <group position={[1.6, 13.7, 1.6]}>
-        <Box p={[0, 0, 0]} s={[12.4, 0.34, 13.4]} color={C.white} finish={FINISH.paint} />
-        <Box p={[0, -0.04, 6.72]} s={[12.5, 0.44, 0.1]} color={STEEL} finish={FINISH.steel} />
+      {/* Auvent en porte-à-faux : même largeur que les plateaux, 2,4 m au-delà de la façade. */}
+      <group position={[1.55, 13.7, 1.55]}>
+        <Box p={[0, 0, 0]} s={[11.9, 0.34, 13.5]} color={C.white} finish={FINISH.paint} />
+        <Box p={[0, -0.04, 6.77]} s={[12, 0.44, 0.1]} color={STEEL} finish={FINISH.steel} />
         <Box
-          p={[0, -0.2, 6.62]}
-          s={[12.2, 0.05, 0.06]}
+          p={[0, -0.2, 6.67]}
+          s={[11.7, 0.05, 0.06]}
           color={C.lamp}
           finish={{ glow: C.lamp, glowIntensity: 1 }}
           shadow={false}
         />
         {[-3.5, 3.5].map((x) => (
-          <Pipe key={x} a={[-7.5, 1.1, -3.6]} b={[x, 0.2, 6.4]} radius={0.04} color={STEEL} />
+          <Pipe key={x} a={[-7.45, 1.3, -3.6]} b={[x, 0.2, 6.5]} radius={0.04} color={STEEL} />
         ))}
-        <SolarPanel p={[2, 0.17, -2.5]} w={2.6} />
-        <SolarPanel p={[-1.2, 0.17, -2.5]} w={2.6} />
-        <SolarPanel p={[2, 0.17, 0.2]} w={2.6} />
-        <RoofUnit p={[4.6, 0.17, -4.8]} />
+        <Parapet y={0.17} w={11.9} d={13.5} h={0.3} color={C.white} coping={STEEL} />
+        <SolarPanel p={[2, 0.17, -3.2]} w={2.6} />
+        <SolarPanel p={[-1.2, 0.17, -3.2]} w={2.6} />
+        <SolarPanel p={[2, 0.17, -0.6]} w={2.6} />
+        <SolarPanel p={[-1.2, 0.17, -0.6]} w={2.6} />
+        <Box p={[4.2, 0.25, -4.6]} s={[2.6, 0.16, 2.6]} color={C.concrete} finish={FINISH.slats} />
+        <RoofUnit p={[4.2, 0.33, -4.6]} s={[1.6, 0.7, 1]} />
+        <Railing a={[2.8, 0.17, -3.2]} b={[5.6, 0.17, -3.2]} h={0.9} color={STEEL} />
       </group>
       <Sign
         text={place('project-1').enseigne}
-        p={[1.6, 13.66, 8.39]}
+        p={[1.55, 13.66, 8.43]}
         s={[6, 0.42]}
         color={C.white}
         bg={STEEL}
         rounded={false}
       />
 
+      {/* Arrière : escalier de secours sur deux niveaux, accès de livraison, local vélos. */}
+      <group position={[5.6, 0, -5.4]} rotation={[0, Math.PI, 0]}>
+        <Stair
+          p={[0, 0, 0.6]}
+          ry={Math.PI / 2}
+          rise={4.6}
+          run={4.2}
+          width={1.0}
+          color={STEEL}
+          rail={STEEL}
+          sides={[1]}
+        />
+        <Box p={[4.4, 4.55, 0.65]} s={[1.6, 0.12, 1.2]} color={STEEL} finish={FINISH.slats} />
+        <Stair
+          p={[4.6, 4.6, 0.6]}
+          ry={-Math.PI / 2}
+          rise={4.4}
+          run={4.2}
+          width={1.0}
+          color={STEEL}
+          rail={STEEL}
+          sides={[-1]}
+        />
+        <Box p={[0.2, 8.95, 0.65]} s={[1.6, 0.12, 1.2]} color={STEEL} finish={FINISH.slats} />
+        {[-0.5, 4.6].map((x) => (
+          <Rod key={x} p={[x, 4.5, 1.2]} s={[0.06, 9, 0.06]} color={STEEL} />
+        ))}
+      </group>
+      <DoorSet
+        p={[-1.5, 0.3, -5.66]}
+        ry={Math.PI}
+        w={2.4}
+        h={2.6}
+        leaf={C.slate}
+        glazed={false}
+        canopy='flat'
+        canopyColor={STEEL}
+        lamps={false}
+      />
       <Planter p={[-3.6, 0, 7.4]} w={2.4} color={STEEL} />
       <Planter p={[4.2, 0, 7.4]} w={2.4} color={STEEL} />
-      <WallLamp p={[-2.1, 2.7, 5.65]} />
-      <WallLamp p={[2.1, 2.7, 5.65]} />
     </>
   );
 }
