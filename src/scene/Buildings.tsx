@@ -13,7 +13,7 @@ import Discovery from './buildings/Discovery';
 import Atelier from './buildings/Gallery';
 import Veolia from './buildings/Veolia';
 import { buildings, type Building } from '../world/config';
-import { getState, player } from '../state';
+import { getState, player, useGame } from '../state';
 import { place } from '../content';
 
 /*
@@ -38,6 +38,9 @@ function Portal({ b }: { b: Building }) {
   );
 }
 
+/** Distance de la caméra en deçà de laquelle les petits détails (Fine) d'un bâtiment sont dessinés. */
+const FINE_DISTANCE = 48;
+
 /** Un fichier par bâtiment, dans src/scene/buildings/. */
 const models = {
   profile: Portrait,
@@ -56,6 +59,8 @@ function BuildingModel({ b }: { b: Building }) {
   const Model = models[b.id];
   const root = useRef<THREE.Group>(null!);
   const faded = useRef<THREE.MeshStandardMaterial[]>([]);
+  const fine = useRef<THREE.Mesh[]>([]);
+  const { quality } = useGame();
   const ray = useMemo(() => new THREE.Ray(), []);
   const hit = useMemo(() => new THREE.Vector3(), []);
   const target = useMemo(() => new THREE.Vector3(), []);
@@ -87,15 +92,20 @@ function BuildingModel({ b }: { b: Building }) {
       clones.push(clone);
     });
     faded.current = owned;
+    fine.current = batch.meshes.filter((m) => m.userData.fine);
     return () => {
       originals.forEach((m, mesh) => (mesh.material = m));
       clones.forEach((m) => m.dispose());
       faded.current = [];
       batch.restore();
     };
-  }, []);
+  }, [quality]);
   useFrame(({ camera }, dt) => {
     const s = getState();
+    // Troisième niveau de détail : seulement à portée de la porte.
+    const near =
+      Math.hypot(camera.position.x - b.position[0], camera.position.z - b.position[1]) < FINE_DISTANCE;
+    for (const mesh of fine.current) mesh.visible = near;
     let obscured = false;
     if (s.phase === 'explore' || s.phase === 'travel') {
       ray.origin.set(player.x, player.y + 1.6, player.z);
