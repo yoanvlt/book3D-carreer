@@ -169,7 +169,12 @@ function BuildingModel({ b }: { b: Building }) {
   });
   const totem: [number, number, number] = [b.size[0] / 2 + 0.9, 0, b.size[1] / 2 + 1.4];
   return (
-    <group ref={root} position={[b.position[0], b.elevation, b.position[1]]} rotation={[0, b.rotation, 0]}>
+    <group
+      ref={root}
+      name={`building-${b.id}`}
+      position={[b.position[0], b.elevation, b.position[1]]}
+      rotation={[0, b.rotation, 0]}
+    >
       {/* Socle en deux assises */}
       <Box p={[0, -0.25, 0]} s={[b.size[0] + 2.2, 0.5, b.size[1] + 2.2]} color={C.stoneDark} />
       <Box
@@ -181,7 +186,7 @@ function BuildingModel({ b }: { b: Building }) {
       <Model />
       <Portal b={b} />
       {/* Totem d'entrée au nom du lieu */}
-      <group position={totem}>
+      <group position={totem} userData={{ outside: true }}>
         <Box p={[0, 0.15, 0]} s={[1.9, 0.3, 0.6]} color={C.stoneDark} finish={FINISH.stone} />
         <Bevel p={[0, 1.25, 0]} s={[1.6, 2.1, 0.3]} color={scenePlaceColor[b.id]} radius={0.1} />
         <Box p={[0, 2.36, 0]} s={[1.75, 0.1, 0.42]} color={C.ink} />

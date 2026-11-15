@@ -21,7 +21,9 @@
     "sons": "python3 scripts/sons.py",
     "knip": "knip",
     "capture:details": "node scripts/capture-details.mjs",
-    "capture:comparaisons": "node scripts/compose-avant-apres.mjs"
+    "capture:comparaisons": "node scripts/compose-avant-apres.mjs",
+    "capture:inspection": "node scripts/capture-inspection.mjs",
+    "mesure:chargement": "node scripts/mesure-chargement.mjs"
   },
   "dependencies": {
     "@fontsource-variable/bricolage-grotesque": "^5.3.0",

@@ -3,7 +3,8 @@ import Interior from './Interior';
 import Transitions from './Transitions';
 import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { PerformanceMonitor } from '@react-three/drei';
-import { Canvas, useFrame } from '@react-three/fiber';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
+import { probe } from './photo';
 import Terrain from './Terrain';
 import Buildings from './Buildings';
 import Environment from './Environment';
@@ -28,6 +29,13 @@ import { useGame, setState, getState, player, cameraMode, passage } from '../sta
 
 function Runtime() {
   const sample = useRef({ elapsed: 0, frames: 0, slow: 0 });
+  const { scene } = useThree();
+  useEffect(() => {
+    probe.scene = scene;
+    return () => {
+      probe.scene = null;
+    };
+  }, [scene]);
   useEffect(() => {
     setState({ ready: true });
     const media = window.matchMedia('(prefers-reduced-motion: reduce)');
