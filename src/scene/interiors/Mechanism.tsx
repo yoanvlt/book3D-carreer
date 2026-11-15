@@ -70,8 +70,8 @@ export default function MechanismInterior({ mood }: { mood: InteriorMood }) {
           {[-2.4, -1.2, 0, 1.2].map((x, i) => (
             <Box
               key={x}
-              p={[x, 2.1, -0.44]}
-              s={[0.08 + (i % 2) * 0.3, 0.6, 0.04]}
+              p={[x, 1.8, -0.44]}
+              s={[0.08 + (i % 2) * 0.3, 0.55, 0.04]}
               r={[0, 0, i * 0.3]}
               color={[STEEL, C.red, C.yellow, C.metal][i]}
               shadow={false}
