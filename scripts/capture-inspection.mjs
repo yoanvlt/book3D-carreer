@@ -3,7 +3,8 @@
 // l'île. Relève aussi l'emprise réelle de chaque bâtiment (emprises.json, lu par
 // tests/coherence.test.mjs).
 //   npm run capture:inspection -- <dossier>
-// Variables : URL (défaut http://127.0.0.1:4173/book3D-carreer/), LIEUX (ex. profile,veolia).
+// Variables : URL (défaut http://127.0.0.1:4173/book3D-carreer/), LIEUX (ex. profile,veolia),
+// EMPRISES=1 (relevé des emprises seulement, sans images).
 import { mkdir, writeFile } from 'node:fs/promises';
 import { chromium } from 'playwright';
 
@@ -75,7 +76,7 @@ const only = process.env.LIEUX?.split(',');
 const layout = (await page.evaluate(() => window.__careerverse.layout())).filter(
   (b) => !only || only.includes(b.id),
 );
-for (const b of layout) {
+for (const b of process.env.EMPRISES ? [] : layout) {
   const radius = Math.max(...b.size) / 2 + 11;
   const images = [];
   const labels = [];
@@ -98,7 +99,7 @@ for (const b of layout) {
   }
   await sheet(images, labels, 4, `${out}/${b.id}.webp`);
 }
-if (!only) {
+if (!only && !process.env.EMPRISES) {
   const top = await shoot({ position: [0, 215, 0.01], target: [0, 0, 0], fov: 40 });
   await sheet([top], ['dessus'], 1, `${out}/ile-dessus.webp`);
 }
