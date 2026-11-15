@@ -1,14 +1,14 @@
-# CareerVerse — V6
+# CareerVerse — V7
 
-Portfolio 3D de Yoan Viollet : une petite ville en React Three Fiber où chaque bâtiment raconte un projet. La V6 garde le jeu de la V5 (joystick, toucher pour aller, saut, passeport, visite guidée, son) et donne du détail à tout le monde :
+Portfolio 3D de Yoan Viollet : une petite ville en React Three Fiber où chaque bâtiment raconte un projet. La V7 garde le jeu et le kit de la V6 (joystick, toucher pour aller, saut, passeport, visite guidée, son, matières procédurales) et soigne la cohérence :
 
-- un kit de construction paramétrable (fenêtres, portes, façades, toitures, structures) et des matières procédurales calculées dans le shader, sans aucune texture ;
-- six bâtiments qui racontent leur lieu : maison d'architecte, pavillon de verre, atelier à sheds, observatoire, galerie, station de traitement d'eau ;
-- une île flottante à falaise de strates et cascades, des rues dallées, quatre essences d'arbres, du mobilier urbain ;
-- six intérieurs différents : salon-bibliothèque, laboratoire, atelier, observatoire, galerie, salle de contrôle ;
-- trois niveaux de lecture et un budget de rendu tenu : 300 draw calls au plus en qualité Soignée, 180 en Légère.
+- un décor cohérent, vérifié par des tests : rien posé sur les allées sans raison, plaques d'égout sur la chaussée, aucun bâtiment qui déborde de son emprise ;
+- six bâtiments repris sur leurs quatre faces, avec des portes encastrées déclinées par lieu, des parvis, des pieds d'arbres et des massifs ;
+- une vraie page de chargement, affichée avant le JavaScript, dont la barre suit les étapes réelles ;
+- le robot comme fil conducteur : il plane à côté du titre, vole jusqu'à la place à l'entrée et revient à l'accueil au retour ;
+- le même budget de rendu : 300 draw calls au plus en qualité Soignée, 180 en Légère.
 
-Suivi détaillé et vérifications : [V6_SUIVI.md](V6_SUIVI.md). Versions précédentes, briefs et cahier des charges : [docs/archives/](docs/archives/README.md). Ajouter un projet : [CONTENT.md](CONTENT.md).
+Suivi détaillé et vérifications : [V7_SUIVI.md](V7_SUIVI.md) (V6 : [V6_SUIVI.md](V6_SUIVI.md)). Versions précédentes, briefs et cahier des charges : [docs/archives/](docs/archives/README.md). Ajouter un projet : [CONTENT.md](CONTENT.md).
 
 ## Installation et lancement
 
@@ -21,24 +21,28 @@ npm run dev
 
 Ouvrir l’URL affichée par Vite, avec le chemin **/book3D-carreer/**. En développement, les bâtiments au statut `brouillon` sont visibles.
 
-| Commande                                  | Rôle                                                                                |
-| ----------------------------------------- | ----------------------------------------------------------------------------------- |
-| `npm run typecheck`                       | TypeScript                                                                          |
-| `npm run lint`                            | ESLint                                                                              |
-| `npm run format` / `npm run format:check` | Prettier                                                                            |
-| `npm run knip`                            | code mort : fichiers, exports et dépendances inutilisés                             |
-| `npm test`                                | tests Node (monde, V3, contenu, V5, budget de rendu V6)                             |
-| `npm run build` puis `npm run preview`    | build de production dans `dist/`                                                    |
-| `npm run capture -- scenes <dossier>`     | captures aux quatre tailles (serveur `preview` lancé)                               |
-| `npm run capture -- portes <dossier>`     | entrée, lecture d’une station et sortie des six bâtiments                           |
-| `npm run capture:comparaisons`            | vues avant et après côte à côte (`docs/screenshots/v6/comparaisons/`)               |
-| `npm run capture:details -- <dossier>`    | pour chaque bâtiment : vue d’accueil, façade, porte ; intérieurs ; dessous de l’île |
-| `npm run capture:interface -- <dossier>`  | plan, aide, présentation, lecture, fiche mobile, version texte                      |
-| `npm run capture:tactile -- <dossier>`    | parcours tactile 390×844 : joystick, saut, toucher pour aller                       |
-| `npm run capture:visite -- <dossier>`     | visite guidée de bout en bout                                                       |
-| `npm run capture:apercu`                  | image de partage `public/apercu.jpg` et icône Apple                                 |
-| `npm run temps-morts`                     | durées de trajet, entrée, sortie et présentation (60 Hz)                            |
-| `npm run sons`                            | régénère les sons (`public/sons/`, Python, numpy et ffmpeg)                         |
+| Commande                                  | Rôle                                                                                              |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| `npm run typecheck`                       | TypeScript                                                                                        |
+| `npm run lint`                            | ESLint                                                                                            |
+| `npm run format` / `npm run format:check` | Prettier                                                                                          |
+| `npm run knip`                            | code mort : fichiers, exports et dépendances inutilisés                                           |
+| `npm test`                                | tests Node (monde, V3, contenu, V5, budget de rendu, cohérence du décor, emprises, vols du robot) |
+| `npm run build` puis `npm run preview`    | build de production dans `dist/`                                                                  |
+| `npm run capture -- scenes <dossier>`     | captures aux quatre tailles (serveur `preview` lancé)                                             |
+| `npm run capture -- portes <dossier>`     | entrée, lecture d’une station et sortie des six bâtiments                                         |
+| `npm run capture:comparaisons`            | vues avant et après côte à côte (deux dossiers de `capture:details`)                              |
+| `npm run capture:inspection -- <dossier>` | tour d'inspection : 8 angles par bâtiment, vue de dessus, relevé des emprises                     |
+| `npm run capture:robot -- <dossier>`      | robot à l'accueil, vols d'entrée et de retour à 0, 33, 66 et 100 %                                |
+| `npm run capture:chargement -- <dossier>` | page de chargement à trois étapes                                                                 |
+| `npm run mesure:chargement -- [n]`        | temps jusqu'à la première image, plus longue tâche, poids transféré                               |
+| `npm run capture:details -- <dossier>`    | pour chaque bâtiment : vue d’accueil, façade, porte ; intérieurs ; dessous de l’île               |
+| `npm run capture:interface -- <dossier>`  | plan, aide, présentation, lecture, fiche mobile, version texte                                    |
+| `npm run capture:tactile -- <dossier>`    | parcours tactile 390×844 : joystick, saut, toucher pour aller                                     |
+| `npm run capture:visite -- <dossier>`     | visite guidée de bout en bout                                                                     |
+| `npm run capture:apercu`                  | image de partage `public/apercu.jpg` et icône Apple                                               |
+| `npm run temps-morts`                     | durées de trajet, entrée, sortie, présentation et vols du robot (60 Hz)                           |
+| `npm run sons`                            | régénère les sons (`public/sons/`, Python, numpy et ffmpeg)                                       |
 
 Les scripts de capture utilisent Playwright (déclaré en dépendance de développement) et le Chromium installé avec lui.
 
@@ -95,4 +99,4 @@ Sur téléphone : joystick en bas à gauche, bouton de saut à droite, toucher l
 | `tests/`                                                                    | tests Node des vrais modules TypeScript, contenu d’essai dans `tests/fixtures/`         |
 | `scripts/`                                                                  | captures Playwright de contrôle visuel                                                  |
 | `docs/archives/`                                                            | suivis V3 à V5, briefs, cahier des charges                                              |
-| `docs/screenshots/v6/`                                                      | captures de la version en cours (WebP), relevés de rendu                                |
+| `docs/screenshots/v7/`                                                      | captures de la version en cours (WebP), relevés de rendu, tour d'inspection             |
