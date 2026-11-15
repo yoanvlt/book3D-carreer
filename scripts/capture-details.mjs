@@ -113,6 +113,9 @@ if (views.includes('ile')) {
 }
 
 for (const b of views.includes('interieur') ? layout : []) {
+  // Sortir d'abord : la V5 gardait la salle précédente si l'on passait directement d'un intérieur à l'autre.
+  await page.evaluate(() => window.__careerverse.visit(null));
+  await page.waitForTimeout(1500);
   await page.evaluate((id) => window.__careerverse.visit(id), b.id);
   await page.waitForTimeout(2000);
   await shoot(`interieur-${b.id}`, { position: [0, 5.4, 12.2], target: [0, 1.4, -5], fov: 62 });
