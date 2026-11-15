@@ -1,14 +1,15 @@
 /**
  * Le robot, du départ à l'arrivée (V8). Tout le vol est réglé ici, en une courte timeline de
  * poses-clés avec leurs courbes d'accélération ; robot (Robot.tsx) et caméra (CameraRig.tsx)
- * ne font que lire `flightPose` et `flightCamera`. Pur et testé (tests/v7.test.mjs).
+ * ne font que lire `flightPose` et `flightCamera`. Pur et testé (tests/vol.test.mjs).
  *
  * Aller : accroupi sur l'îlot → saut et allumage → arc au-dessus des toits, incliné dans les
  * virages → redressement et freinage → atterrissage (léger écrasement, anneau de poussière).
  * Retour : le chemin inverse jusqu'à l'îlot ; il se retourne une fois vers la ville avant de se
- * poser. Caméra : travelling de profil ou de trois quarts avant, à distance constante.
+ * poser. Caméra : travelling de trois quarts (arrière à l'aller, face au retour), à distance
+ * constante, l'île dans le cadre.
  */
-import { Vector3, type PerspectiveCamera } from 'three';
+import { Vector3, PerspectiveCamera } from 'three';
 import { buildings, WORLD } from './config';
 import { heightAt } from './terrain';
 import { edgeRadius } from './island';
@@ -26,10 +27,14 @@ const POSE = { pitch: 0.38, flare: -0.22, bank: 0.42, crouch: 0.32, squash: 0.82
 const TRACK = {
   screen: 0.15,
   robot: 2.5,
-  /** Angle entre l'arrière du robot et la caméra (65° : trois quarts, jamais de dos). */
+  /** Aller : angle entre l'arrière du robot et la caméra (65° : trois quarts, jamais de dos). */
   azimuth: (65 * Math.PI) / 180,
-  /** Plongée de la caméra vers le robot (l'île reste dans le cadre). */
+  /** Retour : angle entre l'avant du robot et la caméra (25° : trois quarts face, l'île derrière lui). */
+  facing: (25 * Math.PI) / 180,
+  /** Plongée de la caméra vers le robot. */
   elevation: (28 * Math.PI) / 180,
+  /** Cadre où le robot doit rester quand la visée glisse vers l'île (coordonnées normalisées). */
+  frame: { x: 0.55, bottom: -0.3, top: 0.62 },
 } as const;
 
 /** Courbes d'accélération. */
@@ -170,26 +175,67 @@ export function flightPose(path: Path, time: number, startYaw: number, endYaw: n
 }
 
 /**
- * Caméra de travelling : de trois quarts (à `TRACK.azimuth` de l'arrière, jamais de dos), en
- * plongée, à la distance qui donne au robot `TRACK.screen` de la hauteur d'écran ; du côté
- * extérieur de l'île, si bien que l'île reste devant, dans le cadre.
+ * Caméra de travelling, à la distance qui donne au robot `TRACK.screen` de la hauteur d'écran.
+ * Aller : de trois quarts arrière (à `TRACK.azimuth` de l'arrière, jamais de dos) ; retour : de
+ * trois quarts face, l'île derrière le robot. Côté extérieur de l'île, en plongée. La visée glisse
+ * ensuite du robot vers la ville tant que le robot reste dans le cadre : l'île entre dans l'image.
  */
-export function flightCamera(pose: Pose, path: Path, fov: number): { position: V3; target: V3 } {
+const lens = new PerspectiveCamera();
+export function flightCamera(
+  pose: Pose,
+  path: Path,
+  fov: number,
+  aspect = 1.6,
+): { position: V3; target: V3 } {
   const distance = TRACK.robot / (TRACK.screen * 2 * Math.tan((fov * Math.PI) / 360));
   const dir = new Vector3(path[3][0] - path[0][0], 0, path[3][2] - path[0][2]).normalize();
   const side = new Vector3(dir.z, 0, -dir.x);
   const center = new Vector3(pose.p[0], pose.p[1] + 1.2, pose.p[2]);
   if (side.dot(new Vector3(center.x, 0, center.z)) < 0) side.negate();
-  const flat = dir
-    .clone()
-    .multiplyScalar(-Math.cos(TRACK.azimuth))
-    .addScaledVector(side, Math.sin(TRACK.azimuth))
-    .multiplyScalar(Math.cos(TRACK.elevation));
+  const leaving = Math.hypot(path[3][0], path[3][2]) > Math.hypot(path[0][0], path[0][2]);
+  const flat = leaving
+    ? dir.clone().multiplyScalar(Math.cos(TRACK.facing)).addScaledVector(side, Math.sin(TRACK.facing))
+    : dir.clone().multiplyScalar(-Math.cos(TRACK.azimuth)).addScaledVector(side, Math.sin(TRACK.azimuth));
+  flat.multiplyScalar(Math.cos(TRACK.elevation));
   const offset = flat.add(new Vector3(0, Math.sin(TRACK.elevation), 0));
   const position = center.clone().addScaledVector(offset, distance);
   // Jamais sous le relief de l'île.
   position.y = Math.max(position.y, heightAt(position.x, position.z) + 2);
-  return { position: position.toArray() as V3, target: center.toArray() as V3 };
+  return { position: position.toArray() as V3, target: aimAtCity(position, center, fov, aspect) };
+}
+
+/** Visée : du robot vers la ville, aussi loin que le cadre `TRACK.frame` le permet (dichotomie). */
+function aimAtCity(position: Vector3, center: Vector3, fov: number, aspect: number): V3 {
+  Object.assign(lens, { fov, aspect, near: 0.1, far: 2000 });
+  lens.position.copy(position);
+  lens.updateProjectionMatrix();
+  const city = new Vector3(...landingPoint())
+    .sub(position)
+    .setLength(center.distanceTo(position))
+    .add(position);
+  const feet = new Vector3();
+  const head = new Vector3();
+  const aim = (k: number) => {
+    const target = center.clone().lerp(city, k);
+    lens.lookAt(target);
+    lens.updateMatrixWorld();
+    feet.set(center.x, center.y - 1.2, center.z).project(lens);
+    head.set(center.x, center.y + 1.3, center.z).project(lens);
+    const { x, bottom, top } = TRACK.frame;
+    return Math.abs(feet.x) < x && Math.abs(head.x) < x && feet.y > bottom && head.y < top ? target : null;
+  };
+  let best = aim(1);
+  if (!best) {
+    best = center;
+    let [lo, hi] = [0, 1];
+    for (let i = 0; i < 14; i++) {
+      const k = (lo + hi) / 2;
+      const target = aim(k);
+      if (target) [lo, best] = [k, target];
+      else hi = k;
+    }
+  }
+  return best.toArray() as V3;
 }
 
 /** Vrai si le point est sous le terrain ou dans le volume d'un bâtiment (contrôle des trajets). @public */

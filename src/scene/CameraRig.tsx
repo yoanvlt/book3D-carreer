@@ -15,11 +15,11 @@ import { photo } from './photo';
  */
 const rigPosition = new THREE.Vector3();
 const rigTarget = new THREE.Vector3();
-function flightView(fov: number) {
+function flightView(fov: number, aspect: number) {
   const f = robotUi.flight;
   if (!f.path) return null;
   const pose = flightPose(f.path as Path, f.time, f.startYaw, f.endYaw);
-  const view = flightCamera(pose, f.path as Path, fov);
+  const view = flightCamera(pose, f.path as Path, fov, aspect);
   rigPosition.set(...view.position);
   rigTarget.set(...view.target);
   return {
@@ -106,7 +106,7 @@ export default function CameraRig() {
         r.from.copy(camera.position);
         r.lookFrom.copy(r.look);
       }
-      const v = flightView(narrow ? 48 : 41);
+      const v = flightView(narrow ? 48 : 41, size.width / size.height);
       const w = v ?? { start: 1, end: 1 };
       const homeView = new THREE.Vector3(
         CAMERA.aerial[0] * distance,
@@ -159,7 +159,7 @@ export default function CameraRig() {
           r.from.copy(camera.position);
           r.lookFrom.copy(r.look);
         }
-        const v = flightView(narrow ? 48 : 41);
+        const v = flightView(narrow ? 48 : 41, size.width / size.height);
         const w = v ?? { start: 1, end: 1 };
         camera.position.copy(r.from).lerp(rigPosition, w.start).lerp(r.safe, w.end);
         r.look.copy(r.lookFrom).lerp(rigTarget, w.start).lerp(r.aim, w.end);

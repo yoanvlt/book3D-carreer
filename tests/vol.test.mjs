@@ -1,6 +1,7 @@
 // Le robot, fil conducteur (V8) : îlot d'accueil (devant la caméra, sans masquer le titre ni la
 // carte), vols d'entrée et de retour en timeline de poses-clés, au-dessus des toits, sans traverser
-// l'île ni un bâtiment ; travelling à taille constante, jamais de dos ; phases passables.
+// l'île ni un bâtiment ; travelling à taille constante, jamais de dos, île dans le cadre ; phases
+// passables.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { PerspectiveCamera, Vector3 } from 'three';
@@ -90,17 +91,23 @@ test('Vols : 3 à 3,5 s, accroupi, saut, croisière inclinée, freinage, atterri
   assert.deepEqual(poses.at(-1).p, flight.landingPoint());
 });
 
-test('Travelling : robot à taille constante (≈ 15 % de la hauteur), de profil ou de trois quarts, jamais de dos', () => {
+test('Travelling : robot à taille constante (≈ 15 % de la hauteur), de trois quarts, jamais de dos, île dans le cadre', () => {
+  // Points de l'île (centre et deux couronnes), au niveau du sol.
+  const island = [[0, 0]];
+  for (const r of [20, 40])
+    for (let a = 0; a < 6.28; a += 0.5) island.push([r * Math.cos(a), r * Math.sin(a)]);
   for (const [w, h] of CHECKED_SCREENS) {
     const fov = w < 760 ? 48 : 41;
     const home = flight.homePosition(homeCamera(w, h), w);
-    for (const [from, to] of [
-      [home, flight.landingPoint()],
-      [flight.landingPoint(), home],
-    ])
+    for (const [name, from, to] of [
+      ['aller', home, flight.landingPoint()],
+      ['retour', flight.landingPoint(), home],
+    ]) {
+      let poses = 0;
+      let seen = 0;
       for (const { pose, path } of timeline(from, to)) {
         if (pose.step !== 'cruise') continue;
-        const view = flight.flightCamera(pose, path, fov);
+        const view = flight.flightCamera(pose, path, fov, w / h);
         const cam = new PerspectiveCamera(fov, w / h, 0.1, 1400);
         cam.position.set(...view.position);
         cam.lookAt(...view.target);
@@ -109,10 +116,26 @@ test('Travelling : robot à taille constante (≈ 15 % de la hauteur), de profil
         const top = new Vector3(pose.p[0], pose.p[1] + ROBOT.height, pose.p[2]).project(cam);
         const share = Math.abs(top.y - feet.y) / 2;
         assert.ok(share > 0.12 && share < 0.18, `${w}×${h} : robot à ${(share * 100).toFixed(1)} %`);
+        assert.ok(Math.abs(feet.x) < 0.8 && feet.y > -0.8 && top.y < 0.8, `${w}×${h} : robot hors cadre`);
         const dir = new Vector3(path[3][0] - path[0][0], 0, path[3][2] - path[0][2]).normalize();
         const look = new Vector3(pose.p[0] - view.position[0], 0, pose.p[2] - view.position[2]).normalize();
         assert.ok(look.dot(dir) < 0.5, `${w}×${h} : caméra de dos`);
+        const inFrame = island.filter(([x, z]) => {
+          const p = new Vector3(x, heightAt(x, z), z).project(cam);
+          return Math.abs(p.x) < 1 && Math.abs(p.y) < 1 && p.z < 1;
+        }).length;
+        poses++;
+        if (inFrame >= 3) seen++;
       }
+      // Paysage : l'île toujours dans le cadre. Portrait étroit, à l'aller : le cadre ne la
+      // montre qu'en descente (la vue de trois quarts arrière l'exclut au départ, si haut).
+      const share = seen / poses;
+      const needed = w >= 760 ? 1 : name === 'retour' ? 0.85 : 0.4;
+      assert.ok(
+        share >= needed,
+        `${w}×${h} ${name} : île dans le cadre ${(share * 100).toFixed(0)} % du vol`,
+      );
+    }
   }
 });
 

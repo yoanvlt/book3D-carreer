@@ -27,6 +27,7 @@ const hooks = {
   setState: game.setState,
   /** Place le robot (captures des actions), assis sur le banc le plus proche, ou qui salue. */
   place: (x: number, z: number, angle = game.player.angle) => {
+    game.robotUi.sit = null;
     Object.assign(game.player, { x, z, angle, speed: 0 });
     game.player.teleport++;
   },
