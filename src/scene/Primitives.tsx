@@ -31,7 +31,6 @@ export function material(color: string, finish: Finish = {}) {
 /** Verre : légèrement réfléchissant, jamais transparent (pas de tri coûteux). */
 export const GLASS: Finish = { rough: 0.18, metal: 0.25 };
 export const METAL: Finish = { rough: 0.35, metal: 0.55 };
-export const MATTE: Finish = { rough: 0.92 };
 
 const cube = new THREE.BoxGeometry(1, 1, 1);
 const cylinder = new THREE.CylinderGeometry(1, 1, 1, 18);

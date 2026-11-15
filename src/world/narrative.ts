@@ -60,7 +60,7 @@ export function stationsFor(id: BuildingId): Station[] {
 /** Mobilier qui bloque la marche : [x, z, demi-largeur, demi-profondeur]. */
 export type Footprint = [number, number, number, number];
 /** Emprise d'une station : du bord intérieur du socle jusqu'au mur, écran compris. */
-export function stationFootprint(s: Station): Footprint {
+function stationFootprint(s: Station): Footprint {
   const side = Math.sign(s.position[0]);
   const inner = STATION.plinthX - 1.2;
   const outer = ROOM.halfWidth - 0.7;
@@ -134,6 +134,7 @@ export const stationApproach = (s: Station): Point => [
   Math.sign(s.position[0]) * STATION.approachX,
   s.position[1],
 ];
+/** @public Utilisé par les tests ou les scripts. */
 export function clearIndoorSegment(a: Point, b: Point, id: BuildingId) {
   const n = Math.max(1, Math.ceil(Math.hypot(b[0] - a[0], b[1] - a[1]) / 0.15));
   for (let i = 0; i <= n; i++)

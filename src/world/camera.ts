@@ -3,7 +3,7 @@ import { heightAt } from './terrain';
 import { CAMERA } from './config';
 import { ROOM } from './narrative';
 
-/** Caméra intérieure : rayon de l'orbite et volume libre de la salle (au-dessus des écrans). */
+/** Caméra intérieure : rayon de l'orbite et volume libre de la salle (au-dessus des écrans). @public */
 export const INTERIOR_CAMERA = {
   radius: 7.5,
   height: 6.2,
@@ -11,8 +11,8 @@ export const INTERIOR_CAMERA = {
   maxZ: ROOM.halfDepth - 1.4,
 };
 
-export const cameraSettings = { minimumDistance: 9, clearance: 0.65 };
-export function cameraPoint(target: Vec3, yaw: number, pitch: number, distance: number): Vec3 {
+const cameraSettings = { minimumDistance: 9, clearance: 0.65 };
+function cameraPoint(target: Vec3, yaw: number, pitch: number, distance: number): Vec3 {
   return {
     x: target.x + Math.sin(yaw) * Math.cos(pitch) * distance,
     y: target.y + Math.sin(pitch) * distance,

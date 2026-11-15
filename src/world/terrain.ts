@@ -26,6 +26,7 @@ export function heightAt(x: number, z: number): number {
   }
   return h;
 }
+/** @public Utilisé par les tests ou les scripts. */
 export function terrainSlope(x: number, z: number) {
   return (
     Math.hypot(heightAt(x + 0.2, z) - heightAt(x - 0.2, z), heightAt(x, z + 0.2) - heightAt(x, z - 0.2)) / 0.4

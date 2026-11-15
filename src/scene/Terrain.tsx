@@ -59,7 +59,7 @@ function TerrainMesh() {
     </mesh>
   );
 }
-export function Path({
+function Path({
   points,
   width = 3.5,
   color = T.path,

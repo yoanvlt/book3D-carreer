@@ -5,6 +5,7 @@
  */
 import { buildings, type BuildingId } from './config';
 
+/** @public Utilisé par les tests ou les scripts. */
 export const PASSPORT_KEY = 'careerverse.passeport';
 const IDS = buildings.map((b) => b.id);
 

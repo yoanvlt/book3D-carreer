@@ -1,6 +1,7 @@
 import { blocked } from './collision';
 import { WORLD, type Point } from './config';
 import { distanceToRoad } from './urban';
+/** @public Utilisé par les tests ou les scripts. */
 export function clearSegment(a: Point, b: Point, radius = WORLD.robotRadius + 0.15) {
   const n = Math.ceil(Math.hypot(b[0] - a[0], b[1] - a[1]) / 0.25);
   for (let i = 0; i <= n; i++) {
@@ -100,7 +101,7 @@ export function findRoute(start: Point, goal: Point): Point[] {
  * Supprime les crans de la grille : un point intermédiaire est retiré quand la ligne droite
  * qui le contourne reste libre. Les raccourcis sont limités à 10 unités pour suivre les rues.
  */
-export function smoothRoute(route: Point[]): Point[] {
+function smoothRoute(route: Point[]): Point[] {
   if (route.length < 3) return route;
   const out = [route[0]];
   for (let i = 0; i < route.length - 1;) {

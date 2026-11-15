@@ -41,11 +41,11 @@ export const typography = {
 } as const;
 
 /** Espacements en px (échelle de 4). */
-export const space = { 1: 4, 2: 8, 3: 12, 4: 16, 5: 24, 6: 32, 7: 48, 8: 64 } as const;
+const space = { 1: 4, 2: 8, 3: 12, 4: 16, 5: 24, 6: 32, 7: 48, 8: 64 } as const;
 
-export const radius = { sm: 8, md: 16, lg: 24, pill: 999 } as const;
+const radius = { sm: 8, md: 16, lg: 24, pill: 999 } as const;
 
-export const shadow = {
+const shadow = {
   panel: '0 3px 0 rgba(31, 43, 51, 0.08), 0 12px 30px rgba(29, 79, 112, 0.16)',
   raised: '0 5px 0 ' + ui.accentShade,
   pressed: '0 2px 0 ' + ui.accentShade,

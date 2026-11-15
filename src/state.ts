@@ -14,8 +14,7 @@ import { blocked } from './world/collision';
 import { TIMING, cumulative, travelDuration } from './world/timing';
 import { loadStamps, saveStamps } from './world/passport';
 import { ROOM, stationsFor, indoorRoute, stationApproach, stationAt, indoorBlocked } from './world/narrative';
-export type Phase =
-  'home' | 'entering' | 'explore' | 'travel' | 'doorway' | 'showcase' | 'returning' | 'homing';
+type Phase = 'home' | 'entering' | 'explore' | 'travel' | 'doorway' | 'showcase' | 'returning' | 'homing';
 export type CameraMode =
   'aerial' | 'arrival' | 'exterior' | 'interior' | 'guided' | 'door' | 'presentation' | 'return' | 'homeward';
 type State = {
@@ -155,8 +154,8 @@ export const presentation = {
   savedPitch: CAMERA.elevation,
   savedDistance: CAMERA.distance,
 };
-export const isIdle = () => state.phase === 'home' || state.phase === 'explore';
-export const arrival = { destination: null as BuildingId | null };
+const isIdle = () => state.phase === 'home' || state.phase === 'explore';
+const arrival = { destination: null as BuildingId | null };
 const overlaysClosed = { map: false, help: false, detail: null, reading: null };
 export function enter() {
   if (state.phase !== 'home') return;
@@ -171,7 +170,7 @@ export function finishArrival() {
   if (destination) travel(destination);
 }
 /** Marche lancée en touchant le sol : elle ne bloque pas l'interface. */
-export const isTapWalk = (s = state) => s.phase === 'travel' && !journey.destination && !journey.exit;
+const isTapWalk = (s = state) => s.phase === 'travel' && !journey.destination && !journey.exit;
 /** Une séquence automatique possède le robot et la caméra : l'interface attend. */
 export const isBusy = (s = state) => s.phase !== 'home' && s.phase !== 'explore' && !isTapWalk(s);
 export function showPanel(panel: 'map' | 'help') {
@@ -328,6 +327,7 @@ export function openBuilding(id: BuildingId) {
   if (Math.hypot(player.x - p[0], player.z - p[1]) > 4) return;
   startDoor(id, false, findRoute([player.x, player.z], p));
 }
+/** @public Utilisé par les tests ou les scripts. */
 export function leaveBuilding() {
   if (!state.interior || state.phase !== 'explore') return;
   startDoor(state.interior, true, indoorRoute([player.x, player.z], ROOM.exit, state.interior));

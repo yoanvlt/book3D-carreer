@@ -111,36 +111,6 @@ export function Windows({
   );
 }
 
-/** Rebord en périphérie d'une toiture plate. */
-export function Parapet({
-  y,
-  w,
-  d,
-  h = 0.45,
-  t = 0.25,
-  color,
-  x = 0,
-  z = 0,
-}: {
-  y: number;
-  w: number;
-  d: number;
-  h?: number;
-  t?: number;
-  color: string;
-  x?: number;
-  z?: number;
-}) {
-  return (
-    <group position={[x, y + h / 2, z]}>
-      <Box p={[0, 0, d / 2 - t / 2]} s={[w, h, t]} color={color} />
-      <Box p={[0, 0, -d / 2 + t / 2]} s={[w, h, t]} color={color} />
-      <Box p={[w / 2 - t / 2, 0, 0]} s={[t, h, d - 2 * t]} color={color} />
-      <Box p={[-w / 2 + t / 2, 0, 0]} s={[t, h, d - 2 * t]} color={color} />
-    </group>
-  );
-}
-
 /** Auvent incliné avec lambrequin rayé, au-dessus d'une ouverture. */
 export function Awning({
   p,

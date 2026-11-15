@@ -194,7 +194,7 @@ export function tickMotion(delta: number) {
 }
 
 /** Termine immédiatement une séquence de porte en cours (même état final qu'en la laissant jouer). */
-export function skipDoor() {
+function skipDoor() {
   for (let i = 0; i < 400 && getState().phase === 'doorway'; i++) tickMotion(0.05);
   player.teleport++;
 }

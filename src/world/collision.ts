@@ -1,7 +1,7 @@
 import { buildings, WORLD, type Point } from './config';
 import { heightAt } from './terrain';
 import { trees, benches, lamps } from './landscape';
-export interface Obstacle {
+interface Obstacle {
   x: number;
   z: number;
   halfX: number;
@@ -10,6 +10,7 @@ export interface Obstacle {
   bottom: number;
   top: number;
 }
+/** @public Utilisé par les tests ou les scripts. */
 export const obstacles: Obstacle[] = buildings.map((b) => ({
   x: b.position[0],
   z: b.position[1],
@@ -19,7 +20,7 @@ export const obstacles: Obstacle[] = buildings.map((b) => ({
   bottom: b.elevation - 0.2,
   top: b.elevation + b.height + 0.8,
 }));
-export const props: Obstacle[] = [
+const props: Obstacle[] = [
   { x: 0, z: 0, halfX: 2.6, halfZ: 2.6, angle: 0, bottom: 0.65, top: 5.6 },
   {
     x: -43,
@@ -80,7 +81,7 @@ export function blocked(x: number, z: number, radius = WORLD.robotRadius): boole
  * Normale de contact au point (x, z) : direction qui éloigne de l'obstacle le plus pénétré,
  * calculée dans le repère tourné de chaque boîte. Sert à glisser le long des murs en biais.
  */
-export function contactNormal(x: number, z: number, radius = WORLD.robotRadius): Point | null {
+function contactNormal(x: number, z: number, radius = WORLD.robotRadius): Point | null {
   let best: Point | null = null;
   let depth = -Infinity;
   const r = Math.hypot(x, z);
