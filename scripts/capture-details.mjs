@@ -3,7 +3,8 @@
 // dessous de l'île. Caméra fixe (mode photo de ?debug=1), interface masquée.
 //   npm run capture:details -- <dossier> [webp|png] [kit]
 // Avec « kit » : planche du kit de construction (?debug=1&kit) au lieu des bâtiments.
-// Variables : URL (défaut http://127.0.0.1:4173/book3D-carreer/), QUALITE (high|low).
+// Variables : URL (défaut http://127.0.0.1:4173/book3D-carreer/), QUALITE (high|low),
+// LIEUX (ex. profile,veolia : seulement ces bâtiments), VUES (exterieur|interieur|ile, séparées par des virgules).
 import { mkdir, writeFile } from 'node:fs/promises';
 import { saveShot } from './shot.mjs';
 import { chromium } from 'playwright';
@@ -27,15 +28,17 @@ page.on('pageerror', (e) => errors.push(e.message));
 await page.goto(base + (mode === 'kit' ? '?debug=1&kit' : '?debug=1'));
 await page.waitForFunction(() => window.__careerverse?.state().ready, null, { timeout: 180000 });
 await page.evaluate((q) => window.__careerverse.setState({ quality: q, qualityAuto: false }), quality);
-// Seule la scène reste visible : chaque voisin du canvas, à chaque niveau, est masqué.
-await page.evaluate(() => {
-  let node = document.querySelector('canvas');
-  while (node && node !== document.body) {
-    for (const sibling of node.parentElement.children)
-      if (sibling !== node) sibling.style.setProperty('visibility', 'hidden', 'important');
-    node = node.parentElement;
-  }
-});
+// Seule la scène reste visible : chaque voisin du canvas, à chaque niveau, est masqué (à chaque
+// vue, car l'interface d'un intérieur apparaît après coup).
+const hideInterface = () =>
+  page.evaluate(() => {
+    let node = document.querySelector('canvas');
+    while (node && node !== document.body) {
+      for (const sibling of node.parentElement.children)
+        if (sibling !== node) sibling.style.setProperty('visibility', 'hidden', 'important');
+      node = node.parentElement;
+    }
+  });
 const diag = () =>
   page.evaluate(() => {
     try {
@@ -47,6 +50,7 @@ const diag = () =>
 const report = { qualite: quality, vues: {}, erreurs: errors };
 async function shoot(name, shot) {
   await page.evaluate((s) => window.__careerverse.photo(s), shot);
+  await hideInterface();
   await page.waitForTimeout(2500);
   await saveShot(page, `${out}/${name}`, { format });
   const d = await diag();
@@ -65,13 +69,17 @@ if (mode === 'kit') {
   await browser.close();
   process.exit(0);
 }
-const layout = await page.evaluate(() => window.__careerverse.layout());
+const only = process.env.LIEUX?.split(',');
+const views = (process.env.VUES ?? 'exterieur,ile,interieur').split(',');
+const layout = (await page.evaluate(() => window.__careerverse.layout())).filter(
+  (b) => !only || only.includes(b.id),
+);
 const local = (b, x, z) => [
   b.position[0] + x * Math.cos(b.rotation) + z * Math.sin(b.rotation),
   b.position[1] - x * Math.sin(b.rotation) + z * Math.cos(b.rotation),
 ];
 const AERIAL = [92, 98, 122];
-for (const b of layout) {
+for (const b of views.includes('exterieur') ? layout : []) {
   const center = [b.position[0], b.elevation + b.height * 0.45, b.position[1]];
   const d = AERIAL.map((v, i) => v - center[i]);
   const n = Math.hypot(...d);
@@ -94,13 +102,17 @@ for (const b of layout) {
     fov: 50,
   });
 }
-await shoot('ile-dessous', { position: [104, -4, 132], target: [0, -6, 0], fov: 38 });
+if (views.includes('ile'))
+  await shoot('ile-dessous', { position: [104, -4, 132], target: [0, -6, 0], fov: 38 });
 await page.evaluate(() => window.__careerverse.photo(null));
 await page.evaluate(() => window.__careerverse.setState({ phase: 'home' }));
-await page.waitForTimeout(2500);
-await saveShot(page, `${out}/ile-accueil`, { format });
+if (views.includes('ile')) {
+  await hideInterface();
+  await page.waitForTimeout(2500);
+  await saveShot(page, `${out}/ile-accueil`, { format });
+}
 
-for (const b of layout) {
+for (const b of views.includes('interieur') ? layout : []) {
   await page.evaluate((id) => window.__careerverse.visit(id), b.id);
   await page.waitForTimeout(2000);
   await shoot(`interieur-${b.id}`, { position: [0, 5.4, 12.2], target: [0, 1.4, -5], fov: 62 });
