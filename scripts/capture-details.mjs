@@ -1,13 +1,14 @@
 // Vues de détail pour comparer deux versions : pour chaque bâtiment, la silhouette vue depuis
 // l'accueil, la façade depuis l'allée et un gros plan devant la porte ; les six intérieurs ; le
 // dessous de l'île. Caméra fixe (mode photo de ?debug=1), interface masquée.
-//   npm run capture:details -- <dossier> [png]
+//   npm run capture:details -- <dossier> [webp|png] [kit]
+// Avec « kit » : planche du kit de construction (?debug=1&kit) au lieu des bâtiments.
 // Variables : URL (défaut http://127.0.0.1:4173/book3D-carreer/), QUALITE (high|low).
 import { mkdir, writeFile } from 'node:fs/promises';
 import { saveShot } from './shot.mjs';
 import { chromium } from 'playwright';
 
-const [out = 'docs/screenshots/v6/details', format = 'webp'] = process.argv.slice(2);
+const [out = 'docs/screenshots/v6/details', format = 'webp', mode = 'batiments'] = process.argv.slice(2);
 const base = process.env.URL ?? 'http://127.0.0.1:4173/book3D-carreer/';
 const quality = process.env.QUALITE ?? 'high';
 await mkdir(out, { recursive: true });
@@ -23,7 +24,7 @@ const page = await browser.newPage({ viewport: { width: 1280, height: 800 }, red
 const errors = [];
 page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
 page.on('pageerror', (e) => errors.push(e.message));
-await page.goto(base + '?debug=1');
+await page.goto(base + (mode === 'kit' ? '?debug=1&kit' : '?debug=1'));
 await page.waitForFunction(() => window.__careerverse?.state().ready, null, { timeout: 180000 });
 await page.evaluate((q) => window.__careerverse.setState({ quality: q, qualityAuto: false }), quality);
 // Seule la scène reste visible : chaque voisin du canvas, à chaque niveau, est masqué.
@@ -52,6 +53,18 @@ async function shoot(name, shot) {
   report.vues[name] = { drawCalls: d.drawCalls, triangles: d.triangles };
 }
 
+if (mode === 'kit') {
+  await shoot('kit-ensemble', { position: [4, 34, 52], target: [4, 0, 0], fov: 50 });
+  await shoot('kit-matieres', { position: [0, 3.2, 27], target: [0, 1.6, 18], fov: 62 });
+  await shoot('kit-facades', { position: [-14, 4, 13], target: [-14, 2.6, 0], fov: 55 });
+  await shoot('kit-fenetres', { position: [-22, 2.6, 7.5], target: [-22, 2.4, 2.5], fov: 50 });
+  await shoot('kit-toitures', { position: [8, 16, 14], target: [10, 2, -7], fov: 58 });
+  await shoot('kit-structures', { position: [40, 9, -2], target: [27, 3, -16], fov: 55 });
+  await writeFile(`${out}/rapport-kit.json`, JSON.stringify(report, null, 2));
+  console.log(JSON.stringify({ vues: Object.keys(report.vues).length, erreurs: errors }));
+  await browser.close();
+  process.exit(0);
+}
 const layout = await page.evaluate(() => window.__careerverse.layout());
 const local = (b, x, z) => [
   b.position[0] + x * Math.cos(b.rotation) + z * Math.sin(b.rotation),
