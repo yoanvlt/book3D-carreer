@@ -10,16 +10,27 @@ import { getState, setState, player, view, finishArrival, skip, robotUi } from '
 import { FLIGHT } from '../world/flight';
 import { photo } from './photo';
 
-/** Poursuite du robot pendant les vols : derrière lui, un peu au-dessus, le regard sur lui. */
+/**
+ * Poursuite du robot pendant les vols : la caméra se place derrière lui, un peu au-dessus (poids
+ * `weight`), et le regarde (poids `lookWeight`, qui peut durer plus longtemps).
+ */
 const CHASE = { back: 8, up: 3.5 };
 const chasePoint = new THREE.Vector3();
-function chase(weight: number, position: THREE.Vector3, look: THREE.Vector3) {
-  if (weight <= 0) return;
+const chaseLook = new THREE.Vector3();
+function chase(weight: number, lookWeight: number, position: THREE.Vector3, look: THREE.Vector3) {
+  if (lookWeight <= 0) return;
   const [x, y, z] = robotUi.position;
   const h = robotUi.heading;
   chasePoint.set(x - Math.sin(h) * CHASE.back, y + CHASE.up, z - Math.cos(h) * CHASE.back);
   position.lerp(chasePoint, weight);
-  look.lerp(chasePoint.set(x, y + 1.2, z), weight);
+  // Mélange des directions (pas des points) : un point visé lointain ne doit pas sortir le robot du cadre.
+  chaseLook.copy(look).sub(position).normalize();
+  chasePoint
+    .set(x, y + 1.2, z)
+    .sub(position)
+    .normalize();
+  chaseLook.lerp(chasePoint, lookWeight).normalize();
+  look.copy(position).addScaledVector(chaseLook, 10);
 }
 /** Poids de la poursuite : monte jusqu'à `rise`, tient, puis rend la main à partir de `release`. */
 const chaseWeight = (t: number, rise: number, release: number) =>
@@ -118,7 +129,8 @@ export default function CameraRig() {
         aim = mix3(r.lookFrom, { x: 0, y: 1, z: 0 }, ease(r.t));
       camera.position.set(p.x, p.y, p.z);
       r.look.set(aim.x, aim.y, aim.z);
-      chase(chaseWeight(r.t, 0.2, 0.6), camera.position, r.look);
+      // Le regard reste sur le robot presque jusqu'au bout : à l'arrivée, il est déjà dans la vue d'accueil.
+      chase(chaseWeight(r.t, 0.2, 0.6), chaseWeight(r.t, 0.15, 0.92), camera.position, r.look);
       camera.position.y = Math.max(
         camera.position.y,
         heightAt(camera.position.x, camera.position.z) + CAMERA.clearance,
@@ -179,7 +191,8 @@ export default function CameraRig() {
         camera.position.set(pathPosition.x, pathPosition.y, pathPosition.z);
         r.look.lerpVectors(r.lookFrom, r.aim, e);
         // Pendant le vol, la caméra plonge derrière le robot et le suit jusqu'à la place.
-        if (r.teleport === player.teleport) chase(chaseWeight(t, 0.25, 0.7), camera.position, r.look);
+        if (r.teleport === player.teleport)
+          chase(chaseWeight(t, 0.25, 0.7), chaseWeight(t, 0.2, 0.85), camera.position, r.look);
         // An elevated arc clears roofs during descent and destination transitions.
         // The route is swept against terrain and building collision volumes.
         camera.position.y = Math.max(

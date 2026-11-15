@@ -91,15 +91,17 @@ function Warmup({ active }: { active: boolean }) {
 
 function Runtime() {
   const sample = useRef({ elapsed: 0, frames: 0, slow: 0 });
-  const { scene, gl } = useThree();
+  const { scene, gl, camera } = useThree();
   useEffect(() => {
     probe.scene = scene;
     probe.renderer = gl;
+    probe.camera = camera;
     return () => {
       probe.scene = null;
       probe.renderer = null;
+      probe.camera = null;
     };
-  }, [scene, gl]);
+  }, [scene, gl, camera]);
   useEffect(() => {
     const media = window.matchMedia('(prefers-reduced-motion: reduce)');
     const update = () => setState({ reducedMotion: media.matches });

@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import * as THREE from 'three';
 import * as game from '../state';
 import { photo, measureFootprints, probe } from '../scene/photo';
 import { buildings, type BuildingId } from '../world/config';
@@ -28,6 +29,13 @@ const hooks = {
   holdFlight: (t: number | null) => {
     game.robotUi.hold = t;
   },
+  /** Robot en vol et caméra : positions, pour contrôler le cadrage des vols. */
+  flight: () => ({
+    robot: game.robotUi.position,
+    heading: game.robotUi.heading,
+    camera: probe.camera?.position.toArray(),
+    look: probe.camera?.getWorldDirection(new THREE.Vector3()).toArray(),
+  }),
   /** Caméra fixe pour les captures de détail ; `photo(null)` rend la caméra au robot. */
   photo: (
     shot: { position: [number, number, number]; target: [number, number, number]; fov?: number } | null,
