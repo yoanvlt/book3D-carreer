@@ -33,16 +33,23 @@ function bust(): [number, number][] {
 }
 
 export function profile(b: Builder) {
-  // Soubassement, puis corps de brique. La façade sud est un mur percé de la porte.
-  box(b, 0, 0, 0, W + 0.2, 0.8, D + 0.2, STONE, { bevel: 0.06 });
-  box(b, 0, 0.8, -0.5, W, H - 0.8, D - 1, WALL, { bevel: 0.08 });
+  // Corps de brique, soubassement de pierre en bandeau (interrompu au droit de la porte).
+  box(b, 0, 0, -0.5, W, H, D - 1, WALL, { bevel: 0.08 });
+  for (const [ry, len, off] of [
+    [Math.PI, W, D / 2],
+    [Math.PI / 2, D, W / 2],
+    [-Math.PI / 2, D, W / 2],
+  ] as const)
+    b.within({ ry }, () => b.within({ z: off }, () => band(b, -len / 2, len / 2, 0, 0.8, 0.1, STONE)));
   b.within({ z: D / 2 }, () => {
-    wallWithDoor(b, -W / 2, W / 2, 0.8, H, 1, WALL);
-    // Avant-corps : deux pilastres de pierre, fronton et médaillon.
+    wallWithDoor(b, -W / 2, W / 2, 0, H, 1, WALL);
+    for (const x of [-4.8, 4.8]) band(b, x - 2.2, x + 2.2, 0, 0.8, 0.1, STONE);
+    // Avant-corps : deux pilastres de pierre, palier, fronton et fenêtre au-dessus de la porte.
     b.within({ z: 0.6 }, () => {
-      box(b, -2.5 + 0.35, 0.8, -0.3, 0.7, H + 0.6 - 0.8, 0.6, STONE, { bevel: 0.06 });
-      box(b, 2.5 - 0.35, 0.8, -0.3, 0.7, H + 0.6 - 0.8, 0.6, STONE, { bevel: 0.06 });
+      box(b, -2.5 + 0.35, 0, -0.3, 0.7, H + 0.6, 0.6, STONE, { bevel: 0.06 });
+      box(b, 2.5 - 0.35, 0, -0.3, 0.7, H + 0.6, 0.6, STONE, { bevel: 0.06 });
       box(b, 0, 4.4, -0.3, 3.6, H + 0.6 - 4.4, 0.6, WALL, { bevel: 0.06 });
+      box(b, 0, 0, -0.3, 3.6, 0.12, 0.6, 'bordure', { bevel: 0.03 });
       prism(
         b,
         [
@@ -56,7 +63,7 @@ export function profile(b: Builder) {
       );
       windowAt(b, 0, 4.6, 1.3, 1.7, FRAME);
     });
-    doorSurround(b, 0, 0.8, STONE);
+    doorSurround(b, 0, 0, STONE);
     windowRow(b, 2, 3.4, 1.4, 1.3, 2.2, FRAME);
   });
   // Médaillon : disque de pierre dans le fronton, buste en relief (brique foncée).

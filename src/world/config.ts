@@ -11,6 +11,8 @@ export interface Building {
   height: number;
   elevation: number;
   color: string;
+  /** Plan de la porte (z local), quand elle est en retrait de la façade (portique). */
+  door?: number;
 }
 /**
  * Implantation V8 (voir world/plan.ts) : rotation par quarts de tour, sol plat (elevation 0).
@@ -87,6 +89,10 @@ export function localToWorld(b: Building, x: number, z: number): Point {
 export function entrance(b: Building): Point {
   return localToWorld(b, 0, b.size[1] / 2 + 3.4);
 }
+/** Plan de la porte (z local) : la façade, ou le fond du portique. */
+export const doorPlane = (b: Building) => b.door ?? b.size[1] / 2;
+/** Point devant la porte, à `offset` du plan des vantaux. */
+export const doorPoint = (b: Building, offset = 0.1) => localToWorld(b, 0, doorPlane(b) + offset);
 export const WORLD = {
   radius: 59,
   walkSpeed: 6.2,

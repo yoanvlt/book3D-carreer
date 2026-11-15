@@ -4,11 +4,11 @@
  * relevée par scripts/mesure-chargement.mjs.
  */
 const STEPS = {
-  code: [0.12, 'Chargement du code'],
-  polices: [0.2, 'Chargement des polices'],
-  scene: [0.3, 'Préparation de la scène'],
-  geometrie: [0.85, 'Construction de la ville'],
-  shaders: [0.95, 'Préparation des matières'],
+  code: [0.08, 'Code'],
+  polices: [0.14, 'Polices'],
+  modeles: [0.3, 'Modèles'],
+  monde: [0.55, 'Monde'],
+  lumiere: [0.9, 'Lumière précalculée'],
   image: [1, 'Première image'],
 } as const;
 export type LoadingStep = keyof typeof STEPS;

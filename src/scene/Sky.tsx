@@ -4,7 +4,8 @@ import * as THREE from 'three';
 import { makeClouds, DRIFT } from '../world/clouds';
 import { getState } from '../state';
 
-/** Nuages facettés, un seul maillage instancié ; chaque nuage oscille lentement sur place. */
+/** Nuages doux et arrondis : boules lisses, dessus blanc, dessous légèrement bleuté ; un seul
+ * maillage instancié, chaque nuage oscille lentement sur place. */
 export function Clouds() {
   const clouds = useMemo(makeClouds, []);
   const puffs = useMemo(
@@ -18,15 +19,35 @@ export function Clouds() {
       ),
     [clouds],
   );
-  const geometry = useMemo(() => new THREE.IcosahedronGeometry(1, 1), []);
+  const geometry = useMemo(() => new THREE.SphereGeometry(1, 20, 12), []);
   const material = useMemo(
     () =>
-      new THREE.MeshStandardMaterial({
-        color: '#ffffff',
-        roughness: 1,
-        flatShading: true,
-        emissive: '#dbefff',
-        emissiveIntensity: 0.35,
+      new THREE.ShaderMaterial({
+        name: 'nuage',
+        fog: true,
+        uniforms: THREE.UniformsUtils.merge([
+          THREE.UniformsLib.fog,
+          { top: { value: new THREE.Color('#ffffff') }, bottom: { value: new THREE.Color('#c9dcea') } },
+        ]),
+        vertexShader: `#include <common>
+          #include <fog_pars_vertex>
+          varying vec3 vNormal;
+          void main() {
+            vNormal = normalize(mat3(modelMatrix * instanceMatrix) * normal);
+            vec4 mvPosition = viewMatrix * modelMatrix * instanceMatrix * vec4(position, 1.0);
+            gl_Position = projectionMatrix * mvPosition;
+            #include <fog_vertex>
+          }`,
+        fragmentShader: `#include <common>
+          #include <fog_pars_fragment>
+          uniform vec3 top; uniform vec3 bottom; varying vec3 vNormal;
+          void main() {
+            float k = smoothstep(-0.6, 0.8, vNormal.y);
+            gl_FragColor = vec4(mix(bottom, top, k), 1.0);
+            #include <tonemapping_fragment>
+            #include <colorspace_fragment>
+            #include <fog_fragment>
+          }`,
       }),
     [],
   );

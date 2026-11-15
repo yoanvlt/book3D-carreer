@@ -12,7 +12,7 @@ import {
   endPresentation,
   type DoorStage,
 } from '../state';
-import { buildings, entrance, localToWorld, type Point } from './config';
+import { buildings, doorPoint, entrance, type Point } from './config';
 import { heightAt } from './terrain';
 import { ROOM } from './narrative';
 import { ease } from './cinematics';
@@ -130,9 +130,7 @@ function tickDoor(dt: number) {
       if (t >= half && !passage.swapped) {
         passage.swapped = true;
         // Le fondu couvre le changement de scène : le robot réapparaît déjà un peu engagé.
-        const p: Point = passage.leaving
-          ? localToWorld(b, 0, b.size[1] / 2 + 0.1)
-          : [ROOM.arrival[0], ROOM.arrival[1] + 2.5];
+        const p: Point = passage.leaving ? doorPoint(b) : [ROOM.arrival[0], ROOM.arrival[1] + 2.5];
         setState({
           interior: passage.leaving ? null : b.id,
           nearby: passage.leaving ? b.id : null,

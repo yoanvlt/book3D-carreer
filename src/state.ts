@@ -1,13 +1,5 @@
 import { useSyncExternalStore } from 'react';
-import {
-  WORLD,
-  CAMERA,
-  entrance,
-  localToWorld,
-  buildings,
-  type BuildingId,
-  type Point,
-} from './world/config';
+import { WORLD, CAMERA, entrance, doorPoint, buildings, type BuildingId, type Point } from './world/config';
 import { heightAt } from './world/terrain';
 import { findRoute } from './world/navigation';
 import { blocked } from './world/collision';
@@ -313,7 +305,7 @@ function startDoor(id: BuildingId, leaving: boolean, route: Point[]) {
     swapped: false,
     leaving,
     from: [player.x, player.z],
-    to: leaving ? ROOM.door : localToWorld(b, 0, b.size[1] / 2 + 0.1),
+    to: leaving ? ROOM.door : doorPoint(b),
     // Loin de la porte intérieure, un fondu remplace la marche jusqu'au seuil.
     stage: leaving && length > 3 ? 'cut' : 'approach',
     openness: 0,

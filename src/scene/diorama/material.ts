@@ -104,6 +104,7 @@ const fragmentShader = /* glsl */ `
   uniform vec3 groundColor;
   uniform float ambient;
   uniform vec3 tint;
+  uniform float opacity;
   varying vec2 vUv;
   varying vec3 vNormal;
   varying vec3 vWorld;
@@ -127,7 +128,7 @@ const fragmentShader = /* glsl */ `
     ndl = smoothstep(-0.12, 1.0, ndl);
     vec3 hemi = mix(groundColor, skyColor, n.y * 0.5 + 0.5);
     vec3 color = albedo * (hemi * ambient * ao + sunColor * ndl * sun * mix(0.6, 1.0, ao));
-    gl_FragColor = vec4(color, 1.0);
+    gl_FragColor = vec4(color, opacity);
     #include <tonemapping_fragment>
     #include <colorspace_fragment>
     #include <fog_fragment>
@@ -166,6 +167,7 @@ export function dioramaMaterial(kind: DioramaKind, tint = '#ffffff'): THREE.Shad
         groundColor: { value: new THREE.Color(scene.hemisphere.ground) },
         ambient: { value: 0.62 },
         tint: { value: new THREE.Color(tint) },
+        opacity: { value: 1 },
       },
     ]),
     vertexShader,
@@ -177,4 +179,18 @@ export function dioramaMaterial(kind: DioramaKind, tint = '#ffffff'): THREE.Shad
   material.uniforms.groundRect.value = groundLight.rect;
   materials.set(key, material);
   return material;
+}
+
+/**
+ * Copie d'une matière pour un seul objet (fondu d'un bâtiment qui cache le robot) : même
+ * programme, uniformes propres.
+ */
+export function ownMaterial(kind: DioramaKind): THREE.ShaderMaterial {
+  const base = dioramaMaterial(kind);
+  const m = base.clone();
+  m.uniforms.atlas.value = base.uniforms.atlas.value;
+  m.uniforms.groundLight.value = groundLight.texture;
+  m.uniforms.groundRect.value = groundLight.rect;
+  materials.set(`${kind}:own:${materials.size}`, m);
+  return m;
 }

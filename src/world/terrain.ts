@@ -1,31 +1,40 @@
-import { buildings } from './config';
-const smooth = (x: number) => {
-  const t = Math.max(0, Math.min(1, x));
+/**
+ * Relief de l'île (V8) : un sol de maquette, plat partout où l'on construit et circule (rues,
+ * trottoirs, place, parcelles), avec quelques buttes douces dans les pelouses, à distance des
+ * rues et des parcelles. La même fonction sert au maillage, au déplacement et au placeur.
+ */
+import { OUTER, PARCELS, rectDistance } from './plan';
+
+/** Buttes des parcs : centre, hauteur, rayon. */
+const MOUNDS: [number, number, number, number][] = [
+  [-27, 37, 1.0, 7],
+  [27, 38, 0.9, 7],
+  [-48, -38, 1.3, 7],
+  [0, -57, 1.0, 6],
+  [50, -32, 1.3, 7],
+  [-50, 30, 0.9, 6],
+  [52, 40, 0.8, 6],
+];
+
+const smooth = (a: number, b: number, x: number) => {
+  const t = Math.max(0, Math.min(1, (x - a) / (b - a)));
   return t * t * (3 - 2 * t);
 };
-/** The same continuous height field drives the mesh, paths and controller. */
+
+/** Hauteur du sol en (x, z). */
 export function heightAt(x: number, z: number): number {
-  let h =
-    0.45 +
-    3.3 * Math.exp(-((x + 10) ** 2 + (z + 30) ** 2) / 700) +
-    1.8 * Math.exp(-((x - 33) ** 2 + (z + 7) ** 2) / 300) +
-    0.55 * Math.sin(x * 0.09) * Math.cos(z * 0.08);
-  h +=
-    5.8 * Math.exp(-((x + 42) ** 2 + (z + 31) ** 2) / 100) +
-    5.3 * Math.exp(-((x - 37) ** 2 + (z + 36) ** 2) / 95);
-  // A quiet, flat civic square; smoothstep terraces avoid steps in walkable paths.
-  h = h * (1 - smooth((12 - Math.hypot(x, z)) / 5)) + 0.65 * smooth((12 - Math.hypot(x, z)) / 5);
-  for (const b of buildings) {
-    const dx = x - b.position[0],
-      dz = z - b.position[1];
-    const lx = dx * Math.cos(b.rotation) - dz * Math.sin(b.rotation),
-      lz = dx * Math.sin(b.rotation) + dz * Math.cos(b.rotation);
-    const d = Math.max(Math.abs(lx) - b.size[0] / 2 - 1.4, Math.abs(lz) - b.size[1] / 2 - 2.7);
-    const blend = 1 - smooth(d / 5);
-    h = h * (1 - blend) + b.elevation * blend;
+  let h = 0;
+  for (const [mx, mz, amp, r] of MOUNDS) {
+    const d2 = (x - mx) ** 2 + (z - mz) ** 2;
+    if (d2 < r * r * 4) h += amp * Math.exp(-d2 / (r * r * 0.5));
   }
-  return h;
+  if (h < 1e-3) return 0;
+  // Plat garanti à moins de 2 m de la ville et des parcelles, raccord doux jusqu'à 6 m.
+  let d = rectDistance(OUTER, x, z);
+  for (const p of PARCELS) d = Math.min(d, rectDistance(p.bounds, x, z));
+  return h * smooth(2, 6, d);
 }
+
 /** @public Utilisé par les tests ou les scripts. */
 export function terrainSlope(x: number, z: number) {
   return (

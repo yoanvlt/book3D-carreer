@@ -1,6 +1,9 @@
 import { buildings, type BuildingId } from '../world/config';
 import { roads } from '../world/urban';
-import { trees } from '../world/landscape';
+import { decor } from '../world/placer';
+import { PLAZA } from '../world/plan';
+
+const trees = decor.filter((d) => /^(pin|sapin|feuillu)$/.test(d.model));
 import { player, setState, travel, useGame } from '../state';
 import { color as C, placeColor, ui } from '../design/tokens';
 import { isOpen, place } from '../content';
@@ -42,9 +45,22 @@ export default function Map() {
             strokeLinecap='round'
           />
         ))}
-        <rect x='-8' y='-6' width='16' height='12' rx='1' fill={C.path} />
+        <rect
+          x={PLAZA.x0}
+          y={PLAZA.z0}
+          width={PLAZA.x1 - PLAZA.x0}
+          height={PLAZA.z1 - PLAZA.z0}
+          rx='1'
+          fill={C.path}
+        />
         {trees.map((t, i) => (
-          <circle key={i} cx={t.p[0]} cy={t.p[1]} r={1.4 * t.s} fill={t.kind === 1 ? C.leafAutumn : C.leaf} />
+          <circle
+            key={i}
+            cx={t.x}
+            cy={t.z}
+            r={1.4 * (typeof t.scale === 'number' ? t.scale : 1)}
+            fill={C.leaf}
+          />
         ))}
         {buildings.map((b) => (
           <g
