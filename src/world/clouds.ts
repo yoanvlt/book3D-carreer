@@ -6,6 +6,7 @@
  */
 import { PerspectiveCamera, Vector3 } from 'three';
 import { CAMERA } from './config';
+import { edgeRadius, undersideRadius, undersideY } from './island';
 
 export interface Cloud {
   x: number;
@@ -53,13 +54,13 @@ export function cloudConflicts(cloud: Cloud, width: number, height: number): boo
   if (p.z > 1) return false;
   for (const z of reservedZones(width))
     if (p.x + rx > z.x0 && p.x - rx < z.x1 && p.y + r > z.y0 && p.y - r < z.y1) return true;
-  // L'île : bord du plateau et pied de terre. Un nuage plus proche que le bord et superposé masque.
+  // L'île : bord du plateau, falaise et dessous jusqu'à la pointe (world/island.ts). Un nuage plus
+  // proche qu'un de ces points et superposé à lui le masque.
   for (let i = 0; i < 48; i++) {
     const a = (i / 48) * Math.PI * 2;
     for (const [rr, y] of [
-      [64, 0],
-      [60, -6.6],
-      [40, -6.6],
+      [edgeRadius(a), 0],
+      ...[0.15, 0.3, 0.5, 0.7, 0.9].map((t) => [undersideRadius(a, t), undersideY(t)]),
     ]) {
       const q = new Vector3(Math.cos(a) * rr, y, Math.sin(a) * rr);
       if (q.distanceTo(camera.position) < distance - radius) continue;
