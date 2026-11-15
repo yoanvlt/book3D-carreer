@@ -12,6 +12,7 @@ import { play } from '../audio/sound';
 import { Box, Cylinder, Ball, material } from './Primitives';
 import { angleDifference } from '../world/motion';
 import { buildings, WORLD } from '../world/config';
+import { photo } from './photo';
 
 /**
  * Comportement du robot hors marche : vol stationnaire à l'accueil, vol d'entrée ou de retour.
@@ -150,7 +151,8 @@ export default function Robot() {
     const s = getState();
     const f = flight.current;
     const reduced = s.reducedMotion;
-    const mode = flightMode(s, f.mode);
+    // Mode photo (captures) : le robot reste à sa place au sol, pas devant la caméra photo.
+    const mode = photo.active ? null : flightMode(s, f.mode);
     if (!mode) {
       f.mode = '';
       return false;
