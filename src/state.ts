@@ -160,6 +160,13 @@ const overlaysClosed = { map: false, help: false, detail: null, reading: null };
 export function enter() {
   if (state.phase !== 'home') return;
   arrival.destination = null;
+  // Le robot atterrit au départ, sur la place (il a pu quitter la ville ailleurs).
+  player.x = WORLD.spawn[0];
+  player.z = WORLD.spawn[1];
+  player.y = heightAt(...WORLD.spawn);
+  player.speed = 0;
+  player.angle = WORLD.spawnAngle;
+  view.yaw = WORLD.spawnAngle - Math.PI;
   setState({ phase: 'entering', ...overlaysClosed, interior: null });
 }
 export function finishArrival() {
@@ -347,6 +354,16 @@ export function guideToStation(index: number) {
   if (!s) return;
   startJourney(indoorRoute([player.x, player.z], stationApproach(s), state.interior), null);
 }
+/** Robot de l'accueil : position du curseur (écran normalisé) et signe de la main au survol. */
+export const robotUi = {
+  pointer: [0, 0] as [number, number],
+  wave: false,
+  /** Captures : vol figé à cette fraction (0 à 1) de sa durée totale ; null en jeu. */
+  hold: null as number | null,
+  /** Position du robot pendant les vols, suivie du regard par la caméra. */
+  position: [0, 0, 0] as [number, number, number],
+};
+
 export function goHome() {
   if (state.phase !== 'explore' || state.interior) return;
   journey.points = [];

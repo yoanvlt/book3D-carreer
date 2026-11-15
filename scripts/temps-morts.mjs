@@ -13,6 +13,7 @@ const { heightAt } = await source.import('world/terrain');
 const { tickMotion } = await source.import('world/motion');
 const cinema = await source.import('world/cinematics');
 const narrative = await source.import('world/narrative');
+const { FLIGHT } = await source.import('world/flight');
 // Absent de la V4 : la présentation y durait compositions[id].duration + 1,6 s de retour.
 const TIMING = await source.import('world/timing').then(
   (m) => m.TIMING,
@@ -73,3 +74,9 @@ const max = (k) => Math.max(...rows.map((r) => r[k]));
 console.log(
   `| **maximum** | ${f(max('trajet'))} | ${f(max('entrer'))} | ${f(max('sortir'))} | ${f(max('presentation'))} |`,
 );
+// Vols du robot (V7) : la caméra et le robot partagent la même durée (CameraRig, Robot).
+console.log('');
+console.log('| Séquence | Durée | Passable |');
+console.log('| --- | ---: | :---: |');
+console.log(`| Entrée : vol de l'accueil à la place, atterrissage compris | ${f(FLIGHT.total)} | oui |`);
+console.log(`| Retour : décollage et vol jusqu'à l'accueil | ${f(FLIGHT.total)} | oui |`);

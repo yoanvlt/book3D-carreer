@@ -1,4 +1,4 @@
-import { enter, showPanel, startTour, useGame } from '../state';
+import { enter, robotUi, showPanel, startTour, useGame } from '../state';
 import { site } from '../content';
 
 const start = () => {
@@ -7,6 +7,11 @@ const start = () => {
 };
 
 /** Accueil : nom, rôle, une phrase et deux actions. */
+/** Le robot de l'accueil fait signe tant que « Explorer la ville » est survolé ou focalisé. */
+const wave = (on: boolean) => () => {
+  robotUi.wave = on;
+};
+
 export default function Hero() {
   const state = useGame();
   const home = state.phase === 'home';
@@ -16,7 +21,15 @@ export default function Hero() {
       <h1 className='hero-title'>{site.nom}</h1>
       <p className='hero-text'>{site.accroche}</p>
       <div className='hero-actions'>
-        <button className='button-primary' onClick={start} disabled={!state.ready}>
+        <button
+          className='button-primary'
+          onClick={start}
+          disabled={!state.ready}
+          onPointerEnter={wave(true)}
+          onPointerLeave={wave(false)}
+          onFocus={wave(true)}
+          onBlur={wave(false)}
+        >
           Explorer la ville
         </button>
         <button className='button-secondary' onClick={() => showPanel('map')}>

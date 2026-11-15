@@ -23,6 +23,7 @@
     "capture:details": "node scripts/capture-details.mjs",
     "capture:comparaisons": "node scripts/compose-avant-apres.mjs",
     "capture:inspection": "node scripts/capture-inspection.mjs",
+    "capture:robot": "node scripts/capture-robot.mjs",
     "mesure:chargement": "node scripts/mesure-chargement.mjs"
   },
   "dependencies": {

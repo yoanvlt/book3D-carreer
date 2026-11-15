@@ -1,17 +1,35 @@
-import { useRef } from 'react';
-import { useFrame } from '@react-three/fiber';
+import { useEffect, useRef } from 'react';
+import { useFrame, useThree } from '@react-three/fiber';
 import { RoundedBox } from '@react-three/drei';
 import * as THREE from 'three';
 import { color as C } from '../design/tokens';
-import { player, getState, marker, journey } from '../state';
+import { player, getState, marker, journey, robotUi, skip, presentation } from '../state';
+import { FLIGHT, flightPath, homePosition, landingPoint, pointOnFlight, type V3 } from '../world/flight';
+import { homeCamera } from '../world/clouds';
+
 import { heightAt } from '../world/terrain';
 import { play } from '../audio/sound';
 import { Box, Cylinder, Ball, material } from './Primitives';
 import { angleDifference } from '../world/motion';
-import { buildings } from '../world/config';
+import { buildings, WORLD } from '../world/config';
 
-/** Petits nuages de poussière aux pas rapides et à la réception d'un saut. */
-const PUFFS = 14;
+/**
+ * Comportement du robot hors marche : vol stationnaire à l'accueil, vol d'entrée ou de retour.
+ * La visite guidée part de l'accueil : le robot vole vers la place au premier lieu (« tour »),
+ * y reste pendant les présentations, puis remonte à l'accueil à la fin (« back »).
+ */
+function flightMode(s: ReturnType<typeof getState>, previous: string) {
+  if (s.phase === 'entering') return 'entering';
+  if (s.phase === 'homing') return 'homing';
+  if (s.tour !== null && presentation.fromHome) return 'tour';
+  if (s.phase === 'home') return previous === 'tour' || previous === 'back' ? 'back' : 'home';
+  return null;
+}
+
+/** Petits nuages de poussière aux pas rapides, à la réception d'un saut et à l'atterrissage. */
+const PUFFS = 18;
+/** Bouffées demandées hors du pas (atterrissage du vol) : x, y, z, taille. */
+const puffQueue: [number, number, number, number][] = [];
 function Dust() {
   const mesh = useRef<THREE.InstancedMesh>(null!);
   const puffs = useRef(Array.from({ length: PUFFS }, () => ({ x: 0, y: -100, z: 0, age: 1, size: 0 })));
@@ -39,6 +57,12 @@ function Dust() {
       const airborne = player.jump.height > 0;
       if (last.current.airborne && !airborne) for (let i = 0; i < 3; i++) spawn(0.32);
       last.current.airborne = airborne;
+    }
+    while (puffQueue.length) {
+      const [x, y, z, size] = puffQueue.shift()!;
+      const p = puffs.current[last.current.next];
+      last.current.next = (last.current.next + 1) % PUFFS;
+      Object.assign(p, { x, y, z, age: 0, size });
     }
     const o = temp.current;
     puffs.current.forEach((p, i) => {
@@ -94,12 +118,124 @@ export default function Robot() {
     armL = useRef<THREE.Group>(null!),
     armR = useRef<THREE.Group>(null!);
   const head = useRef<THREE.Group>(null!);
+  const eyes = useRef<THREE.Group>(null!);
+  const flames = useRef<THREE.Group>(null!);
+  const sparks = useRef<THREE.Group>(null!);
   const airborne = useRef(false);
+  const { camera, size } = useThree();
+  /** Vol en cours : mode (accueil, aller, retour), courbe, avancement, atterrissage joué. */
+  const flight = useRef({
+    mode: '',
+    path: null as ReturnType<typeof flightPath> | null,
+    t: 0,
+    skip: 0,
+    landed: false,
+  });
+  useEffect(() => {
+    const move = (e: PointerEvent) => {
+      robotUi.pointer = [(e.clientX / window.innerWidth) * 2 - 1, 1 - (e.clientY / window.innerHeight) * 2];
+    };
+    window.addEventListener('pointermove', move);
+    return () => window.removeEventListener('pointermove', move);
+  }, []);
   const gait = useRef(0),
     motion = useRef(0),
     previous = useRef({ speed: 0, angle: player.angle });
+  /**
+   * Accueil et vols : le robot plane devant la caméra d'accueil, puis vole vers la place (entrée,
+   * départ de la visite guidée) ou remonte planer à l'accueil (retour, fin de la visite).
+   * Renvoie vrai quand le robot ne suit pas le joueur.
+   */
+  const homeAndFlight = (dt: number, t: number) => {
+    const s = getState();
+    const f = flight.current;
+    const reduced = s.reducedMotion;
+    const mode = flightMode(s, f.mode);
+    if (!mode) {
+      f.mode = '';
+      return false;
+    }
+    flames.current.visible = !reduced;
+    flames.current.scale.y = 0.8 + Math.sin(t * 40) * 0.15 + Math.sin(t * 23) * 0.1;
+    sparks.current.children.forEach((spark, i) => {
+      const k = (t * 1.8 + i / sparks.current.children.length) % 1;
+      spark.position.set(((i % 2) * 2 - 1) * (0.24 + Math.sin(i * 7.1) * 0.08), -0.35 - k * 0.7, 0.09);
+      spark.scale.setScalar(1 - k);
+    });
+    if (mode === 'home') {
+      f.mode = 'home';
+      const [x, y, z] = homePosition(camera as THREE.PerspectiveCamera, size.width);
+      root.current.position.set(x, y + (reduced ? 0 : Math.sin(t * 1.6) * 0.18), z);
+      root.current.rotation.y = Math.atan2(camera.position.x - x, camera.position.z - z) - 0.35;
+      // Regard vers le curseur, signe de la main au survol d'« Explorer la ville ».
+      const [px, py] = robotUi.pointer;
+      head.current.rotation.y = THREE.MathUtils.damp(head.current.rotation.y, px * 0.6 + 0.35, 6, dt);
+      head.current.rotation.x = THREE.MathUtils.damp(head.current.rotation.x, -py * 0.35, 6, dt);
+      const wave = robotUi.wave && !reduced;
+      armR.current.rotation.z = THREE.MathUtils.damp(
+        armR.current.rotation.z,
+        wave ? 2.5 + Math.sin(t * 9) * 0.35 : 0.25,
+        8,
+        dt,
+      );
+      armL.current.rotation.z = THREE.MathUtils.damp(armL.current.rotation.z, -0.25, 8, dt);
+      left.current.rotation.x = right.current.rotation.x = 0.15;
+      body.current.rotation.set(0, 0, 0);
+      body.current.position.y = 0;
+      return true;
+    }
+    if (f.mode !== mode) {
+      const from = root.current.position.toArray() as V3;
+      const landing = mode === 'entering' || mode === 'tour';
+      const to = landing ? landingPoint() : homePosition(homeCamera(size.width, size.height), size.width);
+      // Retour au départ demandé en ville (pas depuis l'accueil) : pas de vol, le robot y est posé.
+      const flies = f.mode === 'home' || !landing;
+      Object.assign(f, {
+        mode,
+        path: flightPath(from, to, landing),
+        t: flies ? 0 : 1,
+        skip: skip.serial,
+        landed: false,
+      });
+      if (flies && !reduced) play('saut', { volume: 0.4 });
+    }
+    if (skip.serial !== f.skip || reduced) f.t = 1;
+    f.t = Math.min(1, f.t + dt / FLIGHT.duration);
+    if (robotUi.hold !== null) f.t = Math.min(1, (robotUi.hold * FLIGHT.total) / FLIGHT.duration);
+    const { p, heading } = pointOnFlight(f.path!, f.t * f.t * (3 - 2 * f.t));
+    root.current.position.set(...p);
+    robotUi.position = p;
+    if (f.t < 0.95)
+      root.current.rotation.y += angleDifference(heading, root.current.rotation.y) * (1 - Math.exp(-6 * dt));
+    body.current.rotation.x = THREE.MathUtils.damp(body.current.rotation.x, f.t < 0.9 ? 0.25 : 0, 6, dt);
+    armL.current.rotation.z = THREE.MathUtils.damp(armL.current.rotation.z, -0.6, 8, dt);
+    armR.current.rotation.z = THREE.MathUtils.damp(armR.current.rotation.z, 0.6, 8, dt);
+    if (f.t >= 1 && (mode === 'entering' || mode === 'tour')) {
+      // Atterrissage : poussière et son court ; la caméra rend la main un instant après.
+      flames.current.visible = false;
+      root.current.rotation.y = WORLD.spawnAngle;
+      body.current.rotation.x = 0;
+      if (!f.landed) {
+        f.landed = true;
+        for (let i = 0; i < 6; i++) {
+          const a = (i / 6) * Math.PI * 2;
+          puffQueue.push([p[0] + Math.cos(a) * 0.5, p[1] + 0.1, p[2] + Math.sin(a) * 0.5, 0.35]);
+        }
+        if (!reduced) play('pas', { volume: 0.6, rate: 0.8 });
+      }
+    }
+    // Fin du retour en fin de visite : le robot reprend son vol stationnaire à l'accueil.
+    if (f.t >= 1 && mode === 'back') f.mode = 'home';
+    sparks.current.visible = flames.current.visible;
+    return true;
+  };
   useFrame((_, delta) => {
     const dt = Math.min(delta, 0.05);
+    const t = _.clock.elapsedTime;
+    // Clignement des yeux : un battement bref toutes les 3,5 s environ.
+    eyes.current.scale.y = t % 3.6 < 0.12 ? 0.15 : 1;
+    if (homeAndFlight(dt, t)) return;
+    flames.current.visible = sparks.current.visible = false;
     root.current.position.set(player.x, player.y + 0.14 + player.jump.height, player.z);
     root.current.rotation.y = player.angle;
     const state = getState(),
@@ -209,16 +345,18 @@ export default function Robot() {
                 material={material(C.ink)}
                 castShadow
               />
-              {[-0.21, 0.21].map((x) => (
-                <RoundedBox
-                  key={x}
-                  args={[0.105, 0.19, 0.035]}
-                  radius={0.045}
-                  smoothness={2}
-                  position={[x, 1.98, 0.5]}
-                  material={material('#b8e3e7')}
-                />
-              ))}
+              <group ref={eyes} position={[0, 1.98, 0.5]}>
+                {[-0.21, 0.21].map((x) => (
+                  <RoundedBox
+                    key={x}
+                    args={[0.105, 0.19, 0.035]}
+                    radius={0.045}
+                    smoothness={2}
+                    position={[x, 0, 0]}
+                    material={material('#b8e3e7')}
+                  />
+                ))}
+              </group>
               {[-0.6, 0.6].map((x) => (
                 <Cylinder
                   key={x}
@@ -254,6 +392,35 @@ export default function Robot() {
             <Box p={[0, -0.62, 0.09]} s={[0.34, 0.06, 0.54]} color={C.ink} />
           </group>
         ))}
+        {/* Petites particules lumineuses sous les propulseurs */}
+        <group ref={sparks} visible={false}>
+          {Array.from({ length: 6 }, (_, i) => (
+            <mesh key={i} material={material('#ffd27a', { glow: '#ffd27a', glowIntensity: 2 })}>
+              <sphereGeometry args={[0.05, 6, 4]} />
+            </mesh>
+          ))}
+        </group>
+        {/* Propulseurs sous les pieds : flamme stylisée (accueil et vols seulement). */}
+        <group ref={flames} position={[0, 0.06, 0.09]} visible={false}>
+          {[-0.24, 0.24].map((x) => (
+            <group key={x} position={[x, 0, 0]}>
+              <mesh
+                position={[0, -0.28, 0]}
+                rotation={[Math.PI, 0, 0]}
+                material={material('#ffb347', { glow: '#ff9a3c', glowIntensity: 1.6 })}
+              >
+                <coneGeometry args={[0.13, 0.5, 10]} />
+              </mesh>
+              <mesh
+                position={[0, -0.18, 0]}
+                rotation={[Math.PI, 0, 0]}
+                material={material('#fff3c4', { glow: '#fff3c4', glowIntensity: 2 })}
+              >
+                <coneGeometry args={[0.07, 0.28, 8]} />
+              </mesh>
+            </group>
+          ))}
+        </group>
       </group>
     </>
   );

@@ -6,7 +6,8 @@ import type { Vec3 } from '../world/collision';
 import { CAMERA } from '../world/config';
 import { chooseCamera, moveCamera, chooseInteriorCamera, moveInteriorCamera, framing } from '../world/camera';
 import { heightAt } from '../world/terrain';
-import { getState, setState, player, view, finishArrival, skip } from '../state';
+import { getState, setState, player, view, finishArrival, skip, robotUi } from '../state';
+import { FLIGHT } from '../world/flight';
 import { photo } from './photo';
 
 export default function CameraRig() {
@@ -94,12 +95,16 @@ export default function CameraRig() {
         r.lookFrom.copy(r.look);
         r.route = safeCameraRoute(r.from, end);
       }
-      r.t += dt / (s.reducedMotion ? 0.001 : 2.5);
+      r.t = Math.min(1, r.t + dt / (s.reducedMotion ? 0.001 : FLIGHT.total));
       if (skipped) r.t = 1;
+      if (robotUi.hold !== null) r.t = robotUi.hold;
+      // La caméra remonte en gardant le robot dans le regard, puis se cale sur le centre de l'île.
+      const [rx, ry, rz] = robotUi.position;
+      const follow = Math.sin(Math.PI * Math.min(1, r.t * 1.1)) * 0.6;
       const p = sampleRoute(r.route, r.t),
         aim = mix3(r.lookFrom, { x: 0, y: 1, z: 0 }, ease(r.t));
       camera.position.set(p.x, p.y, p.z);
-      r.look.set(aim.x, aim.y, aim.z);
+      r.look.set(aim.x + (rx - aim.x) * follow, aim.y + (ry - aim.y) * follow, aim.z + (rz - aim.z) * follow);
       camera.lookAt(r.look);
       perspective.fov = THREE.MathUtils.damp(perspective.fov, narrow ? 48 : 41, 3, dt);
       r.offset = (narrow ? 0 : -size.width * CAMERA.homeOffset) * ease(r.t);
@@ -147,13 +152,22 @@ export default function CameraRig() {
           }
         }
         if (r.t === 0) r.route = safeCameraRoute(r.from, r.safe);
-        r.t += dt / (s.reducedMotion ? 0.001 : 2.7);
+        r.t += dt / (s.reducedMotion ? 0.001 : FLIGHT.total);
         if (skipped) r.t = 1;
+        if (robotUi.hold !== null) r.t = robotUi.hold;
         const t = Math.min(1, r.t),
           e = t * t * (3 - 2 * t);
         const pathPosition = sampleRoute(r.route, t);
         camera.position.set(pathPosition.x, pathPosition.y, pathPosition.z);
         r.look.lerpVectors(r.lookFrom, r.aim, e);
+        // Pendant le vol, la caméra plonge en suivant le robot du regard.
+        if (r.teleport === player.teleport) {
+          const follow = Math.sin(Math.PI * Math.min(1, t * 1.15)) * 0.7;
+          const [rx, ry, rz] = robotUi.position;
+          r.look.x += (rx - r.look.x) * follow;
+          r.look.y += (ry - r.look.y) * follow;
+          r.look.z += (rz - r.look.z) * follow;
+        }
         // An elevated arc clears roofs during descent and destination transitions.
         // The route is swept against terrain and building collision volumes.
         camera.position.y = Math.max(

@@ -294,9 +294,10 @@ test('An interior-to-exterior destination waits for the entire door sequence', (
 test('Selecting a destination from home first completes the aerial descent', () => {
   reset();
   game.setState({ phase: 'home' });
-  const p = [game.player.x, game.player.z];
   game.travel('project-2');
   assert.equal(game.getState().phase, 'entering');
+  // V7 : le robot atterrit au départ ; il n'en bouge pas pendant la descente.
+  const p = [game.player.x, game.player.z];
   tickMotion(0.03);
   assert.deepEqual([game.player.x, game.player.z], p);
   game.finishArrival();

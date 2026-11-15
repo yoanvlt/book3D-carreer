@@ -20,7 +20,7 @@ export interface Cloud {
 export const DRIFT = 2.5;
 
 /** Caméra d'accueil telle que la règle CameraRig (phase « home »). */
-function homeCamera(width: number, height: number) {
+export function homeCamera(width: number, height: number) {
   const narrow = width < 760;
   const k = narrow ? 1.36 : 1;
   const camera = new PerspectiveCamera(narrow ? 48 : 41, width / height, 0.1, 1400);

@@ -24,6 +24,10 @@ const hooks = {
   leave: game.guideExit,
   goHome: game.goHome,
   setState: game.setState,
+  /** Fige les vols du robot (entrée, retour) à une fraction de leur durée, pour les captures. */
+  holdFlight: (t: number | null) => {
+    game.robotUi.hold = t;
+  },
   /** Caméra fixe pour les captures de détail ; `photo(null)` rend la caméra au robot. */
   photo: (
     shot: { position: [number, number, number]; target: [number, number, number]; fov?: number } | null,
