@@ -1,5 +1,7 @@
 // Page de chargement (V8) : une capture à quatre étapes réelles (modèles, monde, lumière
-// précalculée, première image), au bureau et sur téléphone, processeur ralenti (×4). Le rendu logiciel rend ces étapes assez
+// précalculée, première image), au bureau et sur téléphone. Chaque étape est figée par
+// `?debug=1&chargement=<étape>` (même affichage qu'en vrai), sans quoi le chargement est trop
+// rapide pour être saisi. Le rendu logiciel rend ces étapes assez
 // longues pour être saisies au vol ; sur un vrai poste elles passent plus vite.
 //   npm run capture:chargement -- [dossier]
 // Variable : URL (défaut http://127.0.0.1:4173/book3D-carreer/).
@@ -17,14 +19,8 @@ const browser = await chromium.launch({
     '--ignore-gpu-blocklist',
   ],
 });
-// Étape et pourcentage à partir duquel on capture (le chargement est rapide : voir le
-// ralentissement du processeur plus bas).
-const STEPS = [
-  ['1-modeles', 15],
-  ['2-monde', 31],
-  ['3-lumiere', 56],
-  ['4-image', 90],
-];
+// Étapes capturées : la page est figée à chacune par `?debug=1&chargement=<étape>`.
+const STEPS = ['modeles', 'monde', 'lumiere', 'image'];
 const seen = [];
 const shots = [];
 for (const [name, options] of [
@@ -32,27 +28,18 @@ for (const [name, options] of [
   ['telephone', { viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true }],
 ]) {
   const page = await browser.newPage(options);
-  // Processeur ralenti (×4) : chaque étape reste visible assez longtemps pour être capturée.
-  const cdp = await page.context().newCDPSession(page);
-  await cdp.send('Emulation.setCPUThrottlingRate', { rate: 4 });
-  await page.goto(base, { waitUntil: 'commit' });
-  for (const [file, ...labels] of STEPS) {
-    const label = await page
-      .waitForFunction(
-        (threshold) => {
-          const value = Number(document.getElementById('loader-percent')?.textContent ?? 0);
-          const step = document.querySelector('#loader-steps li.active')?.dataset.step ?? 'image';
-          return value >= threshold && `${step} ${value} %`;
-        },
-        labels[0],
-        { timeout: 180000, polling: 'raf' },
-      )
-      .then((h) => h.jsonValue())
-      .catch(() => null);
-    if (!label) continue;
-    // Capture immédiate : l'étape en cours, pas la suivante. Encodage WebP à la fin.
-    shots.push([`${out}/${name}-${file}.webp`, await page.screenshot({ timeout: 180000 })]);
-    seen.push(`${name} ${file} : ${label}`);
+  for (const [i, step] of STEPS.entries()) {
+    await page.goto(`${base}?debug=1&chargement=${step}`);
+    await page.waitForFunction(() => document.querySelectorAll('#loader .trait.on').length > 0, null, {
+      timeout: 60000,
+    });
+    await page.waitForTimeout(900);
+    const label = await page.evaluate(
+      () =>
+        `${document.querySelector('#loader-steps li.active')?.dataset.step ?? 'image'} ${document.getElementById('loader-percent')?.textContent} %`,
+    );
+    shots.push([`${out}/${name}-${i + 1}-${step}.webp`, await page.screenshot({ timeout: 180000 })]);
+    seen.push(`${name} ${step} : ${label}`);
   }
   await page.close();
 }

@@ -33,7 +33,7 @@ const cv = (fn, arg) => page.evaluate(fn, arg);
 // Assis sur le banc sud-est de la place, puis debout et qui salue.
 await cv(() => window.__careerverse.place(6.4, 1.9, 0));
 await cv(() => window.__careerverse.sit());
-await cv(() => window.__careerverse.photo({ position: [11, 3.2, 8], target: [5.7, 1, 1.3], fov: 45 }));
+await cv(() => window.__careerverse.photo({ position: [11.2, 2.4, -3.9], target: [5.7, 0.9, 1.3], fov: 42 }));
 await saveShot(page, `${out}/robot-assis`);
 await cv(() => {
   window.__careerverse.photo(null);

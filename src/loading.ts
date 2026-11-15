@@ -15,10 +15,27 @@ export type LoadingStep = keyof typeof STEPS;
 
 let current = 0;
 /**
+ * Captures (`?debug=1&chargement=<étape>`) : la page de chargement est figée à cette étape (même
+ * affichage qu'en vrai) et ne se retire pas.
+ */
+const frozen = (() => {
+  const q = new URLSearchParams(window.location.search);
+  const step = q.get('chargement');
+  return q.has('debug') && step && step in STEPS ? (step as LoadingStep) : null;
+})();
+/**
  * Avance le chargement : `fraction` de l'étape (0 à 1). Met à jour le pourcentage, l'état des
  * étapes et les traits de l'île dessinés (allumés au-delà de leur seuil).
  */
 export function loadingStep(step: LoadingStep, fraction = 1) {
+  if (frozen && step !== frozen) {
+    if (current === 0) show(frozen, 0.5);
+    return;
+  }
+  show(step, fraction);
+}
+
+function show(step: LoadingStep, fraction: number) {
   const keys = Object.keys(STEPS) as LoadingStep[];
   const index = keys.indexOf(step);
   const start = index > 0 ? STEPS[keys[index - 1]][0] : 0;
@@ -44,6 +61,7 @@ const MINIMUM = 600;
 
 /** Dévoilement de l'accueil : fondu de la page de chargement, puis retrait du DOM. */
 export function loadingDone() {
+  if (frozen) return;
   const loader = document.getElementById('loader');
   if (!loader || loader.classList.contains('loader-done')) return;
   performance.mark('careerverse:pret');
