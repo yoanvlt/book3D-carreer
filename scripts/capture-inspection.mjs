@@ -8,7 +8,7 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import { chromium } from 'playwright';
 
-const [out = 'docs/screenshots/v7/inspection/apres'] = process.argv.slice(2);
+const [out = 'docs/screenshots/v8/inspection'] = process.argv.slice(2);
 const base = process.env.URL ?? 'http://127.0.0.1:4173/book3D-carreer/';
 await mkdir(out, { recursive: true });
 const browser = await chromium.launch({
@@ -102,6 +102,8 @@ for (const b of process.env.EMPRISES ? [] : layout) {
 if (!only && !process.env.EMPRISES) {
   const top = await shoot({ position: [0, 215, 0.01], target: [0, 0, 0], fov: 40 });
   await sheet([top], ['dessus'], 1, `${out}/ile-dessus.webp`);
+  const under = await shoot({ position: [95, -55, 95], target: [0, -14, 0], fov: 42 });
+  await sheet([under], ['dessous'], 1, `${out}/ile-dessous.webp`);
 }
 const footprints = await page.evaluate(() => window.__careerverse.footprints?.() ?? []);
 await writeFile(`${out}/emprises.json`, JSON.stringify(footprints, null, 2));

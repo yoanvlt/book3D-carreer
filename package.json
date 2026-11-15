@@ -27,7 +27,8 @@
     "capture:chargement": "node scripts/capture-chargement.mjs",
     "mesure:chargement": "node scripts/mesure-chargement.mjs",
     "kits": "node scripts/kits.mjs",
-    "capture:da": "node scripts/capture-da.mjs"
+    "capture:da": "node scripts/capture-da.mjs",
+    "capture:actions": "node scripts/capture-actions.mjs"
   },
   "dependencies": {
     "@fontsource-variable/bricolage-grotesque": "^5.3.0",

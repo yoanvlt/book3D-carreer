@@ -1,6 +1,6 @@
-// V7 : le robot, fil conducteur. Vol stationnaire à l'accueil (à côté du titre, au-dessus de la
-// carte sur téléphone), vol d'entrée vers la place et vol de retour, au-dessus des toits, sans
-// jamais traverser l'île ni un bâtiment ; durées et phases (home, entering, homing).
+// Le robot, fil conducteur (V8) : îlot d'accueil (devant la caméra, sans masquer le titre ni la
+// carte), vols d'entrée et de retour en timeline de poses-clés, au-dessus des toits, sans traverser
+// l'île ni un bâtiment ; travelling à taille constante, jamais de dos ; phases passables.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { PerspectiveCamera, Vector3 } from 'three';

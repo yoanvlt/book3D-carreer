@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { buildings } from '../world/config';
 
 /**
  * Mode photo des captures automatiques (`?debug=1` seulement) : la caméra quitte le robot et se
@@ -20,32 +21,25 @@ export const probe = {
 
 /**
  * Emprise de chaque bâtiment dans son repère local (x : largeur, z : profondeur, porte vers +z),
- * calculée sur la géométrie de toutes ses pièces d'origine. Les objets marqués userData.outside
- * (totem, parvis) et les maillages regroupés (copies des pièces) sont ignorés.
+ * calculée sur tous les sommets de son maillage (V8 : construit en coordonnées du monde, ramené
+ * dans le repère du bâtiment par sa position et sa rotation).
  */
 export function measureFootprints(ids: string[]) {
   const scene = probe.scene;
   if (!scene) return [];
   return ids.flatMap((id) => {
-    const root = scene.getObjectByName(`building-${id}`);
-    if (!root) return [];
-    root.updateWorldMatrix(true, true);
-    const inverse = root.matrixWorld.clone().invert();
+    const mesh = scene.getObjectByName(`building-${id}`) as THREE.Mesh | undefined;
+    const b = buildings.find((x) => x.id === id);
+    if (!mesh?.geometry || !b) return [];
+    const inverse = new THREE.Matrix4()
+      .makeRotationY(b.rotation)
+      .setPosition(b.position[0], 0, b.position[1])
+      .invert();
     const box = new THREE.Box3();
-    const part = new THREE.Box3();
-    const visit = (o: THREE.Object3D) => {
-      if (o.userData.outside) return;
-      if (o instanceof THREE.Mesh && !o.userData.batched && o.geometry) {
-        if (!o.geometry.boundingBox) o.geometry.computeBoundingBox();
-        part
-          .copy(o.geometry.boundingBox!)
-          .applyMatrix4(new THREE.Matrix4().multiplyMatrices(inverse, o.matrixWorld));
-        box.union(part);
-      }
-      o.children.forEach(visit);
-    };
-    visit(root);
-    const round = (v: THREE.Vector3) => v.toArray().map((n) => +n.toFixed(2));
+    const v = new THREE.Vector3();
+    const p = mesh.geometry.getAttribute('position');
+    for (let i = 0; i < p.count; i++) box.expandByPoint(v.fromBufferAttribute(p, i).applyMatrix4(inverse));
+    const round = (x: THREE.Vector3) => x.toArray().map((n) => +n.toFixed(2));
     return [{ id, min: round(box.min), max: round(box.max) }];
   });
 }

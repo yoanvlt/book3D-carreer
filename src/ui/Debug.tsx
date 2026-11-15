@@ -25,6 +25,13 @@ const hooks = {
   leave: game.guideExit,
   goHome: game.goHome,
   setState: game.setState,
+  /** Place le robot (captures des actions), assis sur le banc le plus proche, ou qui salue. */
+  place: (x: number, z: number, angle = game.player.angle) => {
+    Object.assign(game.player, { x, z, angle, speed: 0 });
+    game.player.teleport++;
+  },
+  sit: () => game.interact(),
+  wave: game.wave,
   /** Fige les vols du robot (entrée, retour) à une fraction de leur durée, pour les captures. */
   holdFlight: (t: number | null) => {
     game.robotUi.hold = t;

@@ -25,7 +25,7 @@ id: project-1 # ne pas modifier
 statut: brouillon # vide, brouillon ou publié
 titre: Tableau de bord énergie # nom affiché dans le plan et devant la porte (40 caractères au plus)
 sous_titre: Le Pavillon de verre # nom du lieu, sous le titre (60 caractères au plus)
-enseigne: ÉNERGIE # texte peint sur la façade (24 caractères au plus)
+enseigne: ÉNERGIE # texte de la plaque d'enseigne, sur la façade du lieu (24 caractères au plus)
 resume: Un tableau de bord pour suivre la consommation de douze sites.
 tags: [Power BI, SQL, Data]
 liens:

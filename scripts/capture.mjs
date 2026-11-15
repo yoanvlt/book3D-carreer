@@ -10,7 +10,7 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import { saveShot } from './shot.mjs';
 import { chromium } from 'playwright';
 
-const [mode = 'scenes', out = 'docs/screenshots/v5', only = ''] = process.argv.slice(2);
+const [mode = 'scenes', out = 'docs/screenshots/v8', only = ''] = process.argv.slice(2);
 const base = process.env.URL ?? 'http://127.0.0.1:4173/book3D-carreer/';
 const url = base + (base.includes('?') ? '&' : '?') + 'debug=1';
 const quality = process.env.QUALITE ?? 'high';
