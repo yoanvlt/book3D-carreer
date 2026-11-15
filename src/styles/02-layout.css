@@ -1,0 +1,29 @@
+/* ---------- Mise en page générale ---------- */
+.app,
+.world {
+  width: 100%;
+  height: 100dvh;
+  min-height: 480px;
+  overflow: hidden;
+}
+.app {
+  position: relative;
+  background: linear-gradient(var(--sky-top), var(--sky-horizon) 70%, var(--sky-bottom));
+}
+.world {
+  position: absolute;
+  inset: 0;
+  touch-action: none;
+}
+.world canvas {
+  display: block;
+  outline: 0;
+}
+#scene-curtain {
+  position: absolute;
+  inset: 0;
+  background: var(--paper);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 25;
+}

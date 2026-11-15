@@ -1,0 +1,99 @@
+/* ---------- En-tête ---------- */
+.topbar {
+  position: absolute;
+  inset: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-5) clamp(16px, 3.5vw, 56px);
+  z-index: 10;
+  pointer-events: none;
+}
+.topbar > * {
+  pointer-events: auto;
+}
+.brand-button {
+  padding: 10px 16px;
+}
+.is-home .topbar .panel {
+  background: transparent;
+  box-shadow: none;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 22px;
+  font-weight: var(--weight-heavy);
+  letter-spacing: -0.02em;
+}
+.monogram {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: var(--accent-strong);
+  color: var(--paper);
+  font-size: 15px;
+  font-weight: var(--weight-heavy);
+  letter-spacing: -0.04em;
+  box-shadow: 0 2px 0 var(--accent-shade);
+}
+.brand-name {
+  font-size: 19px;
+}
+/* En intérieur ou pendant une séquence, le logo reste net : il n'a simplement pas d'action. */
+.brand-button:disabled {
+  opacity: 1;
+  cursor: default;
+}
+.header-actions {
+  display: flex;
+  gap: var(--space-2);
+}
+.plan-button {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 9px 12px 9px 14px;
+  font-weight: var(--weight-bold);
+  font-size: var(--text-md);
+}
+.plan-button svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linejoin: round;
+}
+.sound-button {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+}
+.sound-button svg {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.is-home .sound-button {
+  box-shadow: inset 0 0 0 2px currentColor !important;
+  border-radius: 50%;
+}
+.help-button {
+  width: 44px;
+  height: 44px;
+  font-size: var(--text-lg);
+  font-weight: var(--weight-heavy);
+}
+.is-home .help-button {
+  box-shadow: inset 0 0 0 2px currentColor !important;
+  border-radius: 50%;
+}

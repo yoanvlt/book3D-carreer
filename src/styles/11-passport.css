@@ -1,0 +1,102 @@
+/* ---------- Passeport et visite guidée ---------- */
+.passport {
+  position: absolute;
+  right: clamp(16px, 3.5vw, 56px);
+  top: 84px;
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 10px 7px 14px;
+}
+.passport-label {
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
+  margin-right: 4px;
+}
+.stamp {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px dashed var(--line);
+}
+.stamp.done {
+  border-style: solid;
+  animation: stamp 0.35s ease-out;
+}
+.stamp svg {
+  width: 13px;
+  height: 13px;
+  fill: none;
+  stroke: var(--paper);
+  stroke-width: 2.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+@keyframes stamp {
+  from {
+    transform: scale(1.8) rotate(-12deg);
+    opacity: 0;
+  }
+}
+.stamp-toast {
+  position: absolute;
+  right: clamp(16px, 3.5vw, 56px);
+  top: 130px;
+  z-index: 6;
+  margin: 0;
+  padding: 8px 14px;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-bold);
+}
+.hero-duration {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--ink-soft);
+}
+.tour {
+  position: absolute;
+  left: clamp(16px, 3.5vw, 56px);
+  bottom: var(--space-6);
+  z-index: 8;
+  width: min(420px, calc(100vw - 32px));
+  padding: var(--space-5);
+  border-top: 6px solid var(--place);
+}
+.tour-progress {
+  margin: 0 0 4px;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-bold);
+  color: var(--ink-soft);
+}
+.tour h2 {
+  margin: 0;
+  font-size: var(--text-xxl);
+  font-weight: var(--weight-heavy);
+  letter-spacing: -0.02em;
+}
+.tour-text {
+  margin: 4px 0 var(--space-3);
+  color: var(--ink-soft);
+}
+.tour-dots {
+  display: flex;
+  gap: 6px;
+  margin-bottom: var(--space-4);
+}
+.tour-dots i {
+  width: 22px;
+  height: 5px;
+  border-radius: 3px;
+  background: var(--line);
+}
+.tour-dots i.done {
+  background: var(--place);
+}
+.tour-actions {
+  display: flex;
+  gap: var(--space-2);
+}

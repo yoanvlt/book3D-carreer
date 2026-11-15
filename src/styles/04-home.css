@@ -1,0 +1,54 @@
+/* ---------- Accueil ---------- */
+.hero {
+  position: absolute;
+  left: clamp(24px, 5vw, 96px);
+  top: 50%;
+  transform: translateY(-50%);
+  max-width: min(540px, 40vw);
+  z-index: 5;
+  transition:
+    opacity 0.5s,
+    transform 0.7s;
+}
+.hero-hidden {
+  opacity: 0;
+  transform: translateY(-46%);
+  pointer-events: none;
+}
+.hero-role {
+  margin: 0 0 var(--space-3);
+  font-size: var(--text-lg);
+  font-weight: var(--weight-bold);
+}
+.hero-title {
+  margin: 0 0 var(--space-4);
+  font-size: var(--display);
+  font-weight: var(--weight-heavy);
+  line-height: 0.98;
+  letter-spacing: -0.035em;
+}
+.hero-text {
+  margin: 0 0 var(--space-6);
+  font-size: var(--text-xl);
+  line-height: 1.4;
+  max-width: 30ch;
+}
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+.hero-keys {
+  margin: var(--space-5) 0 0;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  line-height: 2;
+}
+.hero-keys kbd {
+  margin: 0 6px 0 2px;
+  background: rgba(255, 255, 255, 0.7);
+  border-color: transparent;
+}
+.hero-keys kbd:first-child {
+  margin-left: 0;
+}
