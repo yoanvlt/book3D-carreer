@@ -1,5 +1,6 @@
 import { buildings, type Point } from './config';
 import { distanceToRoad } from './urban';
+import { PLAZA, pavementClearance } from './roads';
 /** Hand-composed groves: outer edge, street corners and pockets between destinations. */
 export const trees: { p: Point; s: number; kind: number }[] = [
   [-49, 18, 1.4, 0],
@@ -80,21 +81,21 @@ export const benches: { p: Point; angle: number }[] = [
   { p: [6, 5], angle: 0.6 },
   { p: [-7, -5], angle: 2.2 },
   { p: [8, -4], angle: -2.1 },
-  { p: [-35, 5], angle: 1.5 },
+  { p: [-35.6, 1.8], angle: 0 },
   { p: [15, 24], angle: -0.3 },
   { p: [14, -27], angle: 0 },
 ];
 export const lamps: Point[] = [
-  [-11, 9],
+  [-13.55, 9.5],
   [12, 8],
-  [-12, -8],
+  [-14.1, -7.1],
   [10, -10],
-  [-30, 4],
+  [-30.5, 1.55],
   [-34, -9],
   [-17, -24],
   [10, -23],
   [33, -4],
-  [35, 12],
+  [35.35, 13.8],
   [17, 27],
   [-16, 23],
 ];
@@ -120,11 +121,19 @@ export const gardens: [number, number, number, number, number][] = [
   [-13, -17, 2.5, 3, 0],
 ];
 
-/** Poubelle à l'extrémité de chaque banc (dans le volume de collision du banc, à 1,9 m). */
-export const bins: { p: Point; angle: number }[] = benches.map((b) => ({
-  p: [b.p[0] + Math.cos(b.angle) * 1.9, b.p[1] - Math.sin(b.angle) * 1.9] as Point,
-  angle: b.angle,
-}));
+/**
+ * Poubelle à une extrémité de chaque banc, à 1,9 m : sur la place pour un banc de la place,
+ * sinon du côté le plus éloigné du dallage.
+ */
+export const bins: { p: Point; angle: number }[] = benches.map((b) => {
+  const end = (s: number): Point => [
+    b.p[0] + s * Math.cos(b.angle) * 1.9,
+    b.p[1] - s * Math.sin(b.angle) * 1.9,
+  ];
+  const onPlaza = ([x, z]: Point) => Math.abs(x) <= PLAZA.halfX && Math.abs(z) <= PLAZA.halfZ;
+  const score = (p: Point) => (onPlaza(b.p) ? (onPlaza(p) ? 1 : 0) : pavementClearance(...p));
+  return { p: score(end(1)) >= score(end(-1)) ? end(1) : end(-1), angle: b.angle };
+});
 /** Bornes sur les bords nord et sud de la place. */
 export const bollards: Point[] = [
   [-2.6, -5.75],

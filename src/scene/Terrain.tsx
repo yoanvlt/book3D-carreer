@@ -1,5 +1,7 @@
 import { streets, approaches } from '../world/urban';
 import { gardens } from '../world/landscape';
+import { manholes } from '../world/decor';
+import { APPROACH_WIDTH, STREET_WIDTH, sampleRoad } from '../world/roads';
 import { useMemo, useEffect } from 'react';
 import * as THREE from 'three';
 import { heightAt } from '../world/terrain';
@@ -83,18 +85,18 @@ function Path({
   finish?: Finish;
 }) {
   const geometry = useMemo(() => {
-    const curve = new THREE.CatmullRomCurve3(
-      points.map(([x, z]) => new THREE.Vector3(x, 0, z)),
-      false,
-      'centripetal',
-    );
+    const samples = sampleRoad(points, 240);
     const vertices: number[] = [],
       indices: number[] = [];
     const lengthSegments = 240,
       widthSegments = segments;
     for (let i = 0; i <= lengthSegments; i++) {
-      const p = curve.getPoint(i / lengthSegments),
-        t = curve.getTangent(i / lengthSegments);
+      const {
+        p: [px, pz],
+        t: [tx, tz],
+      } = samples[i];
+      const p = { x: px, z: pz },
+        t = { x: tx, z: tz };
       const dx = (-t.z * width) / 2,
         dz = (t.x * width) / 2;
       for (let j = 0; j <= widthSegments; j++) {
@@ -203,43 +205,20 @@ function Plaza() {
   );
 }
 
-/** Plaques d'égout le long des rues, bandes podotactiles où les allées rejoignent la rue. */
+/** Plaques d'égout sur la chaussée (world/decor.ts). */
 function StreetDetails() {
-  const manholes: [number, number][] = [];
-  for (const points of streets)
-    for (let i = 0; i < points.length - 1; i += 2) {
-      const [ax, az] = points[i];
-      const [bx, bz] = points[i + 1];
-      const length = Math.hypot(bx - ax, bz - az) || 1;
-      manholes.push([(ax + bx) / 2 - ((bz - az) / length) * 1.4, (az + bz) / 2 + ((bx - ax) / length) * 1.4]);
-    }
   return (
     <>
       {manholes.map(([x, z]) => (
-        <group key={`${x},${z}`} position={[x, heightAt(x, z) + 0.17, z]}>
-          <Cylinder s={[0.4, 0.03, 0.4]} color={C.slate} finish={FINISH.steel} />
+        <group key={`${x},${z}`} position={[x, heightAt(x, z) + 0.155, z]}>
+          <Cylinder s={[0.4, 0.02, 0.4]} color={C.slate} finish={FINISH.steel} />
           <Fine>
             {[-0.18, 0, 0.18].map((dx) => (
-              <Box key={dx} p={[dx, 0.02, 0]} s={[0.05, 0.02, 0.6]} color={C.ink} shadow={false} />
+              <Box key={dx} p={[dx, 0.012, 0]} s={[0.05, 0.01, 0.6]} color={C.ink} shadow={false} />
             ))}
           </Fine>
         </group>
       ))}
-      {approaches.map(([junction, door]) => {
-        const length = Math.hypot(door[0] - junction[0], door[1] - junction[1]) || 1;
-        const [ux, uz] = [(door[0] - junction[0]) / length, (door[1] - junction[1]) / length];
-        const [x, z] = [junction[0] + ux * 3.3, junction[1] + uz * 3.3];
-        return (
-          <Box
-            key={`${x},${z}`}
-            p={[x, heightAt(x, z) + 0.165, z]}
-            s={[3.2, 0.02, 0.6]}
-            r={[0, Math.atan2(ux, uz), 0]}
-            color='#e9dfbf'
-            finish={{ ...FINISH.cobbles, scale: 3.2 }}
-          />
-        );
-      })}
     </>
   );
 }
@@ -286,7 +265,7 @@ export default function Terrain() {
         {/* Rues dallées et bordures de pierre ; les bordures passent sous le dallage d'une rue qui croise. */}
         {streets.map((points, i) => (
           <group key={i}>
-            <Path points={points} width={5.7} finish={FINISH.paving} />
+            <Path points={points} width={STREET_WIDTH} finish={FINISH.paving} />
             {[-1, 1].map((s) => (
               <Path
                 key={s}
@@ -303,7 +282,7 @@ export default function Terrain() {
         ))}
         {approaches.map((points, i) => (
           <group key={i}>
-            <Path points={points} width={3.6} finish={FINISH.paving} />
+            <Path points={points} width={APPROACH_WIDTH} finish={FINISH.paving} />
             {[-1, 1].map((s) => (
               <Path
                 key={s}

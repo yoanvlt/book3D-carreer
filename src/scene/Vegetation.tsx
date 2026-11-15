@@ -10,6 +10,7 @@ import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { color as C, muted } from '../design/tokens';
 import { gardens, trees } from '../world/landscape';
+import { hedgeBlocks } from '../world/decor';
 import { heightAt } from '../world/terrain';
 import { distanceToRoad } from '../world/urban';
 import { buildings } from '../world/config';
@@ -431,32 +432,18 @@ function Instances({
   );
 }
 
-/** Haies taillées le long des allées : blocs arrondis jointifs, de hauteur légèrement variable. */
-const HEDGES: [number, number, number, number][] = [
-  [-16, 9, 7, 0.1],
-  [13, 5, 6, 0.3],
-  [-10, -15, 6, 1],
-  [15, -22, 6, 0.2],
-  [18, 29, 8, -0.4],
-  [-31, 28, 6, 0.8],
-];
+/** Haies taillées le long des allées (world/decor.ts) : blocs arrondis jointifs, posés au plus bas du sol. */
 function Hedges() {
-  const items = useMemo(() => {
-    const out: Item[] = [];
-    for (const [x, z, count, angle] of HEDGES)
-      for (let i = 0; i < count; i++) {
-        const xx = x + i * Math.cos(angle) * 0.7;
-        const zz = z + i * Math.sin(angle) * 0.7;
-        const h = 0.85 + ((i * 7) % 3) * 0.04;
-        out.push({
-          p: [xx, heightAt(xx, zz) + h / 2, zz],
-          s: [0.78, h, 0.72],
-          color: i % 4 === 1 ? muted('#4f8a46') : C.hedge,
-          r: [0, -angle, 0],
-        });
-      }
-    return out;
-  }, []);
+  const items = useMemo(
+    () =>
+      hedgeBlocks.map((h, i): Item => ({
+        p: [h.p[0], h.y + h.h / 2, h.p[1]],
+        s: [0.78, h.h, 0.72],
+        color: i % 4 === 1 ? muted('#4f8a46') : C.hedge,
+        r: [0, -h.angle, 0],
+      })),
+    [],
+  );
   const geometry = useMemo(() => new RoundedBoxGeometry(1, 1, 1, 2, 0.18), []);
   const material = useMemo(() => new THREE.MeshStandardMaterial({ roughness: 0.9, flatShading: true }), []);
   return <Instances items={items} geometry={geometry} material={material} />;
