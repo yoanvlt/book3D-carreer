@@ -7,7 +7,7 @@ Portfolio 3D de Yoan Viollet : une petite ville en React Three Fiber où chaque 
 - un monde vivant : nuages, fontaine, oiseaux, petits robots, feuillage, sons (coupés par défaut) ;
 - un but : passeport de visite, visite guidée d'une minute, carte de fin.
 
-Suivi détaillé et vérifications : [V5_SUIVI.md](V5_SUIVI.md) (V4 : [V4_SUIVI.md](V4_SUIVI.md)). Ajouter un projet : [CONTENT.md](CONTENT.md). Cahier des charges : [CareerVerse_Cahier_des_Charges_V4.md](CareerVerse_Cahier_des_Charges_V4.md).
+Suivi détaillé et vérifications : [V6_SUIVI.md](V6_SUIVI.md). Versions précédentes, briefs et cahier des charges : [docs/archives/](docs/archives/README.md). Ajouter un projet : [CONTENT.md](CONTENT.md).
 
 ## Installation et lancement
 
@@ -84,5 +84,4 @@ Sur téléphone : joystick en bas à gauche, bouton de saut à droite, toucher l
 | `src/ui/`                                                        | interface : en-tête, accueil, HUD, dialogues, version texte                             |
 | `tests/`                                                         | tests Node des vrais modules TypeScript, contenu d’essai dans `tests/fixtures/`         |
 | `scripts/`                                                       | captures Playwright de contrôle visuel                                                  |
-| `docs/screenshots/v4/`                                           | captures de la V4                                                                       |
-| `docs/v4-brief/`                                                 | audit visuel et prototype de la direction A                                             |
+| `docs/archives/`                                                 | suivis V3 à V5, briefs, cahier des charges                                              |
