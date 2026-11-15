@@ -163,7 +163,7 @@ export const scenePlaceColor: Record<BuildingId, string> = {
 export const scene = {
   sky: { top: '#3f9fe0', horizon: '#d6efff', bottom: '#8fd0ea' },
   fog: { color: '#cfeafa', near: 190, far: 520 },
-  hemisphere: { sky: '#d8ecff', ground: '#6e7d4f', intensity: 1.25 },
+  hemisphere: { sky: '#e4f0fb', ground: '#b9b49a', intensity: 1.25 },
   sun: { color: '#fff6e6', intensity: 3.1, position: [-40, 70, 34] as [number, number, number] },
   exposure: 1,
 } as const;

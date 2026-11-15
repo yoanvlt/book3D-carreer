@@ -165,7 +165,7 @@ export function dioramaMaterial(kind: DioramaKind, tint = '#ffffff'): THREE.Shad
         sunColor: { value: new THREE.Color(scene.sun.color).multiplyScalar(1.15) },
         skyColor: { value: new THREE.Color(scene.hemisphere.sky) },
         groundColor: { value: new THREE.Color(scene.hemisphere.ground) },
-        ambient: { value: 0.62 },
+        ambient: { value: 0.78 },
         tint: { value: new THREE.Color(tint) },
         opacity: { value: 1 },
       },

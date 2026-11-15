@@ -55,8 +55,8 @@ export const SWATCHES = [
   ['bois-clair', '#d2ab83'],
   ['bois', '#ae8562'],
   ['bois-profond', '#87664b'],
-  ['verre', '#b4d1da'],
-  ['verre-profond', '#8eb1bf'],
+  ['verre', '#c2dce3'],
+  ['verre-profond', '#a3c3cf'],
   ['fenetre-chaude', '#f2ddab'],
   // Accents des six lieux (46-51)
   ['accent-profile', '#d98a67'],

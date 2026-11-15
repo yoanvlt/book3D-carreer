@@ -7,6 +7,7 @@ import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { probe } from './photo';
 import { loadingDone, loadingStep } from '../loading';
 import Monde, { prepareWorld } from './Monde';
+import Herbe from './Herbe';
 import Robot from './Robot';
 import Controller from './Controller';
 import CameraRig from './CameraRig';
@@ -172,7 +173,12 @@ export default function World() {
           <SkyDome />
           <fog attach='fog' args={[scene.fog.color, scene.fog.near, scene.fog.far]} />
           <Monde onBuilt={onBuilt} />
-          {built && <Clouds />}
+          {built && (
+            <>
+              <Clouds />
+              <Herbe />
+            </>
+          )}
         </>
       )}
       <Robot />

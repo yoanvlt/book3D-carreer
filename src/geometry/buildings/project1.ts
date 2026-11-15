@@ -21,9 +21,9 @@ function curtain(b: Builder, length: number, y0: number, y1: number, door = fals
   for (let i = 1; i < n; i++) {
     const x = -length / 2 + (length * i) / n;
     if (door && Math.abs(x) < 1.7) continue;
-    box(b, x, y0, 0.02, 0.1, y1 - y0, 0.1, 'metal-sombre', { bevel: 0.02 });
+    box(b, x, y0, 0.02, 0.1, y1 - y0, 0.1, 'zinc', { bevel: 0.02 });
   }
-  box(b, 0, y0 + (y1 - y0) * 0.72, 0.03, length, 0.08, 0.08, 'metal-sombre', { bevel: 0.02 });
+  box(b, 0, y0 + (y1 - y0) * 0.72, 0.03, length, 0.08, 0.08, 'zinc', { bevel: 0.02 });
 }
 
 export function project1(b: Builder) {
