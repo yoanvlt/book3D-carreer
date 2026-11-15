@@ -360,8 +360,9 @@ export const robotUi = {
   wave: false,
   /** Captures : vol figé à cette fraction (0 à 1) de sa durée totale ; null en jeu. */
   hold: null as number | null,
-  /** Position du robot pendant les vols, suivie du regard par la caméra. */
+  /** Position et cap du robot pendant les vols, suivis par la caméra. */
   position: [0, 0, 0] as [number, number, number],
+  heading: 0,
 };
 
 export function goHome() {

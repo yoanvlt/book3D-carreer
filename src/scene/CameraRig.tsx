@@ -10,6 +10,21 @@ import { getState, setState, player, view, finishArrival, skip, robotUi } from '
 import { FLIGHT } from '../world/flight';
 import { photo } from './photo';
 
+/** Poursuite du robot pendant les vols : derrière lui, un peu au-dessus, le regard sur lui. */
+const CHASE = { back: 8, up: 3.5 };
+const chasePoint = new THREE.Vector3();
+function chase(weight: number, position: THREE.Vector3, look: THREE.Vector3) {
+  if (weight <= 0) return;
+  const [x, y, z] = robotUi.position;
+  const h = robotUi.heading;
+  chasePoint.set(x - Math.sin(h) * CHASE.back, y + CHASE.up, z - Math.cos(h) * CHASE.back);
+  position.lerp(chasePoint, weight);
+  look.lerp(chasePoint.set(x, y + 1.2, z), weight);
+}
+/** Poids de la poursuite : monte jusqu'à `rise`, tient, puis rend la main à partir de `release`. */
+const chaseWeight = (t: number, rise: number, release: number) =>
+  THREE.MathUtils.smoothstep(t, 0, rise) * (1 - THREE.MathUtils.smoothstep(t, release, 1));
+
 export default function CameraRig() {
   const { camera, size } = useThree();
   const perspective = camera as THREE.PerspectiveCamera;
@@ -98,13 +113,16 @@ export default function CameraRig() {
       r.t = Math.min(1, r.t + dt / (s.reducedMotion ? 0.001 : FLIGHT.total));
       if (skipped) r.t = 1;
       if (robotUi.hold !== null) r.t = robotUi.hold;
-      // La caméra remonte en gardant le robot dans le regard, puis se cale sur le centre de l'île.
-      const [rx, ry, rz] = robotUi.position;
-      const follow = Math.sin(Math.PI * Math.min(1, r.t * 1.1)) * 0.6;
+      // La caméra suit le robot qui remonte, puis se cale sur la vue d'accueil.
       const p = sampleRoute(r.route, r.t),
         aim = mix3(r.lookFrom, { x: 0, y: 1, z: 0 }, ease(r.t));
       camera.position.set(p.x, p.y, p.z);
-      r.look.set(aim.x + (rx - aim.x) * follow, aim.y + (ry - aim.y) * follow, aim.z + (rz - aim.z) * follow);
+      r.look.set(aim.x, aim.y, aim.z);
+      chase(chaseWeight(r.t, 0.2, 0.6), camera.position, r.look);
+      camera.position.y = Math.max(
+        camera.position.y,
+        heightAt(camera.position.x, camera.position.z) + CAMERA.clearance,
+      );
       camera.lookAt(r.look);
       perspective.fov = THREE.MathUtils.damp(perspective.fov, narrow ? 48 : 41, 3, dt);
       r.offset = (narrow ? 0 : -size.width * CAMERA.homeOffset) * ease(r.t);
@@ -160,14 +178,8 @@ export default function CameraRig() {
         const pathPosition = sampleRoute(r.route, t);
         camera.position.set(pathPosition.x, pathPosition.y, pathPosition.z);
         r.look.lerpVectors(r.lookFrom, r.aim, e);
-        // Pendant le vol, la caméra plonge en suivant le robot du regard.
-        if (r.teleport === player.teleport) {
-          const follow = Math.sin(Math.PI * Math.min(1, t * 1.15)) * 0.7;
-          const [rx, ry, rz] = robotUi.position;
-          r.look.x += (rx - r.look.x) * follow;
-          r.look.y += (ry - r.look.y) * follow;
-          r.look.z += (rz - r.look.z) * follow;
-        }
+        // Pendant le vol, la caméra plonge derrière le robot et le suit jusqu'à la place.
+        if (r.teleport === player.teleport) chase(chaseWeight(t, 0.25, 0.7), camera.position, r.look);
         // An elevated arc clears roofs during descent and destination transitions.
         // The route is swept against terrain and building collision volumes.
         camera.position.y = Math.max(

@@ -197,6 +197,7 @@ export default function Robot() {
         skip: skip.serial,
         landed: false,
       });
+      robotUi.heading = Math.atan2(to[0] - from[0], to[2] - from[2]);
       if (flies && !reduced) play('saut', { volume: 0.4 });
     }
     if (skip.serial !== f.skip || reduced) f.t = 1;
