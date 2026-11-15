@@ -2,11 +2,9 @@
 //   node scripts/capture-visite.mjs <dossier>      (URL=… pour un autre serveur)
 // Le rendu logiciel ralentit le temps simulé : la durée réelle mesurée ici n'est pas celle d'un
 // vrai écran ; la durée nominale (6 × 8,8 s) est vérifiée par tests/v5.test.mjs.
-import { createRequire } from 'node:module';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { saveShot } from './shot.mjs';
-const require = createRequire(import.meta.url);
-const { chromium } = require('playwright');
+import { chromium } from 'playwright';
 
 const [out = 'docs/screenshots/v5/visite'] = process.argv.slice(2);
 const base = process.env.URL ?? 'http://127.0.0.1:4173/book3D-carreer/';

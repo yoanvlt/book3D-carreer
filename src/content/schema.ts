@@ -6,7 +6,7 @@
 import { z } from 'zod';
 
 export const BUILDING_IDS = ['profile', 'project-1', 'project-2', 'project-3', 'missions', 'veolia'] as const;
-export const STATUSES = ['vide', 'brouillon', 'publié'] as const;
+const STATUSES = ['vide', 'brouillon', 'publié'] as const;
 
 /** Adresse web complète (https://…) ou fichier de public/medias/ (medias/…). */
 const address = z
@@ -16,12 +16,12 @@ const address = z
     message: 'adresse attendue : https://… ou medias/nom-du-fichier',
   });
 
-export const linkSchema = z.object({
+const linkSchema = z.object({
   texte: z.string().trim().min(1),
   url: address,
 });
 
-export const mediaSchema = z.discriminatedUnion('type', [
+const mediaSchema = z.discriminatedUnion('type', [
   z.object({
     type: z.literal('image'),
     src: address,
@@ -37,12 +37,12 @@ const inlineSchema = z.object({
   v: z.string(),
   href: z.string().optional(),
 });
-export const blockSchema = z.discriminatedUnion('type', [
+const blockSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('p'), inline: z.array(inlineSchema) }),
   z.object({ type: z.literal('ul'), items: z.array(z.array(inlineSchema)) }),
 ]);
 
-export const stationSchema = z.object({
+const stationSchema = z.object({
   titre: z.string().trim().min(1).max(60, 'titre de station trop long (60 caractères au plus)'),
   texte: z.array(blockSchema),
   medias: z.array(mediaSchema),
@@ -78,12 +78,13 @@ export const siteSchema = z
     cv: address.nullable().default(null),
     contact: z
       .object({
-        email: z.string().trim().email().nullable().default(null),
+        email: z.string().trim().pipe(z.email()).nullable().default(null),
         linkedin: address.nullable().default(null),
         github: address.nullable().default(null),
       })
       .strict()
-      .default({}),
+      // zod 4 : prefault fait passer {} par le schéma, pour obtenir les valeurs par défaut (null).
+      .prefault({}),
   })
   .strict();
 
@@ -92,7 +93,6 @@ export const contentSchema = z.object({
   places: z.array(placeSchema).length(BUILDING_IDS.length),
 });
 
-export type Status = (typeof STATUSES)[number];
 export type Inline = z.infer<typeof inlineSchema>;
 export type Block = z.infer<typeof blockSchema>;
 export type Media = z.infer<typeof mediaSchema>;

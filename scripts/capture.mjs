@@ -6,11 +6,9 @@
 //
 // Variables : URL (défaut http://127.0.0.1:4173/book3D-carreer/), QUALITE (high|low).
 // Le rendu passe par SwiftShader (processeur) : les FPS relevés ne valent pas pour un vrai GPU.
-import { createRequire } from 'node:module';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { saveShot } from './shot.mjs';
-const require = createRequire(import.meta.url);
-const { chromium } = require('playwright');
+import { chromium } from 'playwright';
 
 const [mode = 'scenes', out = 'docs/screenshots/v5', only = ''] = process.argv.slice(2);
 const base = process.env.URL ?? 'http://127.0.0.1:4173/book3D-carreer/';
