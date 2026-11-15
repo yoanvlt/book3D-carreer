@@ -1,9 +1,9 @@
 import { useLayoutEffect, useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
-import SlidingDoor from './SlidingDoor';
+import { DoorLeaves, DoorSurround } from './Door';
 import { batchMeshes, Fine } from './StaticBatch';
-import { Beam, Box, FINISH, Sign } from './Primitives';
+import { Box, FINISH, Sign } from './Primitives';
 import { Bevel } from './kit';
 import { color as C, scenePlaceColor } from '../design/tokens';
 import Portrait from './buildings/Profile';
@@ -21,52 +21,31 @@ import { place } from '../content';
  * Les silhouettes et volumes de collision (config.ts) sont ceux de la V3 ; seuls les détails changent.
  */
 
-/** Porte commune : encadrement, linteau à la couleur du lieu, porte coulissante animée. */
+/**
+ * Porte d'entrée encastrée (Door.tsx) : embrasure du matériau du mur, vantaux propres au lieu.
+ * `back` : distance des vantaux au nu de la façade, pour que l'embrasure rejoigne le mur.
+ */
+const PORTAL_BACK: Partial<Record<Building['id'], number>> = { missions: 1.0, 'project-3': 0.5 };
+/** Saillie de l'embrasure devant les vantaux (la galerie l'abrite sous son portique). */
+const PORTAL_DEPTH: Partial<Record<Building['id'], number>> = { missions: 0.12 };
 function Portal({ b }: { b: Building }) {
-  const accent = scenePlaceColor[b.id];
+  const depth = PORTAL_DEPTH[b.id] ?? 0.45;
   return (
     <group position={[0, 0, b.size[1] / 2 + 0.5]}>
-      {/* Embrasure : fond sombre jusqu'à la façade, piédroits et linteau. */}
-      <Box p={[0, 1.75, -0.45]} s={[3.5, 3.5, 0.9]} color={C.slate} />
-      {[-1, 1].map((side) => (
-        <Bevel key={side} p={[side * 1.62, 1.8, -0.1]} s={[0.34, 3.6, 1.1]} color={C.white} radius={0.06} />
-      ))}
-      <Bevel p={[0, 3.66, -0.1]} s={[3.6, 0.32, 1.1]} color={C.white} radius={0.06} />
-      {/* Marquise à la couleur du lieu, filet lumineux en sous-face. */}
-      <Box p={[0, 3.92, 0.55]} s={[4.2, 0.16, 2.2]} color={accent} finish={FINISH.paint} />
-      <Box
-        p={[0, 3.82, 1.62]}
-        s={[4.1, 0.05, 0.05]}
-        color={C.lamp}
-        finish={{ glow: C.lamp, glowIntensity: 0.9 }}
-        shadow={false}
-      />
-      <group userData={{ dynamic: true }}>
-        <SlidingDoor id={b.id} />
-      </group>
-      {/* Seuil de pierre */}
-      <Box p={[0, 0.05, 0.75]} s={[4, 0.1, 1.9]} color={C.stone} finish={FINISH.stone} />
+      <DoorSurround id={b.id} back={PORTAL_BACK[b.id] ?? 0.6} depth={depth} />
+      <DoorLeaves id={b.id} />
       <Fine>
-        {[-1, 1].map((side) => (
-          <Beam
-            key={side}
-            a={[side * 1.9, 2.9, -0.5]}
-            b={[side * 1.9, 3.84, 1.3]}
-            width={0.06}
-            color={C.ink}
-          />
-        ))}
         <Box
-          p={[0, 0.115, 0.85]}
-          s={[2.2, 0.03, 0.9]}
+          p={[0, 0.095, 0.75]}
+          s={[2.0, 0.03, 0.8]}
           color={C.slate}
           finish={FINISH.fabric}
           shadow={false}
         />
         <Sign
           text={b.number}
-          p={[1.62, 2.5, 0.47]}
-          s={[0.28, 0.24]}
+          p={[1.62, 2.4, depth + 0.015]}
+          s={[0.3, 0.24]}
           color={C.white}
           bg={C.ink}
           rounded={false}
@@ -205,10 +184,11 @@ function BuildingModel({ b }: { b: Building }) {
   );
 }
 
-export default function Buildings() {
+/** Les bâtiments, montés un par un pendant le chargement (`count`, voir World.tsx). */
+export default function Buildings({ count = buildings.length }: { count?: number }) {
   return (
     <>
-      {buildings.map((b) => (
+      {buildings.slice(0, count).map((b) => (
         <BuildingModel key={b.id} b={b} />
       ))}
     </>

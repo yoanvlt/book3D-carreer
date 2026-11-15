@@ -1,5 +1,5 @@
 import { type ReactNode } from 'react';
-import SlidingDoor from '../SlidingDoor';
+import { DoorLeaves } from '../Door';
 import StaticBatch from '../StaticBatch';
 import { Box, FINISH, Sign, type Finish } from '../Primitives';
 import { Planter, Windows } from '../kit';
@@ -149,7 +149,7 @@ export default function Room({
         <Planter p={[4, 0, D - 1.4]} w={2} color={mood.accent} />
       </StaticBatch>
       <group position={[0, 0, D - 0.2]} rotation={[0, Math.PI, 0]}>
-        <SlidingDoor id={id} />
+        <DoorLeaves id={id} />
       </group>
       <Sign
         text='Sortie'
