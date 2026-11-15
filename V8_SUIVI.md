@@ -59,7 +59,7 @@ Portes en embrasure de 1 m sur fond sombre (rien de l'intérieur n'est visible),
 
 - **Accueil** : le robot attend sur un îlot (pointe rocheuse, strates, herbe, balise lumineuse, buisson) à gauche de l'île, avec son ombre douce ; il regarde le curseur, balaie l'île du regard, salue au survol ou au focus d'« Explorer la ville ». Sur téléphone, l'îlot est au-dessus de la carte.
 - **Timeline** (`src/world/flight.ts`, un seul fichier de réglages) : accroupi 0,4 s, saut et allumage 0,3 s, croisière 1,9 s (arc au-dessus des toits, penché, incliné dans les virages, traînée), redressement et freinage 0,45 s, atterrissage 0,3 s (écrasement, anneau de poussière, son). Total 3,35 s, passable par clic, toucher ou touche.
-- **Caméra** : travelling de trois quarts (65° de l'arrière, jamais de dos), en plongée, à distance constante (le robot occupe environ 15 % de la hauteur d'écran) ; raccords sans saut d'échelle avec la vue d'accueil et la vue de ville.
+- **Caméra** : travelling en plongée, à distance constante (le robot occupe environ 15 % de la hauteur d'écran) ; de trois quarts arrière à l'aller (65° de l'arrière, jamais de dos), de trois quarts face au retour (l'île derrière le robot) ; la visée glisse du robot vers la ville tant que le robot reste dans le cadre, si bien que l'île entre dans l'image. Raccords sans saut d'échelle avec la vue d'accueil et la vue de ville. Test : sur écran large, l'île est dans le cadre pendant toute la croisière ; en portrait étroit, au retour presque toujours, mais à l'aller seulement dans la descente (voir « Non vérifié »).
 - **Retour** : chemin inverse jusqu'à l'îlot ; le robot se retourne vers la ville avant de se poser. Réduire les animations : fondu simple, pas de vol.
 
 ## Phase 6 — Page de chargement
@@ -113,7 +113,7 @@ VU
 4. **Lumière précalculée par champ de hauteurs** dans un worker plutôt qu'AccumulativeShadows : une seule passe au chargement, sans rendre des dizaines d'images (très lent en rendu logiciel).
 5. **Boucle de rues** : permet aux voitures de circuler sans demi-tour ; trois bâtiments face à la place, deux sur les rues latérales, un au sud.
 6. **Galerie** : porte au fond du portique ; la séquence d'entrée va jusqu'à la vraie porte.
-7. **Caméra de vol** à 65° de l'arrière plutôt que de profil strict : de profil, l'île sortait du cadre, puisque le robot vole vers elle.
+7. **Caméra de vol** à 65° de l'arrière à l'aller plutôt que de profil strict (de profil, l'île sortait du cadre, puisque le robot vole vers elle), de trois quarts face au retour (25° de l'avant), visée glissée vers la ville. En portrait étroit, au début de l'aller, garder à la fois le robot à 15 % de la hauteur, l'île dans le cadre et une vue qui ne soit pas de dos est géométriquement impossible (l'île est droit devant le robot, à 200 m) : j'ai gardé la taille du robot et « jamais de dos » ; l'île apparaît à mi-descente.
 8. **Personnages** en figurines sans visage (aucun pack CC0 de personnages adapté au ton du site).
 9. **Intérieurs** : la coque des salles et les stations sont gardées (lisibilité, tests) ; le mobilier est remplacé par Furniture Bits.
 10. **Herbe masquée au loin** (accueil, vols) : la texture marbrée du sol suffit, et le rendu reste léger.

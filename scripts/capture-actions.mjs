@@ -46,7 +46,7 @@ await saveShot(page, `${out}/robot-salue`);
 // Personnages au travail (vues fixes).
 const SHOTS = {
   jardinier: { position: [-40, 4.2, -27.5], target: [-34.3, 1, -39], fov: 45 },
-  livreur: { position: [2, 4, 17.5], target: [-5.4, 1, 24], fov: 45 },
+  livreur: { position: [-15, 4.5, 13.5], target: [-5.4, 1, 24], fov: 45 },
   chariot: { position: [-35.5, 6.5, -13], target: [-50, 1, -17], fov: 48 },
   astronome: { position: [12, 9, -26], target: [19.8, 5, -35.6], fov: 45 },
   agent: { position: [45, 6, 27], target: [55, 1, 16], fov: 45 },
