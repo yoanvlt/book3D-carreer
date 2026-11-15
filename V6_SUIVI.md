@@ -114,11 +114,59 @@ Coque propre à chaque lieu : sol (parquet, résine, béton, dallage, faux planc
 
 ## Budget de rendu
 
-À COMPLÉTER APRÈS LA CAMPAGNE
+Draw calls de toutes les passes d'une image (ombres et contours compris) et triangles, relevés par `?debug=1`. Avant : V5 (build de référence de la phase 1). Après : V6. Rapports : `docs/screenshots/v6/rapport-scenes.json`, `legere/`, `apres/`, `avant/`.
+
+### Qualité Soignée (budget : 300 draw calls, 700 000 triangles)
+
+| Scène              | Taille    | Avant : draw calls | Avant : triangles | Après : draw calls | Après : triangles |
+| ------------------ | --------- | -----------------: | ----------------: | -----------------: | ----------------: |
+| Accueil            | toutes    |                223 |           321 871 |                246 |           431 663 |
+| Exploration        | 1920×1080 |                197 |           319 937 |               246* |          431 663* |
+| Exploration        | 1440×900  |                191 |           319 795 |                226 |           442 543 |
+| Exploration        | 1366×768  |                197 |           319 937 |                228 |           442 567 |
+| Exploration        | 390×844   |                155 |           306 531 |                189 |           429 573 |
+| Porte              | 1920×1080 |                180 |           313 235 |                205 |           423 993 |
+| Porte              | 1440×900  |                179 |           305 959 |                203 |           407 805 |
+| Porte              | 1366×768  |                180 |           313 235 |                205 |           423 993 |
+| Porte              | 390×844   |                149 |           289 581 |                161 |           388 657 |
+| Intérieur (Profil) | 1920×1080 |                 91 |            39 395 |                 91 |            56 879 |
+| Intérieur (Profil) | 1440×900  |                 89 |            39 303 |                 87 |            56 063 |
+| Intérieur (Profil) | 1366×768  |                 88 |            38 581 |                 91 |            56 879 |
+| Intérieur (Profil) | 390×844   |                 80 |            38 217 |                 80 |            53 157 |
+
+\* À 1920×1080, le relevé d'exploration a été pris pendant la descente de la caméra depuis l'accueil : il reprend la vue d'accueil.
+
+Vues de détail (`apres/rapport-details.json`) : dessous de l'île 246 draw calls ; galerie 190 à 224 ; Veolia 153 à 220 ; Profil 140 à 208 ; Projets 1 à 3, 127 à 135 ; intérieurs 87 à 119 ; 434 635 triangles au plus. **Le plus cher reste à 82 % du budget en draw calls et à 63 % en triangles.**
+
+La hausse des triangles (+35 %) vient surtout des herbes, fleurs et cailloux instanciés et des couronnes d'arbres ; la hausse des draw calls est faible (+10 à +25) parce que les bâtiments, malgré des milliers de pièces, restent à deux à quatre draw calls chacun.
+
+### Qualité Légère (budget : 180 draw calls)
+
+| Scène       | 1920×1080 | 1440×900 | 1366×768 | 390×844 |
+| ----------- | --------: | -------: | -------: | ------: |
+| Accueil     |       147 |      147 |      147 |     147 |
+| Exploration |       124 |      122 |      124 |      89 |
+| Porte       |       124 |      105 |      106 |      63 |
+| Intérieur   |        42 |       41 |       42 |      35 |
+
+Six portes en qualité Légère, contenu d'essai : 51 à 67 draw calls à l'intérieur, 56 à 116 à l'extérieur (V5 : 53 à 70 et 57 à 106).
+
+### Test
+
+`tests/budget.test.mjs` vérifie ces trois rapports : chaque scène sous 300 draw calls et 700 000 triangles en Soignée, sous 180 en Légère, et une console vide. Le décompte demande un vrai rendu WebGL, impossible sous Node : le test lit les relevés versionnés, à refaire après chaque changement de scène (commandes en tête du fichier).
 
 ## Vu à l'écran
 
-À COMPLÉTER APRÈS LA CAMPAGNE
+Chromium sans écran, rendu WebGL par le processeur (SwiftShader). **Les FPS relevés (1 à 12) ne comptent pas.** Aucune erreur de console dans aucune campagne.
+
+- **Scènes habituelles** (`docs/screenshots/v6/`) : accueil, exploration, porte, intérieur, aux tailles 1920×1080, 1440×900, 1366×768 et 390×844, en qualité Soignée ; les mêmes en qualité Légère (`legere/`). Vu : l'île flotte au-dessus de la mer de nuages, la falaise et les deux cascades sont visibles depuis l'accueil, le titre n'est pas couvert ; sur téléphone, la place pavée, les plaques d'égout, les bornes, le support à vélos et la fontaine se lisent.
+- **Avant / après** (`comparaisons/`, 32 images, V5 à gauche, V6 à droite ; sources dans `avant/` et `apres/`) : pour chaque bâtiment, la silhouette vue de l'accueil, la façade depuis l'allée, le gros plan devant la porte ; les six intérieurs vus depuis la porte et depuis le fond ; le dessous de l'île. Chaque bâtiment reste reconnaissable depuis l'accueil (couleur et silhouette gardées : tour orange du Profil, plateaux vitrés du Projet 1, sheds jaunes, coupole blanche sur tambour violet, toit vert d'eau, deux cuves cerclées de rouge).
+- **Planche du kit** (`kit/`) : matières, fenêtres et porte, façades, toitures, structures et accessoires.
+- **Six portes** (`portes/`, contenu d'essai, qualité Légère) : entrée, lecture de la première station et sortie réussies dans les six lieux ; passeport complet ; carte de fin ouverte. Les stations restent lisibles et dégagées dans les nouveaux intérieurs.
+- **Phase 1** : captures identiques avant et après le nettoyage (voir plus haut).
+- **Tests** : 53 tests passent (50 de la V5, 3 de budget). Typecheck, lint, Prettier, knip et build sont verts.
+
+Défauts vus et corrigés pendant la vérification : bordures d'allées qui traversaient la chaussée aux croisements (passées sous le dallage), panneau à outils de l'atelier qui masquait le panneau « Bientôt », plaque de numéro sous une applique, acrotère de la tour du Profil mal placé, salle précédente restée affichée quand on passe directement d'un intérieur à l'autre (cas des scripts de capture ; en jeu on passe toujours par l'extérieur), mais aussi présent dans la V5 : les premières vues « avant » des intérieurs en étaient faussées et ont été refaites.
 
 ## Non vérifié
 
