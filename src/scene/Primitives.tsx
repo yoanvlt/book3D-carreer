@@ -17,6 +17,8 @@ export interface Finish {
   pattern?: Pattern;
   /** Échelle du motif : 2 = motif deux fois plus fin. */
   scale?: number;
+  /** Verre clair : opacité (0 à 1). Matériau transparent, jamais regroupé (une vitrine par draw call). */
+  clear?: number;
 }
 const materials = new Map<string, THREE.MeshStandardMaterial>();
 export function material(color: string, finish: Finish = {}) {
@@ -28,13 +30,20 @@ export function material(color: string, finish: Finish = {}) {
     side = THREE.FrontSide,
     pattern = 'none',
     scale = 1,
+    clear,
   } = finish;
-  const key = [color, rough, metal, glow, glowIntensity, side, pattern, scale].join('|');
+  const key = [color, rough, metal, glow, glowIntensity, side, pattern, scale, clear].join('|');
   let m = materials.get(key);
   if (!m) {
     m = new THREE.MeshStandardMaterial({ color, roughness: rough, metalness: metal, side });
     m.userData.pattern = pattern;
     m.userData.scale = scale;
+    if (clear !== undefined) {
+      m.transparent = true;
+      m.opacity = clear;
+      m.depthWrite = false;
+      m.userData.baseOpacity = clear;
+    }
     if (glow) {
       m.emissive.set(glow);
       m.emissiveIntensity = glowIntensity;
@@ -52,6 +61,8 @@ export const METAL: Finish = { rough: 0.35, metal: 0.55 };
  */
 export const FINISH = {
   glass: GLASS,
+  /** Vitrage transparent (vitrines) : on voit ce qui est derrière. */
+  clearGlass: { rough: 0.1, metal: 0.1, clear: 0.28 },
   metal: METAL,
   steel: { rough: 0.45, metal: 0.4 },
   paint: { rough: 0.6 },
@@ -245,28 +256,6 @@ export function Beam({
       geometry={cube}
       scale={[width, start.distanceTo(end), width]}
       material={material(color, finish)}
-      castShadow
-      receiveShadow
-      dispose={null}
-    />
-  );
-}
-
-/** Demi-cylindre ouvert aux deux extrémités (voûte). */
-const vaults = new Map<string, THREE.BufferGeometry>();
-export function Vault({ p, s, color = C.orange }: { p: V3; s: V3; color?: string }) {
-  const key = s.join(',');
-  let geometry = vaults.get(key);
-  if (!geometry) {
-    geometry = new THREE.CylinderGeometry(s[0], s[0], s[2], 28, 1, true, Math.PI / 2, Math.PI);
-    vaults.set(key, geometry);
-  }
-  return (
-    <mesh
-      position={p}
-      rotation={[Math.PI / 2, 0, 0]}
-      geometry={geometry}
-      material={material(color, { side: THREE.DoubleSide })}
       castShadow
       receiveShadow
       dispose={null}

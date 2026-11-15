@@ -7,6 +7,7 @@ import { Box, Cylinder, FINISH, Pipe, Sign, type Finish } from './Primitives';
 import StaticBatch from './StaticBatch';
 import {
   AirCon,
+  Awning,
   Balcony,
   Barrel,
   Bike,
@@ -81,6 +82,7 @@ export default function KitShowcase() {
           wall={C.peach}
           lit={[1]}
         />
+        <Awning p={[-25.5, 3.05, 2.6]} w={1.6} d={0.8} color={C.orange} />
         <DoorSet p={[-20.8, 0, 2.5]} w={1.1} h={2.2} number='01' canopy='glass' />
         <Volume
           p={[-8, 0, 0]}

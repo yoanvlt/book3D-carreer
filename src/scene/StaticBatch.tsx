@@ -12,8 +12,8 @@ import { PATTERNS, applySurface, type Pattern } from './surface';
  * de détail.
  *
  * Les maillages d'origine restent dans l'arbre React mais sont masqués. Sont exclus : les
- * maillages instanciés, ceux dont le matériau a une texture (panneaux) ou des couleurs de
- * sommets, les objets masqués et tout ce qui est sous un objet userData.dynamic.
+ * maillages instanciés, ceux dont le matériau a une texture (panneaux), des couleurs de
+ * sommets ou de la transparence (vitrines), les objets masqués et tout ce qui est sous un objet userData.dynamic.
  *
  * Les pièces placées sous <Fine> forment des maillages à part (userData.fine) : le bâtiment les
  * masque de loin, et la qualité Légère ne les construit pas (voir Fine).
@@ -36,7 +36,8 @@ export function batchMeshes(root: THREE.Object3D): { meshes: THREE.Mesh[]; resto
       !Array.isArray(object.material) &&
       object.material instanceof THREE.MeshStandardMaterial &&
       !object.material.map &&
-      !object.material.vertexColors
+      !object.material.vertexColors &&
+      !object.material.transparent
     ) {
       const m = object.material;
       const source = object.geometry as THREE.BufferGeometry;

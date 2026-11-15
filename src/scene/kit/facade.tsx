@@ -196,9 +196,19 @@ export function Gutter({
 }
 
 /** Descente d'eau : tuyau, cuvette en tête, dauphin en pied, colliers. */
-export function Downpipe({ p, h, color = C.metal }: { p: V3; h: number; color?: string }) {
+export function Downpipe({
+  p,
+  h,
+  ry = 0,
+  color = C.metal,
+}: {
+  p: V3;
+  h: number;
+  ry?: number;
+  color?: string;
+}) {
   return (
-    <group position={p}>
+    <group position={p} rotation={[0, ry, 0]}>
       <Rod p={[0, h / 2 + 0.25, 0.12]} s={[0.065, h - 0.5, 0.065]} color={color} finish={FINISH.steel} />
       <Box p={[0, h - 0.1, 0.14]} s={[0.24, 0.22, 0.2]} color={color} finish={FINISH.steel} />
       <Box p={[0, 0.2, 0.2]} s={[0.12, 0.18, 0.24]} r={[0.5, 0, 0]} color={color} finish={FINISH.steel} />
