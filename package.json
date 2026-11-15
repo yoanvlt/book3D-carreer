@@ -20,7 +20,8 @@
     "temps-morts": "node scripts/temps-morts.mjs",
     "sons": "python3 scripts/sons.py",
     "knip": "knip",
-    "capture:details": "node scripts/capture-details.mjs"
+    "capture:details": "node scripts/capture-details.mjs",
+    "capture:comparaisons": "node scripts/compose-avant-apres.mjs"
   },
   "dependencies": {
     "@fontsource-variable/bricolage-grotesque": "^5.3.0",
