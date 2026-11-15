@@ -2,6 +2,26 @@ import { defineConfig, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 import { resolve } from 'node:path';
 import { loadContent } from './src/content/parse';
+import { scene, ui } from './src/design/tokens';
+
+/**
+ * Page de chargement (index.html) : ses couleurs viennent des design tokens, remplacés au build
+ * (%LOADER_…%), car elle s'affiche avant tout JavaScript.
+ */
+function loaderTokens(): Plugin {
+  const values: Record<string, string> = {
+    SKY_TOP: scene.sky.top,
+    SKY_HORIZON: scene.sky.horizon,
+    INK: ui.ink,
+    INK_SOFT: ui.inkSoft,
+    ACCENT: ui.accentStrong,
+    PAPER: ui.paper,
+  };
+  return {
+    name: 'careerverse-loader-tokens',
+    transformIndexHtml: (html) => html.replace(/%LOADER_([A-Z_]+)%/g, (_, key: string) => values[key] ?? ''),
+  };
+}
 
 const VIRTUAL = 'virtual:careerverse-content';
 
@@ -34,7 +54,11 @@ function content(drafts: boolean): Plugin {
 }
 
 export default defineConfig(({ command }) => ({
-  plugins: [react(), content(command === 'serve' || process.env.CAREERVERSE_BROUILLONS === '1')],
+  plugins: [
+    react(),
+    loaderTokens(),
+    content(command === 'serve' || process.env.CAREERVERSE_BROUILLONS === '1'),
+  ],
   base: '/book3D-carreer/',
   build: {
     rollupOptions: {

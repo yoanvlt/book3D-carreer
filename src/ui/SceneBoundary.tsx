@@ -1,3 +1,4 @@
+import { loadingDone } from '../loading';
 import { Component, type ReactNode } from 'react';
 import { showPanel } from '../state';
 
@@ -9,6 +10,8 @@ export default class SceneBoundary extends Component<{ children: ReactNode }, { 
   }
   render() {
     if (!this.state.failed) return this.props.children;
+    // La 3D n'a pas démarré : la page de chargement laisse place au message et à la version texte.
+    loadingDone();
     return (
       <div className='webgl-fallback'>
         <strong>La 3D n’a pas pu démarrer sur ce navigateur.</strong>

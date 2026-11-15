@@ -40,8 +40,192 @@
       name="twitter:image:alt"
       content="Une petite île en 3D avec six bâtiments, et le nom Yoan Viollet."
     />
+    <!-- Page de chargement : statique, visible avant tout JavaScript, animée seulement en CSS
+         (transform, opacity) pour rester fluide pendant que le fil principal construit la ville.
+         Couleurs : design tokens (vite.config.ts, loaderTokens). Pilotée par src/loading.ts. -->
+    <style>
+      #loader {
+        position: fixed;
+        inset: 0;
+        z-index: 100;
+        display: grid;
+        place-items: center;
+        overflow: hidden;
+        background: linear-gradient(180deg, %LOADER_SKY_TOP% 0%, %LOADER_SKY_HORIZON% 72%);
+        color: %LOADER_INK%;
+        font-family: 'Bricolage Grotesque Variable', system-ui, sans-serif;
+        transition:
+          opacity 0.7s ease,
+          visibility 0.7s;
+      }
+      #loader.loader-done {
+        opacity: 0;
+        visibility: hidden;
+      }
+      .loader-cloud {
+        position: absolute;
+        height: 46px;
+        border-radius: 40px;
+        background: rgba(255, 255, 255, 0.85);
+        animation: loader-drift 14s linear infinite alternate;
+        will-change: transform;
+      }
+      .loader-cloud::before {
+        content: '';
+        position: absolute;
+        left: 22%;
+        top: -24px;
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        background: inherit;
+      }
+      .loader-card {
+        position: relative;
+        display: grid;
+        justify-items: center;
+        gap: 14px;
+        padding: 24px;
+        text-align: center;
+      }
+      .loader-brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 22px;
+        font-weight: 700;
+      }
+      .loader-mono {
+        display: grid;
+        place-items: center;
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+        background: %LOADER_ACCENT%;
+        color: %LOADER_PAPER%;
+        font-size: 16px;
+        font-weight: 800;
+      }
+      .loader-scene {
+        width: 220px;
+        height: 150px;
+      }
+      .loader-island {
+        animation: loader-float 4s ease-in-out infinite;
+        will-change: transform;
+      }
+      .loader-robot {
+        transform-box: fill-box;
+        transform-origin: center;
+        animation: loader-hover 1.6s ease-in-out infinite;
+        will-change: transform;
+      }
+      .loader-flame {
+        transform-box: fill-box;
+        transform-origin: top;
+        animation: loader-flame 0.35s ease-in-out infinite alternate;
+      }
+      .loader-text {
+        margin: 0;
+        font-size: 16px;
+        color: %LOADER_INK_SOFT%;
+      }
+      .loader-bar {
+        width: min(280px, 70vw);
+        height: 8px;
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.65);
+        overflow: hidden;
+      }
+      #loader-fill {
+        height: 100%;
+        background: %LOADER_ACCENT%;
+        transform: scaleX(0.04);
+        transform-origin: left;
+        transition: transform 0.35s ease;
+      }
+      .loader-step {
+        margin: 0;
+        min-height: 1.3em;
+        font-size: 14px;
+        color: %LOADER_INK_SOFT%;
+      }
+      @keyframes loader-float {
+        50% {
+          transform: translateY(-8px);
+        }
+      }
+      @keyframes loader-hover {
+        50% {
+          transform: translateY(-6px) rotate(-3deg);
+        }
+      }
+      @keyframes loader-flame {
+        from {
+          transform: scaleY(0.7);
+          opacity: 0.7;
+        }
+        to {
+          transform: scaleY(1.15);
+          opacity: 1;
+        }
+      }
+      @keyframes loader-drift {
+        to {
+          transform: translateX(60px);
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .loader-island,
+        .loader-robot,
+        .loader-flame,
+        .loader-cloud {
+          animation: none;
+        }
+        #loader {
+          transition-duration: 0.2s;
+        }
+      }
+    </style>
   </head>
   <body>
+    <div id="loader" role="status" aria-live="polite">
+      <div class="loader-cloud" style="width: 150px; left: 8%; top: 18%"></div>
+      <div class="loader-cloud" style="width: 110px; right: 12%; top: 30%; animation-duration: 18s"></div>
+      <div class="loader-cloud" style="width: 180px; left: 18%; bottom: 14%; animation-duration: 22s"></div>
+      <div class="loader-card">
+        <div class="loader-brand"><span class="loader-mono" aria-hidden="true">YV</span>Yoan Viollet</div>
+        <svg class="loader-scene" viewBox="0 0 220 150" aria-hidden="true">
+          <g class="loader-island">
+            <ellipse cx="110" cy="112" rx="78" ry="16" fill="#8fc463" />
+            <path d="M34 112 Q60 150 110 146 Q160 150 186 112 Z" fill="#9a6a46" />
+            <rect x="70" y="86" width="20" height="26" rx="3" fill="#e8774f" />
+            <rect x="96" y="78" width="16" height="34" rx="3" fill="#5f9fbe" />
+            <path d="M120 112 V92 Q132 80 144 92 V112 Z" fill="#8f7fd6" />
+            <circle cx="160" cy="100" r="9" fill="#5fae46" />
+          </g>
+          <g class="loader-robot">
+            <path class="loader-flame" d="M104 64 L110 80 L116 64 Z" fill="#ffb347" />
+            <rect
+              x="98"
+              y="38"
+              width="24"
+              height="26"
+              rx="6"
+              fill="#ffffff"
+              stroke="%LOADER_INK%"
+              stroke-width="3"
+            />
+            <rect x="103" y="45" width="14" height="7" rx="3" fill="%LOADER_INK%" />
+            <line x1="110" y1="38" x2="110" y2="30" stroke="%LOADER_INK%" stroke-width="3" />
+            <circle cx="110" cy="28" r="3" fill="%LOADER_ACCENT%" />
+          </g>
+        </svg>
+        <p class="loader-text">La ville se construit, un bâtiment après l’autre.</p>
+        <div class="loader-bar" aria-hidden="true"><div id="loader-fill"></div></div>
+        <p id="loader-step" class="loader-step">Chargement du code</p>
+      </div>
+    </div>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

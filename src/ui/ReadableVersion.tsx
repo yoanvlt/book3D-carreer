@@ -1,9 +1,13 @@
+import { useEffect } from 'react';
+import { loadingDone } from '../loading';
 import { buildings } from '../world/config';
 import { isOpen, mediaUrl, place, site } from '../content';
 import StationBody from './RichText';
 
 /** Version texte du portfolio, générée depuis le même contenu que la ville 3D. */
 export default function ReadableVersion() {
+  // Version texte : pas de 3D à construire, la page de chargement s'efface tout de suite.
+  useEffect(() => loadingDone(), []);
   const { contact } = site;
   const contacts = [
     contact.email && { label: contact.email, href: `mailto:${contact.email}` },
