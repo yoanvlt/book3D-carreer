@@ -51,7 +51,45 @@ const shadow = {
   pressed: '0 2px 0 ' + ui.accentShade,
 } as const;
 
-/** Couleurs du monde 3D (sRGB). */
+/**
+ * Désature une couleur sRGB (#rrggbb) : la saturation HSL est multipliée par 1 - amount.
+ * Sert à adoucir les aplats les plus vifs du monde 3D (V6 : -12 %) sans toucher à l'interface.
+ */
+export function muted(hex: string, amount = 0.12): string {
+  const n = parseInt(hex.slice(1), 16);
+  const [r, g, b] = [(n >> 16) & 255, (n >> 8) & 255, n & 255].map((v) => v / 255);
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  const l = (max + min) / 2;
+  const d = max - min;
+  if (d === 0) return hex;
+  let s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+  let h = max === r ? (g - b) / d + (g < b ? 6 : 0) : max === g ? (b - r) / d + 2 : (r - g) / d + 4;
+  h /= 6;
+  s *= 1 - amount;
+  const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+  const p = 2 * l - q;
+  const channel = (t: number) => {
+    t = (t + 1) % 1;
+    const v = t < 1 / 6 ? p + (q - p) * 6 * t : t < 1 / 2 ? q : t < 2 / 3 ? p + (q - p) * (2 / 3 - t) * 6 : p;
+    return Math.round(v * 255)
+      .toString(16)
+      .padStart(2, '0');
+  };
+  return '#' + channel(h + 1 / 3) + channel(h) + channel(h - 1 / 3);
+}
+
+/** Accents de l'interface (plan, passeport, cartes) : inchangés, contrastes vérifiés. */
+const accent = {
+  orange: muted('#ff6a3d'),
+  yellow: muted('#f7b52e'),
+  blue: muted('#4aa8d8'),
+  violet: muted('#8a74e8'),
+  teal: muted('#22a389'),
+  red: muted('#e8423a'),
+} as const;
+
+/** Couleurs du monde 3D (sRGB). Les aplats vifs sont désaturés de 12 % (muted). */
 export const color = {
   // Neutres
   white: '#ffffff',
@@ -63,47 +101,56 @@ export const color = {
   ink: '#1f2b33',
   slate: '#3b4d59',
   // Matières
-  glass: '#7fcde8',
+  glass: muted('#7fcde8'),
   glassDeep: '#3f8fb5',
   glassLit: '#ffe6a8',
-  wood: '#c97b3f',
+  wood: muted('#c97b3f'),
   woodDark: '#8a5530',
   metal: '#aab4bb',
-  brick: '#d9663f',
+  brick: muted('#d9663f'),
   // Végétation
-  grass: '#8fc463',
-  grassHigh: '#7db456',
-  garden: '#6aa94a',
-  leaf: '#5fae46',
+  grass: muted('#8fc463'),
+  grassHigh: muted('#7db456'),
+  garden: muted('#6aa94a'),
+  leaf: muted('#5fae46'),
   leafDark: '#2c7a4c',
-  leafAutumn: '#ffc23d',
+  leafAutumn: muted('#ffc23d'),
   trunk: '#7a5236',
-  flower: '#c896c3',
+  flower: muted('#c896c3'),
   hedge: '#729854',
   // Sol
   path: '#fbf6ea',
   pathEdge: '#d8c9ab',
   earth: '#9a6a46',
-  water: '#79c3dd',
+  water: muted('#79c3dd'),
   // Accents
   orange: '#ff6a3d',
-  orangeSoft: '#ff8a5c',
+  orangeSoft: muted('#ff8a5c'),
   peach: '#ffe2b8',
   yellow: '#f7b52e',
-  yellowSoft: '#ffd36b',
+  yellowSoft: muted('#ffd36b'),
   blue: '#4aa8d8',
   blueDeep: '#2f6f9a',
   violet: '#8a74e8',
-  violetSoft: '#b4a6f2',
+  violetSoft: muted('#b4a6f2'),
   teal: '#22a389',
-  tealSoft: '#7fd6c2',
+  tealSoft: muted('#7fd6c2'),
   red: '#e8423a',
-  redDeep: '#b8231d',
+  redDeep: muted('#b8231d'),
   lamp: '#fff3c4',
-} as const;
+};
 
-/** Couleur d'identité de chaque bâtiment : plan, navigation, accents 3D. */
+/** Couleur d'identité de chaque bâtiment dans l'interface : plan, navigation, passeport. */
 export const placeColor: Record<BuildingId, string> = {
+  profile: accent.orange,
+  'project-1': accent.blue,
+  'project-2': accent.yellow,
+  'project-3': accent.violet,
+  missions: accent.teal,
+  veolia: accent.red,
+};
+/** La même identité dans la scène 3D, désaturée comme le reste du monde. */
+export const scenePlaceColor: Record<BuildingId, string> = {
   profile: color.orange,
   'project-1': color.blue,
   'project-2': color.yellow,

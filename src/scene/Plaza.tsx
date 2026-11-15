@@ -1,4 +1,4 @@
-import { color as C, placeColor } from '../design/tokens';
+import { color as C, scenePlaceColor } from '../design/tokens';
 import { Box, Cylinder, Sign, material } from './Primitives';
 import { buildings } from '../world/config';
 import { setState } from '../state';
@@ -49,7 +49,7 @@ export function Wayfinding() {
       {buildings.map((b, i) => {
         const angle = Math.atan2(b.position[0] - POST[0], b.position[1] - POST[1]) - Math.PI / 2;
         const text = place(b.id).titre;
-        const bg = placeColor[b.id];
+        const bg = scenePlaceColor[b.id];
         const ink = b.id === 'project-2' ? C.ink : C.white;
         return (
           <group key={b.id} position={[0, 4.05 - i * 0.6, 0]} rotation={[0, angle, 0]}>

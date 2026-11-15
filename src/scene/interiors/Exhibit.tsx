@@ -3,7 +3,7 @@ import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { Ball, Beam, Box, Sign, material } from '../Primitives';
 import { Bevel } from '../kit';
-import { color as C, placeColor, type InteriorMood } from '../../design/tokens';
+import { color as C, scenePlaceColor, type InteriorMood } from '../../design/tokens';
 import type { BuildingId } from '../../world/config';
 import { STATION, type Station } from '../../world/narrative';
 import { getState } from '../../state';
@@ -35,7 +35,7 @@ export default function Exhibit({
   const sculpture = useRef<THREE.Group>(null!);
   const glow = useRef<THREE.MeshStandardMaterial>(null!);
   const content = stationContentById(id, station.id);
-  const accent = placeColor[id];
+  const accent = scenePlaceColor[id];
   const side = Math.sign(station.position[0]);
   useFrame(({ clock }, dt) => {
     const s = getState();

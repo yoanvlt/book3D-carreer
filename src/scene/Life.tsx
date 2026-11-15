@@ -5,7 +5,7 @@
 import { useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
-import { color as C, placeColor } from '../design/tokens';
+import { color as C, scenePlaceColor } from '../design/tokens';
 import { streets } from '../world/urban';
 import { heightAt } from '../world/terrain';
 import { cumulative, pointAlong } from '../world/timing';
@@ -121,9 +121,9 @@ function Birds() {
  * ils s'arrêtent, s'écartent et le regardent ; ils n'ont pas de collision et ne le bloquent jamais.
  */
 const WALKERS: { route: Point[]; color: string; speed: number; offset: number }[] = [
-  { route: streets[0].slice(0, 6), color: placeColor['project-1'], speed: 1.5, offset: 0 },
-  { route: streets[1].slice(2, 7), color: placeColor['project-3'], speed: 1.3, offset: 0.4 },
-  { route: streets[3], color: placeColor.missions, speed: 1.6, offset: 0.7 },
+  { route: streets[0].slice(0, 6), color: scenePlaceColor['project-1'], speed: 1.5, offset: 0 },
+  { route: streets[1].slice(2, 7), color: scenePlaceColor['project-3'], speed: 1.3, offset: 0.4 },
+  { route: streets[3], color: scenePlaceColor.missions, speed: 1.6, offset: 0.7 },
 ];
 function Walkers() {
   const body = useRef<THREE.InstancedMesh>(null!);
