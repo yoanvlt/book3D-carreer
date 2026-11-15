@@ -4,6 +4,7 @@ import { trees } from '../world/landscape';
 import { player, setState, travel, useGame } from '../state';
 import { color as C, placeColor, ui } from '../design/tokens';
 import { isOpen, place } from '../content';
+import { Stamp } from './Passport';
 
 /** Contour de l'île, calculé comme le bord du terrain (voir scene/Terrain.tsx). */
 const island = Array.from({ length: 96 }, (_, i) => {
@@ -99,10 +100,12 @@ export default function Map() {
               <strong>{place(b.id).titre}</strong>
               <small>{isOpen(b.id) ? place(b.id).sous_titre : 'Bientôt'}</small>
             </span>
-            {visited.includes(b.id) && <span className='destination-visited'>Visité</span>}
+            <Stamp id={b.id} done={visited.includes(b.id)} />
           </button>
         ))}
         <p className='map-note'>
+          Passeport : {visited.length} lieu{visited.length > 1 ? 'x' : ''} visité
+          {visited.length > 1 ? 's' : ''} sur 6.{' '}
           {mobile
             ? 'Choisissez un lieu pour lire sa fiche.'
             : 'Choisissez un lieu : le robot vous y conduit.'}

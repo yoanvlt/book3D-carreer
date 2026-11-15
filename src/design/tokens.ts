@@ -34,7 +34,7 @@ export const typography = {
     button: 19,
     xl: 22,
     xxl: 30,
-    display: 'clamp(52px, 5.6vw, 96px)',
+    display: 'clamp(48px, 5vw, 92px)',
   },
   weight: { regular: 450, medium: 550, bold: 700, heavy: 800 },
   lineHeight: { tight: 1.05, snug: 1.3, body: 1.55 },

@@ -10,7 +10,10 @@ import {
 } from './world/config';
 import { heightAt } from './world/terrain';
 import { findRoute } from './world/navigation';
-import { ROOM, stationsFor, indoorRoute, stationApproach, stationAt } from './world/narrative';
+import { blocked } from './world/collision';
+import { TIMING, cumulative, travelDuration } from './world/timing';
+import { loadStamps, saveStamps } from './world/passport';
+import { ROOM, stationsFor, indoorRoute, stationApproach, stationAt, indoorBlocked } from './world/narrative';
 export type Phase =
   'home' | 'entering' | 'explore' | 'travel' | 'doorway' | 'showcase' | 'returning' | 'homing';
 export type CameraMode =
@@ -37,6 +40,10 @@ type State = {
   showcase: BuildingId | null;
   /** Le visiteur a déjà marché : l'aide clavier n'est plus affichée. */
   moved: boolean;
+  /** Visite guidée : index du lieu présenté, ou null. */
+  tour: number | null;
+  /** Carte de fin de visite ouverte. */
+  ending: boolean;
 };
 let state: State = {
   phase: 'home',
@@ -46,7 +53,7 @@ let state: State = {
   nearby: null,
   quality: 'high',
   qualityAuto: true,
-  visited: [],
+  visited: loadStamps(),
   ready: false,
   reducedMotion: window.matchMedia('(prefers-reduced-motion: reduce)').matches,
   fps: 0,
@@ -58,10 +65,13 @@ let state: State = {
   notice: '',
   showcase: null,
   moved: false,
+  tour: null,
+  ending: false,
 };
 const listeners = new Set<() => void>();
 export const getState = () => state;
 export const setState = (patch: Partial<State>) => {
+  if (patch.visited && patch.visited !== state.visited) saveStamps(patch.visited);
   state = { ...state, ...patch };
   listeners.forEach((fn) => fn());
 };
@@ -88,21 +98,33 @@ export const player = {
   x: WORLD.spawn[0],
   z: WORLD.spawn[1],
   y: heightAt(...WORLD.spawn),
-  angle: Math.PI,
+  angle: WORLD.spawnAngle,
   speed: 0,
   teleport: 0,
   reaction: 0,
+  /** Saut visuel : hauteur au-dessus du sol et vitesse verticale. */
+  jump: { height: 0, velocity: 0 },
 };
-export const view = { yaw: 0, movementYaw: 0, pitch: CAMERA.elevation, distance: CAMERA.distance, reset: 0 };
+export const view = {
+  yaw: WORLD.spawnAngle - Math.PI,
+  movementYaw: 0,
+  pitch: CAMERA.elevation,
+  distance: CAMERA.distance,
+  reset: 0,
+};
+/** Trajet automatique en cours : ligne brisée parcourue en temps fixé (voir world/timing.ts). */
 export const journey = {
   points: [] as Point[],
+  lengths: [0] as number[],
+  duration: 0,
+  elapsed: 0,
   index: 1,
   destination: null as BuildingId | null,
   exit: false,
   speed: 0,
   stalled: 0,
 };
-export type DoorStage = 'approach' | 'opening' | 'crossing' | 'handoff' | 'emerging' | 'closing';
+export type DoorStage = 'approach' | 'cut' | 'opening' | 'crossing' | 'handoff' | 'emerging' | 'closing';
 export const passage = {
   time: 0,
   swapped: false,
@@ -114,9 +136,17 @@ export const passage = {
   openness: 0,
   fade: 0,
   route: [] as Point[],
+  lengths: [0] as number[],
+  approach: 0,
+  startAngle: 0,
   index: 1,
 };
+/** Demande de passer la séquence en cours (trajet, porte, présentation, descente de caméra). */
+export const skip = { serial: 0 };
 export const presentation = {
+  /** Durée de la présentation (hors retour) et jeu de vues : 2 vues (court) ou 4 (visite guidée). */
+  duration: TIMING.showcase as number,
+  full: false,
   preview: false,
   serial: 0,
   enterAfter: false,
@@ -140,7 +170,12 @@ export function finishArrival() {
   setState({ phase: 'explore' });
   if (destination) travel(destination);
 }
+/** Marche lancée en touchant le sol : elle ne bloque pas l'interface. */
+export const isTapWalk = (s = state) => s.phase === 'travel' && !journey.destination && !journey.exit;
+/** Une séquence automatique possède le robot et la caméra : l'interface attend. */
+export const isBusy = (s = state) => s.phase !== 'home' && s.phase !== 'explore' && !isTapWalk(s);
 export function showPanel(panel: 'map' | 'help') {
+  if (isTapWalk()) cancelJourney();
   if (!isIdle()) return;
   setState({ ...overlaysClosed, [panel]: !state[panel] });
 }
@@ -153,6 +188,8 @@ export function discover(id: BuildingId, preview = false) {
   )
     return;
   presentation.preview = preview;
+  presentation.duration = TIMING.showcase;
+  presentation.full = false;
   presentation.serial++;
   presentation.enterAfter = false;
   presentation.fromHome = state.phase === 'home';
@@ -175,6 +212,14 @@ export function finishPresentation() {
   view.pitch = presentation.savedPitch;
   view.distance = presentation.savedDistance;
   setState({ phase: presentation.fromHome ? 'home' : 'explore', showcase: null });
+  if (state.tour !== null) {
+    const next = state.tour + 1;
+    if (next < TOUR.order.length) {
+      setState({ tour: next });
+      tourStep();
+    } else setState({ tour: null });
+    return;
+  }
   if (id && enterAfter) {
     if (presentation.preview) setState({ detail: id });
     else openBuilding(id);
@@ -185,7 +230,18 @@ function startJourney(points: Point[], destination: BuildingId | null, exit = fa
     setState({ notice: 'Ce trajet est indisponible. Avancez de quelques pas et réessayez.', map: false });
     return false;
   }
-  Object.assign(journey, { points, index: 1, destination, exit, speed: 0, stalled: 0 });
+  const lengths = cumulative(points);
+  Object.assign(journey, {
+    points,
+    lengths,
+    duration: travelDuration(lengths.at(-1) ?? 0, !!state.interior),
+    elapsed: 0,
+    index: 1,
+    destination,
+    exit,
+    speed: 0,
+    stalled: 0,
+  });
   setState({ phase: 'travel', nearby: null, station: null, notice: '', ...overlaysClosed });
   if (state.reducedMotion) skipJourney();
   return true;
@@ -244,16 +300,22 @@ export function cancelJourney() {
 function startDoor(id: BuildingId, leaving: boolean, route: Point[]) {
   if (!route.length) return;
   const b = buildings.find((b) => b.id === id)!;
+  const lengths = cumulative(route);
+  const length = lengths.at(-1) ?? 0;
   Object.assign(passage, {
     time: 0,
     swapped: false,
     leaving,
     from: [player.x, player.z],
-    to: leaving ? [0, 17.55] : localToWorld(b, 0, b.size[1] / 2 + 0.1),
-    stage: 'approach',
+    to: leaving ? ROOM.door : localToWorld(b, 0, b.size[1] / 2 + 0.1),
+    // Loin de la porte intérieure, un fondu remplace la marche jusqu'au seuil.
+    stage: leaving && length > 3 ? 'cut' : 'approach',
     openness: 0,
     fade: 0,
     route,
+    lengths,
+    approach: Math.min(TIMING.approach, Math.max(0.12, length / 9)),
+    startAngle: player.angle,
     index: 1,
   });
   player.reaction = 1;
@@ -276,7 +338,7 @@ export function interact() {
     if (state.station) {
       player.reaction = 1;
       setState({ reading: state.station });
-    } else if (Math.hypot(player.x, player.z - 16) < 3) leaveBuilding();
+    } else if (Math.hypot(player.x - ROOM.exit[0], player.z - ROOM.exit[1]) < 3) leaveBuilding();
   } else if (state.nearby) openBuilding(state.nearby);
 }
 export function guideToStation(index: number) {
@@ -303,15 +365,58 @@ export function resetPlayer() {
   player.z = WORLD.spawn[1];
   player.y = heightAt(...WORLD.spawn);
   player.speed = 0;
+  player.angle = WORLD.spawnAngle;
   player.teleport++;
-  view.yaw = 0;
+  view.yaw = WORLD.spawnAngle - Math.PI;
   setState({ phase: 'entering', ...overlaysClosed, nearby: null });
 }
 export function guideExit(): boolean {
   if (!state.interior || state.phase !== 'explore') return false;
-  if (Math.hypot(player.x, player.z - 16) < 3) {
-    leaveBuilding();
-    return getState().phase === 'doorway';
-  }
-  return startJourney(indoorRoute([player.x, player.z], ROOM.exit, state.interior), null, true);
+  // Près du seuil : la porte s'ouvre ; plus loin, un fondu remplace la marche (sortie ≤ 2 s).
+  leaveBuilding();
+  return getState().phase === 'doorway';
+}
+
+/** Repère du dernier « toucher pour aller », affiché au sol pendant la marche. */
+export const marker = { point: null as Point | null, serial: 0 };
+
+/** Toucher le sol pour y aller : itinéraire calculé par la navigation existante. */
+export function walkTo(p: Point): boolean {
+  if (state.phase === 'travel' && !journey.destination) cancelJourney();
+  if (state.phase !== 'explore' || state.map || state.help || state.detail || state.reading) return false;
+  if (Math.hypot(p[0] - player.x, p[1] - player.z) < 0.6) return false;
+  const route = state.interior
+    ? indoorBlocked(p[0], p[1], state.interior)
+      ? []
+      : indoorRoute([player.x, player.z], p, state.interior)
+    : blocked(p[0], p[1])
+      ? []
+      : findRoute([player.x, player.z], p);
+  if (!route.length) return false;
+  marker.point = p;
+  marker.serial++;
+  return startJourney(route, null);
+}
+
+/**
+ * Visite guidée depuis l'accueil : les six lieux s'enchaînent, chacun avec sa présentation complète
+ * (quatre vues) et sa fiche. Durée totale : 6 × (8 + 0,8) s ≈ 53 s. On la quitte à tout moment ;
+ * un clic ou Espace passe au lieu suivant.
+ */
+export const TOUR = { perPlace: 8, order: buildings.map((b) => b.id) };
+function tourStep() {
+  const id = TOUR.order[state.tour ?? 0];
+  discover(id, true);
+  presentation.full = true;
+  presentation.duration = TOUR.perPlace;
+}
+export function startTour() {
+  if (state.phase !== 'home' || state.tour !== null) return;
+  setState({ tour: 0, ...overlaysClosed });
+  tourStep();
+}
+export function stopTour() {
+  if (state.tour === null) return;
+  setState({ tour: null });
+  endPresentation();
 }

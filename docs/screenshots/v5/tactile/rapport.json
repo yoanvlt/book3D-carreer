@@ -1,0 +1,21 @@
+{
+  "etapes": [
+    {
+      "name": "explorer",
+      "phase": "explore"
+    },
+    {
+      "name": "joystick",
+      "deplacement": 15.45
+    },
+    {
+      "name": "saut",
+      "hauteur": 0.25
+    },
+    {
+      "name": "toucher pour aller",
+      "deplacement": 7.79
+    }
+  ],
+  "erreurs": []
+}

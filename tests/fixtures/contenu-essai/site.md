@@ -6,7 +6,7 @@ accroche: Mon parcours et mes projets, rangés dans une petite ville que l’on 
 # CV au format PDF, déposé dans public/medias/ (exemple : medias/cv-yoan-viollet.pdf).
 cv: null
 contact:
-  email: null
+  email: essai@example.org
   linkedin: null
   github: null
 ---

@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react';
-import { setState, useGame } from './state';
+import { isBusy, setState, useGame } from './state';
 import BuildingPresentation from './ui/BuildingPresentation';
 import Debug, { debugEnabled } from './ui/Debug';
 import Dialog from './ui/Dialog';
@@ -9,7 +9,10 @@ import HelpDialog from './ui/HelpDialog';
 import Hero from './ui/Hero';
 import InteriorHUD from './ui/InteriorHUD';
 import Map from './ui/Map';
+import Joystick from './ui/Joystick';
 import PlaceDialog from './ui/PlaceDialog';
+import Passport, { EndCard } from './ui/Passport';
+import Tour from './ui/Tour';
 import ReadableVersion from './ui/ReadableVersion';
 import SceneBoundary from './ui/SceneBoundary';
 import StatusLayer from './ui/StatusLayer';
@@ -21,7 +24,7 @@ export default function App() {
   const state = useGame();
   if (readable) return <ReadableVersion />;
   const home = state.phase === 'home';
-  const busy = state.phase !== 'home' && state.phase !== 'explore';
+  const busy = isBusy(state);
   return (
     <main className={`app ${home ? 'is-home' : 'is-exploring'} ${busy ? 'is-transitioning' : ''}`}>
       <div className='world' aria-label='Ville 3D interactive'>
@@ -34,7 +37,10 @@ export default function App() {
       <Header />
       <Hero />
       <ExploreHud />
+      <Joystick />
       <BuildingPresentation />
+      <Tour />
+      <Passport />
       <InteriorHUD />
       <div id='scene-curtain' aria-hidden='true' />
       <StatusLayer />
@@ -45,6 +51,7 @@ export default function App() {
       )}
       <PlaceDialog />
       <HelpDialog />
+      <EndCard />
       {debugEnabled && <Debug />}
     </main>
   );

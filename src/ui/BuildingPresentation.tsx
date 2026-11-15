@@ -9,7 +9,7 @@ export default function BuildingPresentation() {
   useEffect(() => {
     if (s.phase === 'showcase') ref.current?.focus();
   }, [s.phase]);
-  if (!s.showcase) return null;
+  if (!s.showcase || s.tour !== null) return null;
   const content = place(s.showcase);
   const returning = s.phase === 'returning';
   return (

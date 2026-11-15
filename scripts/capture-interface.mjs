@@ -2,10 +2,11 @@
 //   node scripts/capture-interface.mjs <dossier>      (URL=… pour un autre serveur)
 import { createRequire } from 'node:module';
 import { mkdir, writeFile } from 'node:fs/promises';
+import { saveShot } from './shot.mjs';
 const require = createRequire(import.meta.url);
 const { chromium } = require('playwright');
 
-const [out = 'docs/screenshots/v4/interface'] = process.argv.slice(2);
+const [out = 'docs/screenshots/v5/interface'] = process.argv.slice(2);
 const base = process.env.URL ?? 'http://127.0.0.1:4173/book3D-carreer/';
 await mkdir(out, { recursive: true });
 const browser = await chromium.launch({
@@ -34,11 +35,7 @@ async function open(width, height, query = '?debug=1') {
 const ready = (page) =>
   page.waitForFunction(() => window.__careerverse?.state().ready, null, { timeout: 180000 });
 const until = (page, test) => page.waitForFunction(test, null, { timeout: 300000, polling: 400 });
-const shot = async (page, name) => {
-  await page.evaluate(() => document.getElementById('diagnostics')?.setAttribute('hidden', ''));
-  await page.waitForTimeout(1500);
-  await page.screenshot({ path: `${out}/${name}.png` });
-};
+const shot = (page, name) => saveShot(page, `${out}/${name}`);
 
 // Bureau
 {
@@ -77,7 +74,7 @@ const shot = async (page, name) => {
 {
   const { page, context } = await open(390, 844);
   await ready(page);
-  await page.click('.hero .button-primary.mobile-only');
+  await page.locator('.hero .button-secondary').first().click();
   await page.waitForSelector('.map-dialog');
   await shot(page, 'plan-390x844');
   await page.click('.destination >> nth=1');
@@ -92,7 +89,7 @@ for (const [w, h] of [
 ]) {
   const { page, context } = await open(w, h, '?lecture');
   await page.waitForSelector('.readable');
-  await page.screenshot({ path: `${out}/version-texte-${w}x${h}.png` });
+  await saveShot(page, `${out}/version-texte-${w}x${h}`);
   await context.close();
 }
 await writeFile(`${out}/erreurs.json`, JSON.stringify(errors, null, 2));

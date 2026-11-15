@@ -8,10 +8,11 @@
 // Le rendu passe par SwiftShader (processeur) : les FPS relevés ne valent pas pour un vrai GPU.
 import { createRequire } from 'node:module';
 import { mkdir, writeFile } from 'node:fs/promises';
+import { saveShot } from './shot.mjs';
 const require = createRequire(import.meta.url);
 const { chromium } = require('playwright');
 
-const [mode = 'scenes', out = 'docs/screenshots/v4', only = ''] = process.argv.slice(2);
+const [mode = 'scenes', out = 'docs/screenshots/v5', only = ''] = process.argv.slice(2);
 const base = process.env.URL ?? 'http://127.0.0.1:4173/book3D-carreer/';
 const url = base + (base.includes('?') ? '&' : '?') + 'debug=1';
 const quality = process.env.QUALITE ?? 'high';
@@ -74,14 +75,8 @@ for (const [width, height] of sizes) {
   page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
   page.on('pageerror', (e) => errors.push(e.message));
   // Le relevé de diagnostic est lu par le script, mais masqué sur les captures.
-  // Le relevé de diagnostic est lu par le script mais masqué sur les captures. Avec le rendu
-  // logiciel (1 à 5 images par seconde), on attend qu'une image sans le relevé soit produite.
-  const shot = async (scene) => {
-    await page.evaluate(() => document.getElementById('diagnostics')?.setAttribute('hidden', ''));
-    await page.waitForTimeout(1500);
-    await page.screenshot({ path: `${out}/${scene}-${width}x${height}.png` });
-    await page.evaluate(() => document.getElementById('diagnostics')?.removeAttribute('hidden'));
-  };
+  // Captures en WebP, relevé de diagnostic masqué (voir shot.mjs).
+  const shot = (scene) => saveShot(page, `${out}/${scene}-${width}x${height}`);
   const entry = { taille: `${width}x${height}`, qualite: quality, scenes: {} };
   await page.goto(url);
   await page.waitForSelector('.loading', { state: 'detached', timeout: 180000 });
@@ -144,6 +139,12 @@ for (const [width, height] of sizes) {
       entry.portes.push(door);
       console.log(JSON.stringify(door));
     }
+    // Six tampons : passeport complet et, si site.md a un CV ou un contact, carte de fin.
+    await page.waitForTimeout(1500);
+    const end = await game(page);
+    entry.passeport = end.visited;
+    entry.carteDeFin = end.ending;
+    if (end.ending) await shot('fin-de-visite');
   }
   entry.erreurs = errors;
   report.push(entry);

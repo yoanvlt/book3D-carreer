@@ -1,0 +1,30 @@
+{
+  "etapes": [
+    {
+      "lieu": "profile",
+      "debut_s": 0.6
+    },
+    {
+      "lieu": "project-1",
+      "debut_s": 89
+    },
+    {
+      "lieu": "project-2",
+      "debut_s": 150
+    },
+    {
+      "lieu": "project-3",
+      "debut_s": 208.2
+    },
+    {
+      "lieu": "missions",
+      "debut_s": 256.8
+    },
+    {
+      "lieu": "veolia",
+      "debut_s": 326.4
+    }
+  ],
+  "fin_s": 406,
+  "erreurs": []
+}

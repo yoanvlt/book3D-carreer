@@ -4,9 +4,9 @@ import * as THREE from 'three';
 import { safeCameraRoute, sampleRoute, ease, mix3 } from '../world/cinematics';
 import type { Vec3 } from '../world/collision';
 import { CAMERA } from '../world/config';
-import { chooseCamera, moveCamera, chooseInteriorCamera, moveInteriorCamera } from '../world/camera';
+import { chooseCamera, moveCamera, chooseInteriorCamera, moveInteriorCamera, framing } from '../world/camera';
 import { heightAt } from '../world/terrain';
-import { getState, setState, player, view, finishArrival } from '../state';
+import { getState, setState, player, view, finishArrival, skip } from '../state';
 
 export default function CameraRig() {
   const { camera, size } = useThree();
@@ -17,6 +17,7 @@ export default function CameraRig() {
     interior: null as string | null,
     chosenYaw: 0,
     teleport: 0,
+    skip: 0,
     t: 0,
     offset: 0,
     from: new THREE.Vector3(),
@@ -28,8 +29,13 @@ export default function CameraRig() {
     safe: new THREE.Vector3(),
   });
   useFrame((_, delta) => {
+    // Une demande de passer n'est valable que pour la séquence en cours.
+    const skipped = runtime.current.skip !== skip.serial;
+    runtime.current.skip = skip.serial;
     const dt = Math.min(delta, 0.05),
       r = runtime.current,
+      // Cadrage portrait réglé ici, à chaque image, selon le format réel de l'écran.
+      frame = framing(size.width / size.height, view.distance, view.pitch),
       s = getState();
     const narrow = size.width < 760;
     if (s.phase === 'showcase' || s.phase === 'returning') {
@@ -62,7 +68,7 @@ export default function CameraRig() {
     if (r.interior) {
       r.interior = null;
       r.target.set(player.x, player.y + 1.65, player.z);
-      const c = chooseCamera(r.target, view.yaw, view.pitch, view.distance, view.yaw);
+      const c = chooseCamera(r.target, view.yaw, frame.pitch, frame.distance, view.yaw);
       camera.position.set(c.point.x, c.point.y, c.point.z);
       r.look.copy(r.target);
     }
@@ -80,13 +86,14 @@ export default function CameraRig() {
         r.route = safeCameraRoute(r.from, end);
       }
       r.t += dt / (s.reducedMotion ? 0.001 : 2.5);
+      if (skipped) r.t = 1;
       const p = sampleRoute(r.route, r.t),
         aim = mix3(r.lookFrom, { x: 0, y: 1, z: 0 }, ease(r.t));
       camera.position.set(p.x, p.y, p.z);
       r.look.set(aim.x, aim.y, aim.z);
       camera.lookAt(r.look);
       perspective.fov = THREE.MathUtils.damp(perspective.fov, narrow ? 48 : 41, 3, dt);
-      r.offset = (narrow ? 0 : -size.width * 0.16) * ease(r.t);
+      r.offset = (narrow ? 0 : -size.width * CAMERA.homeOffset) * ease(r.t);
       if (r.t >= 1) setState({ phase: 'home' });
     } else if (s.phase === 'home') {
       const drift = 0;
@@ -98,7 +105,7 @@ export default function CameraRig() {
       );
       r.look.set(0, 1, 0);
       camera.lookAt(r.look);
-      r.offset = narrow ? 0 : -size.width * 0.16;
+      r.offset = narrow ? 0 : -size.width * CAMERA.homeOffset;
       perspective.fov = narrow ? 48 : 41;
     } else {
       r.target.set(player.x, player.y + CAMERA.targetHeight, player.z);
@@ -108,11 +115,11 @@ export default function CameraRig() {
         r.target.z - Math.cos(view.yaw) * CAMERA.lookAhead,
       );
       r.desired.set(
-        player.x + Math.sin(view.yaw) * view.distance * Math.cos(view.pitch),
-        r.target.y + Math.sin(view.pitch) * view.distance,
-        player.z + Math.cos(view.yaw) * view.distance * Math.cos(view.pitch),
+        player.x + Math.sin(view.yaw) * frame.distance * Math.cos(frame.pitch),
+        r.target.y + Math.sin(frame.pitch) * frame.distance,
+        player.z + Math.cos(view.yaw) * frame.distance * Math.cos(frame.pitch),
       );
-      const candidate = chooseCamera(r.target, view.yaw, view.pitch, view.distance, r.chosenYaw);
+      const candidate = chooseCamera(r.target, view.yaw, frame.pitch, frame.distance, r.chosenYaw);
       r.chosenYaw = candidate.yaw;
       r.safe.set(candidate.point.x, candidate.point.y, candidate.point.z);
       if (s.phase === 'explore' && r.teleport !== player.teleport) {
@@ -132,6 +139,7 @@ export default function CameraRig() {
         }
         if (r.t === 0) r.route = safeCameraRoute(r.from, r.safe);
         r.t += dt / (s.reducedMotion ? 0.001 : 2.7);
+        if (skipped) r.t = 1;
         const t = Math.min(1, r.t),
           e = t * t * (3 - 2 * t);
         const pathPosition = sampleRoute(r.route, t);

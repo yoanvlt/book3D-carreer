@@ -1,5 +1,15 @@
 import { cameraFraction, allObstacles, type Vec3 } from './collision';
 import { heightAt } from './terrain';
+import { CAMERA } from './config';
+import { ROOM } from './narrative';
+
+/** Caméra intérieure : rayon de l'orbite et volume libre de la salle (au-dessus des écrans). */
+export const INTERIOR_CAMERA = {
+  radius: 7.5,
+  height: 6.2,
+  maxX: ROOM.halfWidth - 2.8,
+  maxZ: ROOM.halfDepth - 1.4,
+};
 
 export const cameraSettings = { minimumDistance: 9, clearance: 0.65 };
 export function cameraPoint(target: Vec3, yaw: number, pitch: number, distance: number): Vec3 {
@@ -84,9 +94,9 @@ export function cameraBodyBlocked(p: Vec3) {
 export function chooseInteriorCamera(x: number, z: number, yaw: number, previousYaw: number) {
   let best = { x: 0, y: 6.2, z: 0, yaw, score: Infinity };
   for (const a of [previousYaw, ...Array.from({ length: 32 }, (_, i) => yaw + (i * Math.PI) / 16)]) {
-    const px = x + Math.sin(a) * 9,
-      pz = z + Math.cos(a) * 9;
-    if (Math.abs(px) > 8.2 || Math.abs(pz) > 16.6) continue;
+    const px = x + Math.sin(a) * INTERIOR_CAMERA.radius,
+      pz = z + Math.cos(a) * INTERIOR_CAMERA.radius;
+    if (Math.abs(px) > INTERIOR_CAMERA.maxX || Math.abs(pz) > INTERIOR_CAMERA.maxZ) continue;
     const score =
       Math.abs(angleDelta(a, yaw)) +
       Math.abs(angleDelta(a, previousYaw)) * 0.35 -
@@ -116,7 +126,7 @@ export function moveInteriorCamera(from: Vec3, to: Vec3, target: Vec3, dt: numbe
     y: 6.2,
     z: target.z + Math.cos(angle) * r,
   });
-  const inside = (p: Vec3) => Math.abs(p.x) <= 8.2 && Math.abs(p.z) <= 16.6;
+  const inside = (p: Vec3) => Math.abs(p.x) <= INTERIOR_CAMERA.maxX && Math.abs(p.z) <= INTERIOR_CAMERA.maxZ;
   for (const arc of [short, short > 0 ? short - 2 * Math.PI : short + 2 * Math.PI]) {
     if (!Array.from({ length: 65 }, (_, i) => point(start + (arc * i) / 64)).every(inside)) continue;
     const a = start + Math.sign(arc) * Math.min(Math.abs(arc), dt * 1.25);
@@ -128,4 +138,16 @@ export function moveInteriorCamera(from: Vec3, to: Vec3, target: Vec3, dt: numbe
   // At a boundary a translating target can invalidate the previous orbit.
   // The room's convex free camera volume permits this bounded fallback.
   return { x: from.x + dx * alpha, y: 6.2, z: from.z + dz * alpha };
+}
+
+/**
+ * Cadrage effectif selon le format d'écran. En portrait (largeur / hauteur < 0,8), la caméra
+ * recule et monte ; les réglages du visiteur (molette, glisser) restent relatifs.
+ */
+export function framing(aspect: number, distance: number, pitch: number) {
+  if (aspect >= CAMERA.portrait.below) return { distance, pitch };
+  return {
+    distance: distance * (CAMERA.portrait.distance / CAMERA.distance),
+    pitch: Math.min(CAMERA.maxElevation, pitch + (CAMERA.portrait.elevation - CAMERA.elevation)),
+  };
 }

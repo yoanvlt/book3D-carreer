@@ -88,12 +88,18 @@ export const WORLD = {
   walkSpeed: 6.2,
   runSpeed: 9.5,
   robotRadius: 0.53,
-  spawn: [-9, 10] as Point,
+  /** Départ sur la rue ouest, face au poteau indicateur puis à la place (voir tests/v5.test.mjs). */
+  spawn: [-17, 6] as Point,
+  spawnAngle: 1.68,
 };
 export const CAMERA = {
   distance: 21,
   minDistance: 10,
   maxDistance: 27,
+  /** Écran portrait (téléphone) : caméra plus haute et plus loin pour voir devant le robot. */
+  portrait: { distance: 26, elevation: 0.74, below: 0.8 },
+  /** Accueil sur écran large : décalage de l'image vers la droite, en part de la largeur (titre à gauche). */
+  homeOffset: 0.2,
   elevation: 0.56,
   minElevation: 0.25,
   maxElevation: 1.14,

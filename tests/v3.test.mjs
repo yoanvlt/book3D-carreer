@@ -73,18 +73,22 @@ test('Profile stations activate along the central circulation, with stable owner
       assert.ok(!narrative.indoorBlocked(...p, b.id));
     }
   }
-  assert.equal(narrative.stationAt('project-1', 0.02, 10, 'step-0')?.id, 'step-0');
-  assert.equal(narrative.stationAt('project-1', 2, 10, 'step-0')?.id, 'step-1');
-  assert.equal(narrative.stationAt('profile', 0, 16), null);
+  // Salle V5 : première rangée de stations en z = ROWS[0] (hystérésis au centre de l'allée).
+  const row = narrative.ROWS[0];
+  assert.equal(narrative.stationAt('project-1', 0.02, row, 'step-0')?.id, 'step-0');
+  assert.equal(narrative.stationAt('project-1', 2, row, 'step-0')?.id, 'step-1');
+  assert.equal(narrative.stationAt('profile', 0, narrative.ROOM.halfDepth - 1), null);
 });
 test('Room paths reach every station and exit from both sides without cutting plinths', () => {
   for (const b of buildings) {
     const targets = [narrative.ROOM.exit, ...narrative.stationsFor(b.id).map(narrative.stationApproach)];
+    // Départs des deux côtés de la salle V5 : seuil, entre deux rangées, fond (points libres).
+    const D = narrative.ROOM.halfDepth;
     for (const from of [
-      [0, 14],
-      [-8, 5],
-      [8, -15],
-      [-8, -15],
+      [0, D - 4],
+      [-8, 4.5],
+      [8, -5.5],
+      [-8, -D + 2.5],
     ])
       for (const to of targets) {
         const route = narrative.indoorRoute(from, to, b.id);
@@ -252,12 +256,14 @@ test('Camera hysteresis still allows deliberate manual rotation', () => {
   assert.ok(Math.abs(inside.yaw) > 0.3);
 });
 test('Interior camera reversals orbit the robot instead of crossing its position', () => {
+  const D = narrative.ROOM.halfDepth;
+  const { maxX, maxZ } = camera.INTERIOR_CAMERA;
   for (const [x, z] of [
     [0, 0],
-    [0, 15],
+    [0, D - 3],
     [-8, 0],
-    [8, -15],
-    [0, -15],
+    [8, -D + 3],
+    [0, -D + 3],
   ]) {
     const target = { x, y: 1.65, z };
     let previous = 0,
@@ -266,7 +272,7 @@ test('Interior camera reversals orbit the robot instead of crossing its position
       const goal = camera.chooseInteriorCamera(x, z, Math.PI, previous);
       previous = goal.yaw;
       pos = camera.moveInteriorCamera(pos, goal, target, 1 / 60);
-      assert.ok(Math.abs(pos.x) <= 8.201 && Math.abs(pos.z) <= 16.601);
+      assert.ok(Math.abs(pos.x) <= maxX + 0.001 && Math.abs(pos.z) <= maxZ + 0.001);
       assert.ok(Math.hypot(pos.x - x, pos.z - z) >= 5.99, JSON.stringify({ x, z, i, pos }));
     }
   }
@@ -320,12 +326,13 @@ test('The static showcase frame contains the architectural bounds at all four as
     }
 });
 test('Interior camera bounds clear the tops of the Veolia tanks with a body margin', () => {
+  const D = narrative.ROOM.halfDepth;
   for (let x = -10; x <= 10; x += 2)
-    for (let z = -16; z <= 16; z += 2)
+    for (let z = -D + 1; z <= D - 1; z += 2)
       for (const yaw of [0, 1, 2, 3, 4, 5]) {
         const p = camera.chooseInteriorCamera(x, z, yaw, yaw);
-        for (const tankX of [-9.7, 9.7]) {
-          const horizontal = Math.max(0, Math.hypot(p.x - tankX, p.z + 13) - 0.75);
+        for (const [tankX, tankZ] of narrative.VEOLIA_COLUMNS) {
+          const horizontal = Math.max(0, Math.hypot(p.x - tankX, p.z - tankZ) - 0.75);
           assert.ok(Math.hypot(horizontal, Math.max(0, p.y - 6)) >= 0.65);
         }
       }

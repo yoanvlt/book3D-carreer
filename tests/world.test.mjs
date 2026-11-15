@@ -8,8 +8,9 @@ const { buildings, entrance, localToWorld, WORLD } = await source.import('world/
 const { heightAt, terrainSlope } = await source.import('world/terrain');
 const { blocked, moveWithCollisions, cameraFraction, obstacles } = await source.import('world/collision');
 const { findRoute, clearSegment } = await source.import('world/navigation');
-const { chooseCamera, moveCamera, chooseInteriorCamera } = await source.import('world/camera');
-const { stationsFor, moveIndoors, indoorBlocked } = await source.import('world/narrative');
+const { chooseCamera, moveCamera, chooseInteriorCamera, INTERIOR_CAMERA } =
+  await source.import('world/camera');
+const { stationsFor, moveIndoors, indoorBlocked, ROOM } = await source.import('world/narrative');
 
 after(() => source.cleanup());
 
@@ -168,24 +169,27 @@ test('Interior walking cannot escape or tunnel through exhibition plinths', () =
       assert.equal(indoorBlocked(...end, b.id), false);
       assert.ok(end[1] > s.position[1] - 1.3);
     }
-    const edge = moveIndoors([0, 14], [100, 100], b.id);
+    const edge = moveIndoors([0, ROOM.halfDepth - 4], [100, 100], b.id);
     assert.equal(indoorBlocked(...edge, b.id), false);
   }
 });
 
-test('Interior camera preserves a nine-unit horizontal boom at doors, walls and corners', () => {
+test('Interior camera preserves its full horizontal boom at doors, walls and corners', () => {
+  const { radius } = INTERIOR_CAMERA;
+  const W = ROOM.halfWidth - 1,
+    D = ROOM.halfDepth - 1;
   for (const [x, z] of [
-    [0, 17],
-    [0, -17],
-    [10, 0],
-    [-10, 0],
-    [10, 17],
-    [-10, -17],
+    [0, D],
+    [0, -D],
+    [W, 0],
+    [-W, 0],
+    [W, D],
+    [-W, -D],
   ])
     for (let yaw = 0; yaw < 6.2; yaw += 0.3) {
       const p = chooseInteriorCamera(x, z, yaw, 0);
       assert.ok(Number.isFinite(p.score));
-      assert.ok(Math.abs(p.x) < 10 && Math.abs(p.z) < 17);
-      assert.ok(Math.hypot(p.x - x, p.z - z) > 8.99);
+      assert.ok(Math.abs(p.x) < ROOM.halfWidth - 1 && Math.abs(p.z) < ROOM.halfDepth - 1);
+      assert.ok(Math.hypot(p.x - x, p.z - z) > radius - 0.01);
     }
 });
