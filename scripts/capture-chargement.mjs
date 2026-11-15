@@ -1,12 +1,12 @@
-// Page de chargement (V7) : une capture à trois étapes réelles (polices, construction de la ville,
-// préparation des matières), au bureau et sur téléphone. Le rendu logiciel rend ces étapes assez
+// Page de chargement (V8) : une capture à quatre étapes réelles (modèles, monde, lumière
+// précalculée, première image), au bureau et sur téléphone. Le rendu logiciel rend ces étapes assez
 // longues pour être saisies au vol ; sur un vrai poste elles passent plus vite.
 //   npm run capture:chargement -- [dossier]
 // Variable : URL (défaut http://127.0.0.1:4173/book3D-carreer/).
 import { mkdir, writeFile } from 'node:fs/promises';
 import { chromium } from 'playwright';
 
-const [out = 'docs/screenshots/v7/chargement'] = process.argv.slice(2);
+const [out = 'docs/screenshots/v8/chargement'] = process.argv.slice(2);
 const base = process.env.URL ?? 'http://127.0.0.1:4173/book3D-carreer/';
 await mkdir(out, { recursive: true });
 const browser = await chromium.launch({
@@ -18,9 +18,10 @@ const browser = await chromium.launch({
   ],
 });
 const STEPS = [
-  ['1-polices', 'Chargement des polices', 'Préparation de la scène'],
-  ['2-construction', 'Construction de la ville'],
-  ['3-matieres', 'Préparation des matières', 'Première image'],
+  ['1-modeles', 'modeles'],
+  ['2-monde', 'monde'],
+  ['3-lumiere', 'lumiere'],
+  ['4-image', 'image'],
 ];
 const seen = [];
 const shots = [];
@@ -33,12 +34,18 @@ for (const [name, options] of [
   for (const [file, ...labels] of STEPS) {
     const label = await page
       .waitForFunction(
-        (list) => {
-          const text = document.getElementById('loader-step')?.textContent ?? '';
-          return list.includes(text) && text;
+        (step) => {
+          const active = document.querySelector('#loader-steps li.active')?.dataset.step;
+          const done = document
+            .querySelector(`#loader-steps li[data-step="${step}"]`)
+            ?.classList.contains('done');
+          return (
+            (active === step || (step === 'image' && done)) &&
+            `${step} ${document.getElementById('loader-percent')?.textContent} %`
+          );
         },
-        labels,
-        { timeout: 180000, polling: 20 },
+        labels[0],
+        { timeout: 180000, polling: 10 },
       )
       .then((h) => h.jsonValue())
       .catch(() => null);

@@ -8,7 +8,7 @@ import { mkdir } from 'node:fs/promises';
 import { chromium } from 'playwright';
 import { saveShot } from './shot.mjs';
 
-const [out = 'docs/screenshots/v7/robot'] = process.argv.slice(2);
+const [out = 'docs/screenshots/v8/robot'] = process.argv.slice(2);
 const base = process.env.URL ?? 'http://127.0.0.1:4173/book3D-carreer/';
 await mkdir(out, { recursive: true });
 const browser = await chromium.launch({
@@ -20,7 +20,7 @@ const browser = await chromium.launch({
   ],
 });
 const errors = [];
-const STEPS = [0, 0.33, 0.66, 1];
+const STEPS = [0, 0.2, 0.4, 0.6, 0.8, 1];
 for (const [name, options] of [
   ['bureau', { viewport: { width: 1440, height: 900 } }],
   [

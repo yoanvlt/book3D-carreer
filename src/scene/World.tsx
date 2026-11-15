@@ -8,6 +8,7 @@ import { probe } from './photo';
 import { loadingDone, loadingStep } from '../loading';
 import Monde, { prepareWorld } from './Monde';
 import Herbe from './Herbe';
+import Vie from './Vie';
 import Robot from './Robot';
 import Controller from './Controller';
 import CameraRig from './CameraRig';
@@ -177,6 +178,7 @@ export default function World() {
             <>
               <Clouds />
               <Herbe />
+              <Vie />
             </>
           )}
         </>

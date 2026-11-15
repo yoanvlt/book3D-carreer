@@ -40,9 +40,9 @@
       name="twitter:image:alt"
       content="Une petite île en 3D avec six bâtiments, et le nom Yoan Viollet."
     />
-    <!-- Page de chargement : statique, visible avant tout JavaScript, animée seulement en CSS
-         (transform, opacity) pour rester fluide pendant que le fil principal construit la ville.
-         Couleurs : design tokens (vite.config.ts, loaderTokens). Pilotée par src/loading.ts. -->
+    <!-- Page de chargement (V8) : statique, visible avant tout JavaScript, animée seulement en CSS
+         (transform, opacity). L'île se trace au rythme du chargement (src/loading.ts allume les
+         traits), le pourcentage et les étapes suivent les étapes réelles. Couleurs : tokens. -->
     <style>
       #loader {
         position: fixed;
@@ -50,180 +50,217 @@
         z-index: 100;
         display: grid;
         place-items: center;
-        overflow: hidden;
-        background: linear-gradient(180deg, %LOADER_SKY_TOP% 0%, %LOADER_SKY_HORIZON% 72%);
+        background:
+          radial-gradient(120% 90% at 70% 20%, %LOADER_SKY_HORIZON% 0%, transparent 60%),
+          linear-gradient(170deg, %LOADER_SKY_HORIZON% 0%, %LOADER_PAPER% 70%);
         color: %LOADER_INK%;
-        font-family: 'Bricolage Grotesque Variable', system-ui, sans-serif;
-        transition:
-          opacity 0.7s ease,
-          visibility 0.7s;
+        font-family: 'Bricolage Grotesque Variable', 'Bricolage Grotesque', system-ui, sans-serif;
+        transition: opacity 0.7s ease;
+      }
+      #loader::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        opacity: 0.09;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
       }
       #loader.loader-done {
         opacity: 0;
-        visibility: hidden;
+        pointer-events: none;
       }
-      .loader-cloud {
-        position: absolute;
-        height: 46px;
-        border-radius: 40px;
-        background: rgba(255, 255, 255, 0.85);
-        animation: loader-drift 14s linear infinite alternate;
-        will-change: transform;
+      #loader.loader-done .loader-inner {
+        transform: translateY(-12px) scale(1.02);
       }
-      .loader-cloud::before {
-        content: '';
-        position: absolute;
-        left: 22%;
-        top: -24px;
-        width: 56px;
-        height: 56px;
-        border-radius: 50%;
-        background: inherit;
-      }
-      .loader-card {
+      .loader-inner {
         position: relative;
+        z-index: 1;
         display: grid;
-        justify-items: center;
-        gap: 14px;
-        padding: 24px;
-        text-align: center;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        align-items: center;
+        gap: 4vw;
+        width: min(1080px, 88vw);
+        transition: transform 0.7s ease;
       }
-      .loader-brand {
+      .loader-name {
+        margin: 0;
+        font-size: clamp(44px, 7.4vw, 104px);
+        font-weight: 800;
+        line-height: 0.95;
+        letter-spacing: -0.03em;
+      }
+      .loader-role {
+        margin: 14px 0 34px;
+        font-size: clamp(14px, 1.4vw, 18px);
+        color: %LOADER_INK_SOFT%;
+      }
+      .loader-percent {
+        font-size: clamp(30px, 3.4vw, 46px);
+        font-weight: 700;
+        font-variant-numeric: tabular-nums;
+        color: %LOADER_ACCENT%;
+      }
+      .loader-steps {
+        list-style: none;
+        margin: 14px 0 0;
+        padding: 0;
+        display: grid;
+        gap: 6px;
+        font-size: 15px;
+        color: %LOADER_INK_SOFT%;
+      }
+      .loader-steps li {
         display: flex;
         align-items: center;
-        gap: 12px;
-        font-size: 22px;
-        font-weight: 700;
+        gap: 10px;
+        opacity: 0.38;
+        transition: opacity 0.3s ease;
       }
-      .loader-mono {
-        display: grid;
-        place-items: center;
-        width: 40px;
-        height: 40px;
-        border-radius: 12px;
+      .loader-steps li::before {
+        content: '';
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: currentColor;
+        transform: scale(0.6);
+        transition: transform 0.3s ease;
+      }
+      .loader-steps li.active {
+        opacity: 1;
+        color: %LOADER_INK%;
+      }
+      .loader-steps li.active::before {
         background: %LOADER_ACCENT%;
-        color: %LOADER_PAPER%;
-        font-size: 16px;
-        font-weight: 800;
+        animation: loader-pulse 0.9s ease-in-out infinite alternate;
       }
-      .loader-scene {
-        width: 220px;
-        height: 150px;
+      .loader-steps li.done {
+        opacity: 0.85;
+      }
+      .loader-steps li.done::before {
+        transform: scale(1);
       }
       .loader-island {
-        animation: loader-float 4s ease-in-out infinite;
-        will-change: transform;
+        width: 100%;
+        height: auto;
+        overflow: visible;
+        animation: loader-float 5s ease-in-out infinite;
       }
-      .loader-robot {
-        transform-box: fill-box;
-        transform-origin: center;
-        animation: loader-hover 1.6s ease-in-out infinite;
-        will-change: transform;
+      .trait {
+        fill: none;
+        stroke: %LOADER_INK%;
+        stroke-width: 1.6;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        opacity: 0;
+        transition: opacity 0.35s ease;
       }
-      .loader-flame {
-        transform-box: fill-box;
-        transform-origin: top;
-        animation: loader-flame 0.35s ease-in-out infinite alternate;
-      }
-      .loader-text {
-        margin: 0;
-        font-size: 16px;
-        color: %LOADER_INK_SOFT%;
-      }
-      .loader-bar {
-        width: min(280px, 70vw);
-        height: 8px;
-        border-radius: 8px;
-        background: rgba(255, 255, 255, 0.65);
-        overflow: hidden;
-      }
-      #loader-fill {
-        height: 100%;
-        background: %LOADER_ACCENT%;
-        transform: scaleX(0.04);
-        transform-origin: left;
-        transition: transform 0.35s ease;
-      }
-      .loader-step {
-        margin: 0;
-        min-height: 1.3em;
-        font-size: 14px;
-        color: %LOADER_INK_SOFT%;
+      .trait.on {
+        opacity: 0.85;
       }
       @keyframes loader-float {
-        50% {
-          transform: translateY(-8px);
-        }
-      }
-      @keyframes loader-hover {
-        50% {
-          transform: translateY(-6px) rotate(-3deg);
-        }
-      }
-      @keyframes loader-flame {
         from {
-          transform: scaleY(0.7);
-          opacity: 0.7;
+          transform: translateY(-4px);
         }
         to {
-          transform: scaleY(1.15);
-          opacity: 1;
+          transform: translateY(4px);
         }
       }
-      @keyframes loader-drift {
+      @keyframes loader-pulse {
+        from {
+          transform: scale(0.7);
+        }
         to {
-          transform: translateX(60px);
+          transform: scale(1.15);
+        }
+      }
+      @media (max-width: 760px) {
+        .loader-inner {
+          grid-template-columns: 1fr;
+          gap: 18px;
+        }
+        .loader-art {
+          order: -1;
+          width: 70%;
+          justify-self: center;
         }
       }
       @media (prefers-reduced-motion: reduce) {
         .loader-island,
-        .loader-robot,
-        .loader-flame,
-        .loader-cloud {
+        .loader-steps li.active::before {
           animation: none;
         }
-        #loader {
-          transition-duration: 0.2s;
+        .trait,
+        #loader,
+        .loader-inner {
+          transition: none;
         }
       }
     </style>
   </head>
   <body>
     <div id="loader" role="status" aria-live="polite">
-      <div class="loader-cloud" style="width: 150px; left: 8%; top: 18%"></div>
-      <div class="loader-cloud" style="width: 110px; right: 12%; top: 30%; animation-duration: 18s"></div>
-      <div class="loader-cloud" style="width: 180px; left: 18%; bottom: 14%; animation-duration: 22s"></div>
-      <div class="loader-card">
-        <div class="loader-brand"><span class="loader-mono" aria-hidden="true">YV</span>Yoan Viollet</div>
-        <svg class="loader-scene" viewBox="0 0 220 150" aria-hidden="true">
-          <g class="loader-island">
-            <ellipse cx="110" cy="112" rx="78" ry="16" fill="#8fc463" />
-            <path d="M34 112 Q60 150 110 146 Q160 150 186 112 Z" fill="#9a6a46" />
-            <rect x="70" y="86" width="20" height="26" rx="3" fill="#e8774f" />
-            <rect x="96" y="78" width="16" height="34" rx="3" fill="#5f9fbe" />
-            <path d="M120 112 V92 Q132 80 144 92 V112 Z" fill="#8f7fd6" />
-            <circle cx="160" cy="100" r="9" fill="#5fae46" />
-          </g>
-          <g class="loader-robot">
-            <path class="loader-flame" d="M104 64 L110 80 L116 64 Z" fill="#ffb347" />
-            <rect
-              x="98"
-              y="38"
-              width="24"
-              height="26"
-              rx="6"
-              fill="#ffffff"
-              stroke="%LOADER_INK%"
-              stroke-width="3"
+      <div class="loader-inner">
+        <div>
+          <p class="loader-name">Yoan<br />Viollet</p>
+          <p class="loader-role">Data, IA et systèmes d’information</p>
+          <div class="loader-percent"><span id="loader-percent">0</span>&nbsp;%</div>
+          <ol class="loader-steps" id="loader-steps">
+            <li data-step="code" class="active">Code</li>
+            <li data-step="polices">Polices</li>
+            <li data-step="modeles">Modèles 3D</li>
+            <li data-step="monde">Monde</li>
+            <li data-step="lumiere">Lumière précalculée</li>
+            <li data-step="image">Première image</li>
+          </ol>
+        </div>
+        <div class="loader-art">
+          <svg class="loader-island" viewBox="0 0 220 170" aria-hidden="true">
+            <path class="trait" data-at="0.050" d="M40 92 C 70 78, 150 76, 182 90" />
+            <path class="trait" data-at="0.100" d="M40 92 C 44 100, 70 106, 110 106" />
+            <path class="trait" data-at="0.150" d="M110 106 C 150 106, 178 100, 182 90" />
+            <path class="trait" data-at="0.200" d="M44 98 C 52 112, 72 124, 92 132" />
+            <path class="trait" data-at="0.250" d="M178 96 C 170 112, 150 124, 128 132" />
+            <path
+              class="trait"
+              data-at="0.300"
+              d="M92 132 C 100 142, 106 150, 110 156 C 114 150, 120 142, 128 132"
             />
-            <rect x="103" y="45" width="14" height="7" rx="3" fill="%LOADER_INK%" />
-            <line x1="110" y1="38" x2="110" y2="30" stroke="%LOADER_INK%" stroke-width="3" />
-            <circle cx="110" cy="28" r="3" fill="%LOADER_ACCENT%" />
-          </g>
-        </svg>
-        <p class="loader-text">La ville se construit, un bâtiment après l’autre.</p>
-        <div class="loader-bar" aria-hidden="true"><div id="loader-fill"></div></div>
-        <p id="loader-step" class="loader-step">Chargement du code</p>
+            <path class="trait" data-at="0.350" d="M66 112 L 70 120 M 150 112 L 146 121" />
+            <path class="trait" data-at="0.400" d="M58 90 L 58 76 L 66 70 L 74 76 L 74 90" />
+            <path
+              class="trait"
+              data-at="0.450"
+              d="M84 88 L 84 78 L 102 78 L 102 88 M 82 78 L 93 72 L 104 78"
+            />
+            <path class="trait" data-at="0.500" d="M114 88 L 114 76 C 114 66, 132 66, 132 76 L 132 88" />
+            <path
+              class="trait"
+              data-at="0.550"
+              d="M140 92 L 140 82 L 146 76 L 146 82 L 152 76 L 152 82 L 158 76 L 158 92"
+            />
+            <path class="trait" data-at="0.600" d="M164 94 L 164 74 M 170 94 L 170 74 M 162 74 L 172 74" />
+            <path class="trait" data-at="0.650" d="M120 98 L 120 90 L 136 90 L 136 98" />
+            <path class="trait" data-at="0.700" d="M50 88 L 50 80 M 47 84 L 50 79 L 53 84" />
+            <path class="trait" data-at="0.750" d="M176 88 L 176 81 M 173 85 L 176 80 L 179 85" />
+            <path class="trait" data-at="0.800" d="M98 100 C 98 97, 106 97, 106 100" />
+            <path
+              class="trait"
+              data-at="0.850"
+              d="M88 140 C 82 138, 82 132, 88 132 C 90 128, 98 128, 100 132"
+            />
+            <path
+              class="trait"
+              data-at="0.900"
+              d="M24 60 C 24 54, 34 52, 38 56 C 42 50, 54 52, 54 58 C 58 58, 58 64, 54 64 L 26 64 C 22 64, 22 60, 24 60"
+            />
+            <path
+              class="trait"
+              data-at="0.950"
+              d="M176 44 C 176 40, 184 38, 186 42 C 190 38, 198 40, 198 46 L 178 46 C 175 46, 175 44, 176 44"
+            />
+            <path class="trait" data-at="1.000" d="M140 30 L 146 26 L 152 30" />
+          </svg>
+        </div>
       </div>
     </div>
     <div id="root"></div>

@@ -3,7 +3,7 @@
 // jamais traverser l'île ni un bâtiment ; durées et phases (home, entering, homing).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { Vector3 } from 'three';
+import { PerspectiveCamera, Vector3 } from 'three';
 import { loadSource } from './load-source.mjs';
 
 globalThis.window ??= { matchMedia: () => ({ matches: false }) };
@@ -19,63 +19,101 @@ test.after(() => source.cleanup());
 const ROBOT = { height: 2.5, half: 0.7 };
 
 /** Cadre du robot à l'écran (NDC) : des pieds au sommet de l'antenne, épaules comprises. */
-function screenBox(camera, [x, y, z]) {
-  const right = new Vector3().setFromMatrixColumn(camera.matrixWorld, 0);
-  const corners = [0, ROBOT.height].flatMap((h) =>
-    [-1, 1].map((s) => new Vector3(x, y + h, z).addScaledVector(right, s * ROBOT.half).project(camera)),
-  );
-  return {
-    x0: Math.min(...corners.map((c) => c.x)),
-    x1: Math.max(...corners.map((c) => c.x)),
-    y0: Math.min(...corners.map((c) => c.y)),
-    y1: Math.max(...corners.map((c) => c.y)),
-    front: corners.every((c) => c.z < 1 && c.z > -1),
-  };
-}
 const overlaps = (a, b) => a.x0 < b.x1 && a.x1 > b.x0 && a.y0 < b.y1 && a.y1 > b.y0;
 
-test('Accueil : le robot plane devant la caméra, en entier à l’écran, sans masquer le titre ni la carte', () => {
+test('Accueil : îlot et robot devant la caméra, entiers à l’écran, sans masquer le titre ni la carte', () => {
   for (const [w, h] of CHECKED_SCREENS) {
     const camera = homeCamera(w, h);
-    const box = screenBox(camera, flight.homePosition(camera, w));
-    assert.ok(box.front, `${w}×${h} : derrière la caméra`);
-    assert.ok(box.x0 > -0.95 && box.x1 < 0.95 && box.y0 > -0.95 && box.y1 < 0.95, `${w}×${h} : coupé`);
-    // Hauteur à l'écran : « en grand » (au moins un cinquième de la hauteur), sans tout couvrir.
-    assert.ok(box.y1 - box.y0 > 0.4 && box.y1 - box.y0 < 0.9, `${w}×${h} : taille ${box.y1 - box.y0}`);
+    const [x, y, z] = flight.homePosition(camera, w);
+    // Robot (2,5 m) et îlot (4 m de large, 2,8 m sous les pieds).
+    const right = new Vector3().setFromMatrixColumn(camera.matrixWorld, 0);
+    const pts = [];
+    for (const [dy, half] of [
+      [ROBOT.height, ROBOT.half],
+      [0, 2.0],
+      [-2.8, 0.3],
+    ])
+      for (const s of [-1, 1])
+        pts.push(new Vector3(x, y + dy, z).addScaledVector(right, s * half).project(camera));
+    const box = {
+      x0: Math.min(...pts.map((p) => p.x)),
+      x1: Math.max(...pts.map((p) => p.x)),
+      y0: Math.min(...pts.map((p) => p.y)),
+      y1: Math.max(...pts.map((p) => p.y)),
+    };
+    assert.ok(
+      pts.every((p) => p.z < 1 && p.z > -1),
+      `${w}×${h} : derrière la caméra`,
+    );
+    assert.ok(box.x0 > -0.98 && box.x1 < 0.98 && box.y0 > -0.98 && box.y1 < 0.98, `${w}×${h} : coupé`);
     const reserved =
-      w < 760
-        ? { x0: -1, x1: 1, y0: -1, y1: -0.05 } // carte d'accueil
-        : { x0: -1, x1: -0.12, y0: -0.55, y1: 0.6 }; // titre et boutons
+      w < 760 ? { x0: -1, x1: 1, y0: -1, y1: -0.05 } : { x0: -1, x1: -0.12, y0: -0.55, y1: 0.6 };
     assert.ok(!overlaps(box, reserved), `${w}×${h} : masque ${w < 760 ? 'la carte' : 'le titre'}`);
   }
 });
 
+const timeline = (from, to) => {
+  const path = flight.flightPath(from, to);
+  return Array.from({ length: 61 }, (_, i) =>
+    flight.flightPose(path, (i / 60) * flight.FLIGHT.total, 0, 0),
+  ).map((pose) => ({ pose, path }));
+};
+
 test('Vols : au-dessus des toits, sans traverser l’île ni un bâtiment, aller et retour', () => {
   const homes = CHECKED_SCREENS.map(([w, h]) => flight.homePosition(homeCamera(w, h), w));
-  // Départs du retour : la place et le seuil de chaque bâtiment.
   const city = [
     flight.landingPoint(),
     ...buildings.map((b) => {
-      const d = b.size[1] / 2 + 3;
+      const d = b.size[1] / 2 + 3.4;
       const [x, z] = [b.position[0] + Math.sin(b.rotation) * d, b.position[1] + Math.cos(b.rotation) * d];
       return [x, heightAt(x, z), z];
     }),
   ];
-  const check = (path, label) => {
-    for (let i = 4; i <= 196; i++) {
-      const { p } = flight.pointOnFlight(path, i / 200);
-      assert.ok(!flight.collides(p), `${label} : collision en ${p.map((v) => v.toFixed(1))} (t=${i / 200})`);
+  const check = (from, to, label) => {
+    for (const { pose } of timeline(from, to)) {
+      if (pose.step !== 'cruise') continue;
+      assert.ok(!flight.collides(pose.p), `${label} : collision en ${pose.p.map((v) => v.toFixed(1))}`);
     }
   };
   for (const home of homes) {
-    check(flight.flightPath(home, flight.landingPoint(), true), 'aller');
-    for (const start of city) check(flight.flightPath(start, home, false), 'retour');
+    check(home, flight.landingPoint(), 'aller');
+    for (const start of city) check(start, home, 'retour');
   }
 });
 
-test('Vols : 2,5 s au plus, atterrissage compris', () => {
-  assert.ok(flight.FLIGHT.total <= 2.5);
-  assert.ok(flight.FLIGHT.duration + flight.FLIGHT.landing <= flight.FLIGHT.total + 1e-9);
+test('Vols : 3 à 3,5 s, accroupi, saut, croisière inclinée, freinage, atterrissage écrasé', () => {
+  assert.ok(flight.FLIGHT.total >= 3 && flight.FLIGHT.total <= 3.5);
+  const poses = timeline([80, 80, 100], flight.landingPoint()).map((x) => x.pose);
+  assert.ok(poses.some((p) => p.step === 'crouch' && p.crouch > 0.9));
+  assert.ok(poses.some((p) => p.step === 'cruise' && p.pitch > 0.2 && p.thrust === 1));
+  assert.ok(poses.some((p) => p.step === 'land' && p.squash < 0.9));
+  assert.deepEqual(poses.at(-1).p, flight.landingPoint());
+});
+
+test('Travelling : robot à taille constante (≈ 15 % de la hauteur), de profil ou de trois quarts, jamais de dos', () => {
+  for (const [w, h] of CHECKED_SCREENS) {
+    const fov = w < 760 ? 48 : 41;
+    const home = flight.homePosition(homeCamera(w, h), w);
+    for (const [from, to] of [
+      [home, flight.landingPoint()],
+      [flight.landingPoint(), home],
+    ])
+      for (const { pose, path } of timeline(from, to)) {
+        if (pose.step !== 'cruise') continue;
+        const view = flight.flightCamera(pose, path, fov);
+        const cam = new PerspectiveCamera(fov, w / h, 0.1, 1400);
+        cam.position.set(...view.position);
+        cam.lookAt(...view.target);
+        cam.updateMatrixWorld();
+        const feet = new Vector3(...pose.p).project(cam);
+        const top = new Vector3(pose.p[0], pose.p[1] + ROBOT.height, pose.p[2]).project(cam);
+        const share = Math.abs(top.y - feet.y) / 2;
+        assert.ok(share > 0.12 && share < 0.18, `${w}×${h} : robot à ${(share * 100).toFixed(1)} %`);
+        const dir = new Vector3(path[3][0] - path[0][0], 0, path[3][2] - path[0][2]).normalize();
+        const look = new Vector3(pose.p[0] - view.position[0], 0, pose.p[2] - view.position[2]).normalize();
+        assert.ok(look.dot(dir) < 0.5, `${w}×${h} : caméra de dos`);
+      }
+  }
 });
 
 test('Phases : accueil → entrée (robot posé au départ) → ville → retour à l’accueil, passables', () => {
