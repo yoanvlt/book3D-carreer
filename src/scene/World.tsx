@@ -23,10 +23,11 @@ import Life from './Life';
 const Effects = lazy(() => import('./Effects'));
 // Planche du kit (`?debug=1&kit`), pour le contrôle visuel des pièces et des matières.
 const KitShowcase = lazy(() => import('./KitShowcase'));
-const kitShowcase = (() => {
-  const query = new URLSearchParams(window.location.search);
-  return query.has('debug') && query.has('kit');
-})();
+// Planche de direction artistique V8 (`?debug=1&da`).
+const DirectionArtistique = lazy(() => import('./DirectionArtistique'));
+const debugQuery = new URLSearchParams(window.location.search);
+const artBoard = debugQuery.has('debug') && debugQuery.has('da');
+const kitShowcase = (debugQuery.has('debug') && debugQuery.has('kit')) || artBoard;
 import { useGame, setState, getState, player, cameraMode, passage } from '../state';
 
 loadingStep('scene');
@@ -211,9 +212,7 @@ export default function World() {
         shadow-radius={3}
       />
       {kitShowcase ? (
-        <Suspense fallback={null}>
-          <KitShowcase />
-        </Suspense>
+        <Suspense fallback={null}>{artBoard ? <DirectionArtistique /> : <KitShowcase />}</Suspense>
       ) : interior ? (
         <Interior />
       ) : (

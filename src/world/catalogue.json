@@ -1,0 +1,356 @@
+{
+  "ville": {
+    "route": {
+      "min": [-4, 0, -4],
+      "max": [4, 0.4, 4],
+      "triangles": 58,
+      "cases": ["beton-profond", "enrobe", "enrobe-clair", "marquage", "marquage-ocre"]
+    },
+    "route-passage": {
+      "min": [-4, 0, -4],
+      "max": [4, 0.4, 4],
+      "triangles": 64,
+      "cases": ["beton-profond", "enrobe", "enrobe-clair", "marquage", "marquage-ocre"]
+    },
+    "route-te": {
+      "min": [-4, 0, -4],
+      "max": [4, 0.4, 4],
+      "triangles": 138,
+      "cases": ["beton-profond", "enrobe", "enrobe-clair", "marquage", "marquage-ocre"]
+    },
+    "route-courbe": {
+      "min": [-4, 0, -4],
+      "max": [4, 0.4, 4],
+      "triangles": 172,
+      "cases": ["beton-profond", "enrobe", "enrobe-clair", "marquage", "marquage-ocre"]
+    },
+    "dalle": {
+      "min": [-4, 0, -4],
+      "max": [4, 0.4, 4],
+      "triangles": 60,
+      "cases": ["bordure", "dalle"]
+    },
+    "lampadaire": {
+      "min": [-0.957, 0, -0.138],
+      "max": [0.12, 3.84, 0.138],
+      "triangles": 176,
+      "cases": ["bois-clair", "gris-fonce", "marquage-ocre", "metal-sombre"]
+    },
+    "banc": {
+      "min": [-0.8, 0, -0.3],
+      "max": [0.8, 0.4, 0.3],
+      "triangles": 44,
+      "cases": ["bois", "gris-fonce", "metal-sombre"]
+    },
+    "buisson": {
+      "min": [-0.358, 0, -0.398],
+      "max": [0.4, 1.522, 0.398],
+      "triangles": 72,
+      "cases": ["feuillage", "feuillage-clair", "feuillage-profond", "terre-cuite", "terre-cuite-profonde"]
+    },
+    "voiture": {
+      "min": [-0.838, -0.244, -1.889],
+      "max": [0.838, 1.231, 1.863],
+      "triangles": 1222,
+      "cases": [
+        "beton",
+        "beton-profond",
+        "bois",
+        "bois-clair",
+        "bois-profond",
+        "carrosserie-bleue",
+        "encre",
+        "enrobe",
+        "enrobe-clair",
+        "marquage",
+        "tissu-rouge"
+      ]
+    },
+    "citadine": {
+      "min": [-0.838, -0.244, -1.581],
+      "max": [0.838, 1.231, 1.643],
+      "triangles": 1194,
+      "cases": [
+        "beton",
+        "beton-profond",
+        "bois",
+        "bois-clair",
+        "bois-profond",
+        "carrosserie-rouge",
+        "encre",
+        "enrobe",
+        "enrobe-clair",
+        "marquage"
+      ]
+    },
+    "benne": {
+      "min": [-1.132, 0, -0.706],
+      "max": [1.132, 1.269, 0.706],
+      "triangles": 126,
+      "cases": ["carrosserie-verte", "encre", "enrobe"]
+    },
+    "borne-incendie": {
+      "min": [-0.271, 0, -0.26],
+      "max": [0.271, 0.898, 0.265],
+      "triangles": 180,
+      "cases": ["bois", "carrosserie-rouge"]
+    },
+    "corbeille": {
+      "min": [-0.24, 0, -0.267],
+      "max": [0.267, 0.21, 0.267],
+      "triangles": 18,
+      "cases": ["enrobe", "enrobe-clair"]
+    },
+    "caisse": {
+      "min": [-0.4, 0, -0.4],
+      "max": [0.4, 0.706, 0.412],
+      "triangles": 32,
+      "cases": ["bois-clair", "creme"]
+    },
+    "pin": {
+      "min": [-1.15, -0.41, -1.207],
+      "max": [1.146, 4.375, 0.981],
+      "triangles": 50,
+      "cases": ["feuillage", "feuillage-clair", "tronc"]
+    },
+    "sapin": {
+      "min": [-1.37, -0.4, -1.44],
+      "max": [1.37, 4.451, 1.44],
+      "triangles": 220,
+      "cases": ["feuillage", "feuillage-clair", "tronc"]
+    },
+    "rocher-a": {
+      "min": [-0.596, 0, -0.627],
+      "max": [0.596, 0.277, 0.507],
+      "triangles": 18,
+      "cases": ["roche", "roche-claire"]
+    },
+    "rocher-c": {
+      "min": [-0.741, 0, -0.728],
+      "max": [0.635, 0.779, 0.649],
+      "triangles": 40,
+      "cases": ["roche", "roche-claire"]
+    },
+    "rocher-e": {
+      "min": [-1.021, 0, -0.739],
+      "max": [0.931, 0.779, 0.651],
+      "triangles": 71,
+      "cases": ["roche", "roche-claire"]
+    },
+    "plante-eau": {
+      "min": [-0.338, -0.076, -0.257],
+      "max": [0.294, 0.941, 0.156],
+      "triangles": 162,
+      "cases": ["bois", "bois-profond", "feuillage", "feuillage-clair", "feuillage-profond"]
+    },
+    "nenuphar": {
+      "min": [-0.423, 0, -0.423],
+      "max": [0.423, 0.069, 0.42],
+      "triangles": 68,
+      "cases": ["feuillage", "feuillage-profond"]
+    }
+  },
+  "meubles": {
+    "armchair": {
+      "min": [-0.9, 0, -0.75],
+      "max": [0.9, 1.224, 0.85],
+      "triangles": 528,
+      "cases": ["tissu-bleu"]
+    },
+    "couch-pillows": {
+      "min": [-1.5, 0, -0.75],
+      "max": [1.5, 1.224, 0.85],
+      "triangles": 808,
+      "cases": ["bois-clair", "creme", "tissu-bleu", "tissu-ocre"]
+    },
+    "book-set": {
+      "min": [-0.39, -0.25, -0.177],
+      "max": [0.39, 0.25, 0.188],
+      "triangles": 196,
+      "cases": [
+        "beton",
+        "bois",
+        "bois-clair",
+        "bois-profond",
+        "creme",
+        "marquage",
+        "tissu-bleu",
+        "tissu-rouge"
+      ]
+    },
+    "cabinet-medium-decorated": {
+      "min": [-1, 0, -0.5],
+      "max": [1.042, 1.827, 0.502],
+      "triangles": 1018,
+      "cases": [
+        "beton",
+        "bois",
+        "bois-clair",
+        "bois-profond",
+        "creme",
+        "feuillage-clair",
+        "herbe",
+        "herbe-claire",
+        "marquage"
+      ]
+    },
+    "cabinet-small": {
+      "min": [-0.5, 0, -0.5],
+      "max": [0.5, 1, 0.502],
+      "triangles": 322,
+      "cases": ["bois", "bois-clair", "bois-profond", "creme"]
+    },
+    "cactus-medium-a": {
+      "min": [-0.44, 0, -0.418],
+      "max": [0.44, 0.827, 0.418],
+      "triangles": 448,
+      "cases": [
+        "bois",
+        "bois-profond",
+        "feuillage",
+        "feuillage-clair",
+        "herbe",
+        "herbe-claire",
+        "tissu-rouge"
+      ]
+    },
+    "cactus-small-a": {
+      "min": [-0.25, 0, -0.25],
+      "max": [0.25, 0.552, 0.25],
+      "triangles": 252,
+      "cases": ["bois", "bois-profond", "feuillage", "feuillage-clair", "herbe", "tissu-rouge"]
+    },
+    "chair-a-wood": {
+      "min": [-0.375, 0, -0.47],
+      "max": [0.375, 1.258, 0.375],
+      "triangles": 308,
+      "cases": ["bois", "bois-profond"]
+    },
+    "chair-c": {
+      "min": [-0.375, 0, -0.561],
+      "max": [0.375, 1.203, 0.375],
+      "triangles": 288,
+      "cases": ["bois-profond", "tissu-bleu"]
+    },
+    "chair-stool": {
+      "min": [-0.375, 0, -0.375],
+      "max": [0.375, 0.5, 0.375],
+      "triangles": 216,
+      "cases": ["bois-profond", "tissu-bleu"]
+    },
+    "lamp-standing": {
+      "min": [-0.5, 0, -0.5],
+      "max": [0.5, 2.52, 0.5],
+      "triangles": 320,
+      "cases": ["beton", "beton-profond", "creme", "enrobe", "enrobe-clair", "marquage"]
+    },
+    "lamp-table": {
+      "min": [-0.5, -0.002, -0.5],
+      "max": [0.5, 1.02, 0.5],
+      "triangles": 392,
+      "cases": ["beton", "creme", "marquage", "tissu-bleu"]
+    },
+    "pictureframe-large-a": {
+      "min": [-0.5, -0.6, 0],
+      "max": [0.51, 0.6, 0.2],
+      "triangles": 60,
+      "cases": ["bois", "bois-clair", "marquage"]
+    },
+    "pictureframe-large-b": {
+      "min": [-1, -0.6, 0],
+      "max": [1, 0.6, 0.2],
+      "triangles": 60,
+      "cases": ["bois", "bois-clair", "marquage"]
+    },
+    "pictureframe-medium": {
+      "min": [-0.35, -0.45, 0],
+      "max": [0.35, 0.45, 0.2],
+      "triangles": 60,
+      "cases": ["bois", "bois-clair", "marquage"]
+    },
+    "pictureframe-standing-a": {
+      "min": [-0.25, -0.001, -0.208],
+      "max": [0.25, 0.618, 0.171],
+      "triangles": 74,
+      "cases": ["bois", "bois-clair", "marquage"]
+    },
+    "rug-rectangle-a": {
+      "min": [-1.5, 0, -1],
+      "max": [1.5, 0.1, 1],
+      "triangles": 44,
+      "cases": ["bois-clair", "creme"]
+    },
+    "rug-oval-a": {
+      "min": [-1.5, 0, -1],
+      "max": [1.5, 0.1, 1],
+      "triangles": 176,
+      "cases": ["bois-clair", "creme"]
+    },
+    "rug-rectangle-stripes-a": {
+      "min": [-1.5, 0, -1],
+      "max": [1.5, 0.1, 1],
+      "triangles": 68,
+      "cases": ["bois-clair", "creme"]
+    },
+    "shelf-a-big": {
+      "min": [-1, -0.3, 0],
+      "max": [1, 0.1, 0.5],
+      "triangles": 212,
+      "cases": ["bois", "bois-clair", "bois-profond"]
+    },
+    "shelf-b-large-decorated": {
+      "min": [-1, -0.1, 0],
+      "max": [1, 0.718, 0.5],
+      "triangles": 482,
+      "cases": [
+        "beton",
+        "bois",
+        "bois-clair",
+        "bois-profond",
+        "creme",
+        "marquage",
+        "tissu-bleu",
+        "tissu-rouge"
+      ]
+    },
+    "shelf-b-small-decorated": {
+      "min": [-0.5, -0.1, 0],
+      "max": [0.5, 0.912, 0.571],
+      "triangles": 532,
+      "cases": [
+        "beton",
+        "bois",
+        "bois-clair",
+        "bois-profond",
+        "creme",
+        "feuillage-clair",
+        "herbe-claire",
+        "marquage"
+      ]
+    },
+    "table-low": {
+      "min": [-1.2, 0, -0.75],
+      "max": [1.2, 0.5, 0.75],
+      "triangles": 276,
+      "cases": ["bois", "bois-profond"]
+    },
+    "table-medium": {
+      "min": [-1, 0, -1],
+      "max": [1, 1, 1],
+      "triangles": 168,
+      "cases": ["bois", "bois-profond"]
+    },
+    "table-medium-long": {
+      "min": [-1.5, 0, -1],
+      "max": [1.5, 1, 1],
+      "triangles": 168,
+      "cases": ["bois", "bois-profond"]
+    },
+    "table-small": {
+      "min": [-0.5, 0, -0.5],
+      "max": [0.5, 1, 0.5],
+      "triangles": 168,
+      "cases": ["bois", "bois-profond"]
+    }
+  }
+}
