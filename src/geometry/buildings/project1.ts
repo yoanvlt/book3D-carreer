@@ -42,7 +42,7 @@ export function project1(b: Builder) {
   b.within({ z: D / 2 - 0.4 }, () => doorSurround(b, 0, 0.25, 'accent-project-1', { width: 0.18 }));
   // Dalles blanches débordantes et poteaux d'acier blanc.
   box(b, 0, 3.8, 0, W + 0.8, 0.4, D + 0.8, 'blanc', { bevel: 0.08 });
-  box(b, 0, 7.6, 0, W + 1.6, 0.5, D + 1.6, 'blanc', { bevel: 0.1 });
+  box(b, 0, 7.6, 0, W + 1.6, 0.5, D + 1.0, 'blanc', { bevel: 0.1 });
   for (const x of [-W / 2, -2.5, 2.5, W / 2])
     for (const z of [-D / 2, D / 2])
       box(b, x - Math.sign(x) * 0.15, 0.25, z - Math.sign(z) * 0.15, 0.3, 7.35, 0.3, 'blanc', {
@@ -53,10 +53,10 @@ export function project1(b: Builder) {
       box(b, x - Math.sign(x) * 0.15, 0.25, z, 0.3, 7.35, 0.3, 'blanc', { bevel: 0.04 });
   // Toit équipé : acrotère, panneaux solaires inclinés en rangée, jardinières.
   for (const [x, z, w, d] of [
-    [0, D / 2 + 0.6, W + 1.6, 0.2],
-    [0, -D / 2 - 0.6, W + 1.6, 0.2],
-    [W / 2 + 0.6, 0, 0.2, D + 1.6],
-    [-W / 2 - 0.6, 0, 0.2, D + 1.6],
+    [0, D / 2 + 0.38, W + 1.6, 0.2],
+    [0, -D / 2 - 0.38, W + 1.6, 0.2],
+    [W / 2 + 0.6, 0, 0.2, D + 1.0],
+    [-W / 2 - 0.6, 0, 0.2, D + 1.0],
   ])
     box(b, x, 8.1, z, w, 0.4, d, 'blanc', { bevel: 0.05 });
   for (let i = 0; i < 6; i++) {

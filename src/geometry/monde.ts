@@ -13,6 +13,7 @@ import { Builder, type MeshData } from './mesh';
 import { HeightField, Light, FIELD } from './bake';
 import { terrain, underside } from './island';
 import { feuillu, fountain } from './props';
+import { scatterGrass } from './herbe';
 import { profile } from './buildings/profile';
 import { project1 } from './buildings/project1';
 import { project2 } from './buildings/project2';
@@ -49,6 +50,9 @@ export interface WorldBuild {
   feuillu: MeshData;
   instances: Partial<Record<Model, Placed[]>>;
   ground: { data: Uint8Array; size: number; min: number; extent: number };
+  /** Brins d'herbe (qualité Soignée ; la Légère en prend un sur trois) et cailloux. */
+  grass: Float32Array;
+  pebbles: Float32Array;
 }
 
 type Progress = (step: 'monde' | 'lumiere', fraction: number) => void;
@@ -130,6 +134,8 @@ export function buildWorld(progress: Progress = () => {}): WorldBuild {
     feuillu: feuillu(),
     instances,
     ground: { data: groundData, size, min: FIELD.min, extent: FIELD.extent },
+    grass: scatterGrass(7),
+    pebbles: scatterGrass(0.03, 5),
   };
 }
 

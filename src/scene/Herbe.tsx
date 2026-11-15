@@ -7,40 +7,21 @@
 import { useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
-import { zoneAt } from '../world/plan';
-import { heightAt } from '../world/terrain';
-import { edgeRadius } from '../world/island';
-import { solids } from '../world/placer';
 import { swatchColor, swatchIndex, type Swatch } from '../world/palette';
 import { getState, player, useGame } from '../state';
 import { groundLight } from './diorama/material';
+import { BLADE } from '../geometry/herbe';
+import { sown } from './Monde';
 import { kitGeometry } from './diorama/kits';
 import { instances } from './diorama/geometry';
 
 /** Brins par mètre carré selon la qualité. */
-const DENSITY = { high: 7, low: 2.2 };
+/** Part des brins dessinés selon la qualité (le semis est fait à 7 brins/m²). */
+const STRIDE = { high: 1, low: 3 };
 const FLOWERS: Swatch[] = ['fleur-creme', 'fleur-rose', 'fleur-lilas', 'fleur-jaune'];
 
 function rgb(name: Swatch, shade: number) {
   return new THREE.Color().setRGB(...swatchColor(swatchIndex(name), shade), THREE.SRGBColorSpace);
-}
-
-/** Positions des brins : tirage régulier bruité dans les pelouses, hors des objets posés. */
-function scatter(density: number) {
-  let seed = 11;
-  const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
-  const step = 1 / Math.sqrt(density);
-  const out: number[] = [];
-  for (let x = -66; x < 66; x += step)
-    for (let z = -66; z < 66; z += step) {
-      const px = x + (rnd() - 0.5) * step;
-      const pz = z + (rnd() - 0.5) * step;
-      if (Math.hypot(px, pz) > edgeRadius(Math.atan2(pz, px)) - 1.2) continue;
-      if (zoneAt(px, pz) !== 'pelouse') continue;
-      if (solids.some((s) => Math.hypot(s.x - px, s.z - pz) < Math.min(1.2, s.radius * 0.6))) continue;
-      out.push(px, pz, rnd(), rnd());
-    }
-  return out;
 }
 
 const vertexShader = /* glsl */ `
@@ -91,8 +72,16 @@ const vertexShader = /* glsl */ `
 export default function Herbe() {
   const { quality } = useGame();
   const mesh = useMemo(() => {
-    const list = scatter(DENSITY[quality]);
-    const count = list.length / 4;
+    // Semis du worker : x, z, deux tirages, hauteur du sol ; un brin sur trois en Légère.
+    const all = sown.grass;
+    const stride = STRIDE[quality] * BLADE;
+    const count = Math.floor(all.length / stride);
+    const blades = new Float32Array(count * 4);
+    const heights = new Float32Array(count);
+    for (let i = 0; i < count; i++) {
+      blades.set(all.subarray(i * stride, i * stride + 4), i * 4);
+      heights[i] = all[i * stride + 4];
+    }
     // Brin : 5 sommets, 3 triangles, effilé vers la pointe.
     const geometry = new THREE.InstancedBufferGeometry();
     geometry.setAttribute(
@@ -100,9 +89,7 @@ export default function Herbe() {
       new THREE.Float32BufferAttribute([-0.06, 0, 0, 0.06, 0, 0, -0.04, 0.55, 0, 0.04, 0.55, 0, 0, 1, 0], 3),
     );
     geometry.setIndex([0, 1, 3, 0, 3, 2, 2, 3, 4]);
-    const heights = new Float32Array(count);
-    for (let i = 0; i < count; i++) heights[i] = heightAt(list[i * 4], list[i * 4 + 1]);
-    geometry.setAttribute('blade', new THREE.InstancedBufferAttribute(new Float32Array(list), 4));
+    geometry.setAttribute('blade', new THREE.InstancedBufferAttribute(blades, 4));
     geometry.setAttribute('lift', new THREE.InstancedBufferAttribute(heights, 1));
     geometry.instanceCount = count;
     const material = new THREE.ShaderMaterial({
@@ -150,12 +137,12 @@ export default function Herbe() {
   });
   // Cailloux épars dans les pelouses (rochers du pack nature, réduits).
   const pebbles = useMemo(() => {
-    const list = scatter(0.03);
+    const list = sown.pebbles;
     const placed = [];
-    for (let i = 0; i < list.length; i += 4)
+    for (let i = 0; i < list.length; i += BLADE)
       placed.push({
         x: list[i],
-        y: heightAt(list[i], list[i + 1]),
+        y: list[i + 4],
         z: list[i + 1],
         ry: list[i + 2] * 6.28,
         scale: 0.22 + list[i + 3] * 0.25,

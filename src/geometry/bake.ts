@@ -139,6 +139,9 @@ export class Light {
     const sx = px + nx * 0.3;
     const sy = py + ny * 0.3;
     const sz = pz + nz * 0.3;
+    // Faces tournées vers le bas (dessous de l'île) : pas d'horizon au-dessus à compter, mais la
+    // lumière renvoyée par la mer de nuages ; un dessous doux, jamais noir.
+    if (ny < -0.25) return 0.7 + 0.12 * (1 + ny);
     const flat = Math.hypot(nx, nz);
     let total = 0;
     let weight = 0;

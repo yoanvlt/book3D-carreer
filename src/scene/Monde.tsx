@@ -51,6 +51,11 @@ function buildInWorker(): Promise<WorldBuild> {
 }
 
 let pending: Promise<[WorldBuild, Map<string, THREE.BufferGeometry>]> | null = null;
+/** Semis de l'herbe et des cailloux, calculés dans le worker (lus par Herbe.tsx). */
+export const sown: { grass: Float32Array<ArrayBufferLike>; pebbles: Float32Array<ArrayBufferLike> } = {
+  grass: new Float32Array(0),
+  pebbles: new Float32Array(0),
+};
 /** Lancé une fois (et dès l'import du module) : worker et modèles en parallèle. */
 export function prepareWorld() {
   pending ??= Promise.all([buildInWorker(), loadKits('ville', (f) => loadingStep('modeles', f))]);
@@ -137,6 +142,8 @@ export default function Monde({ onBuilt }: { onBuilt: () => void }) {
     prepareWorld().then(([world]) => {
       if (!live) return;
       setGroundLight(world.ground.data, world.ground.size, world.ground.min, world.ground.extent);
+      sown.grass = world.grass;
+      sown.pebbles = world.pebbles;
       const statics: THREE.Object3D[] = [
         staticMesh(world.terrain, 'ground'),
         staticMesh(world.island.data, 'baked', world.island.light),

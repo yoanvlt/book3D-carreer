@@ -22,6 +22,7 @@ page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
 page.on('pageerror', (e) => errors.push(e.message));
 await page.goto(base + '?debug=1');
 await page.waitForFunction(() => window.__careerverse?.state().ready, null, { timeout: 180000 });
+await page.evaluate(() => window.__careerverse.setState({ quality: 'high', qualityAuto: false }));
 await page.evaluate(() => {
   window.__careerverse.holdFlight(1);
   window.__careerverse.enter();
@@ -44,7 +45,7 @@ await page.waitForTimeout(300);
 await saveShot(page, `${out}/robot-salue`);
 // Personnages au travail (vues fixes).
 const SHOTS = {
-  jardinier: { position: [-27, 4.5, -30], target: [-34.3, 1, -39], fov: 45 },
+  jardinier: { position: [-40, 4.2, -27.5], target: [-34.3, 1, -39], fov: 45 },
   livreur: { position: [2, 4, 17.5], target: [-5.4, 1, 24], fov: 45 },
   chariot: { position: [-35.5, 6.5, -13], target: [-50, 1, -17], fov: 48 },
   astronome: { position: [12, 9, -26], target: [19.8, 5, -35.6], fov: 45 },
