@@ -1,6 +1,6 @@
 import { buildings, WORLD, type Point } from './config';
 import { heightAt } from './terrain';
-import { trees, benches, lamps } from './landscape';
+import { trees, benches, lamps, bollards, bikeRacks, fences } from './landscape';
 interface Obstacle {
   x: number;
   z: number;
@@ -53,6 +53,25 @@ export const allObstacles = [
     angle: b.angle,
     bottom: heightAt(...b.p),
     top: heightAt(...b.p) + 1.3,
+  })),
+  ...bollards.map((p) => ({ x: p[0], z: p[1], halfX: 0.15, halfZ: 0.15, angle: 0, bottom: 0.65, top: 1.6 })),
+  ...bikeRacks.map((r) => ({
+    x: r.p[0],
+    z: r.p[1],
+    halfX: 1.6,
+    halfZ: 0.5,
+    angle: r.angle,
+    bottom: heightAt(...r.p),
+    top: heightAt(...r.p) + 1.1,
+  })),
+  ...fences.map(([a, b]) => ({
+    x: (a[0] + b[0]) / 2,
+    z: (a[1] + b[1]) / 2,
+    halfX: Math.hypot(b[0] - a[0], b[1] - a[1]) / 2,
+    halfZ: 0.08,
+    angle: -Math.atan2(b[1] - a[1], b[0] - a[0]),
+    bottom: heightAt(...a),
+    top: heightAt(...a) + 1,
   })),
   ...lamps.map((p) => ({
     x: p[0],

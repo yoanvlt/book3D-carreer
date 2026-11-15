@@ -1,11 +1,11 @@
 import { color as C } from '../design/tokens';
 import { Box } from './Primitives';
 import StaticBatch from './StaticBatch';
-import { benches, lamps } from '../world/landscape';
+import { benches, bikeRacks, bins, bollards, fences, lamps, streetPlates } from '../world/landscape';
 import { buildings } from '../world/config';
 
-import { Trees, Shrubs } from './Vegetation';
-import { Bench, Lamp, Pergola } from './Furniture';
+import { Trees, Hedges, GroundCover } from './Vegetation';
+import { Bench, BikeRack, Bin, Bollard, Fence, Lamp, Pergola } from './Furniture';
 import { Monument, Wayfinding } from './Plaza';
 
 /** Décor extérieur : végétation, mobilier, place et murs de soutènement des bâtiments en hauteur. */
@@ -32,7 +32,8 @@ export default function Environment() {
   return (
     <>
       <Trees />
-      <Shrubs />
+      <Hedges />
+      <GroundCover />
       <Wayfinding />
       <StaticBatch>
         <Monument />
@@ -42,7 +43,19 @@ export default function Environment() {
           <Bench key={i} {...b} />
         ))}
         {lamps.map((p, i) => (
-          <Lamp key={i} p={p} />
+          <Lamp key={i} p={p} plate={streetPlates[i]} />
+        ))}
+        {bins.map((b, i) => (
+          <Bin key={i} {...b} />
+        ))}
+        {bollards.map((p, i) => (
+          <Bollard key={i} p={p} />
+        ))}
+        {bikeRacks.map((r, i) => (
+          <BikeRack key={i} {...r} />
+        ))}
+        {fences.map(([a, b], i) => (
+          <Fence key={i} a={a} b={b} />
         ))}
       </StaticBatch>
     </>

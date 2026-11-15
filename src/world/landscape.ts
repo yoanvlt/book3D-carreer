@@ -98,3 +98,59 @@ export const lamps: Point[] = [
   [17, 27],
   [-16, 23],
 ];
+
+/** Pelouses fleuries et plates-bandes : centre, demi-axes et angle (x, z, rx, rz, angle). */
+export const gardens: [number, number, number, number, number][] = [
+  [-41, 39, 9, 5, -0.4],
+  [-25, 44, 13, 4, 0],
+  [4, 45, 13, 4, 0.1],
+  [46, 18, 4, 15, -0.1],
+  [-48, 20, 5, 13, 0],
+  [5, -47, 12, 4, 0.2],
+  [-41, -23, 4, 11, -0.3],
+  [-25, -37, 11, 3, 0.05],
+  [23, -35, 11, 4, 0.3],
+  [43, -5, 4, 12, 0],
+  [38, 28, 4, 7, -0.55],
+  [24, 39, 9, 3.6, 0],
+  [-23, 37, 8, 4, -0.5],
+  [-42, 12, 3.5, 10, 0],
+  [-16, -5, 3.2, 4.4, -0.2],
+  [16, 3, 3.3, 4, 0.3],
+  [-13, -17, 2.5, 3, 0],
+];
+
+/** Poubelle à l'extrémité de chaque banc (dans le volume de collision du banc, à 1,9 m). */
+export const bins: { p: Point; angle: number }[] = benches.map((b) => ({
+  p: [b.p[0] + Math.cos(b.angle) * 1.9, b.p[1] - Math.sin(b.angle) * 1.9] as Point,
+  angle: b.angle,
+}));
+/** Bornes sur les bords nord et sud de la place. */
+export const bollards: Point[] = [
+  [-2.6, -5.75],
+  [2.6, -5.75],
+  [-2.6, 5.75],
+  [2.6, 5.75],
+];
+/** Supports à vélos : position, orientation, couleurs des vélos garés. */
+export const bikeRacks: { p: Point; angle: number; bikes: string[] }[] = [
+  { p: [-5.5, -7.8], angle: 0, bikes: ['#3f9c88', '#d64a3f'] },
+  { p: [5.2, 7.9], angle: 0, bikes: ['#e8ad45'] },
+];
+/** Clôtures basses le long des pelouses du nord. */
+export const fences: [Point, Point][] = [
+  [
+    [-36, 40.3],
+    [-15, 40.3],
+  ],
+  [
+    [-7, 41.6],
+    [14, 41.6],
+  ],
+];
+/** Plaques de rue portées par certains lampadaires (indice dans lamps). */
+export const streetPlates: Record<number, string> = {
+  0: 'Place centrale',
+  6: 'Rue des Ateliers',
+  9: 'Allée de Veolia',
+};
