@@ -135,7 +135,7 @@ export function atlasPixels(): Uint8Array {
 }
 
 /** Composantes OKLab d'une couleur sRGB (0-1), pour choisir la case la plus proche. */
-export function oklab([r, g, b]: number[]): [number, number, number] {
+function oklab([r, g, b]: number[]): [number, number, number] {
   const lin = (c: number) => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
   const [R, G, B] = [lin(r), lin(g), lin(b)];
   const l = Math.cbrt(0.4122214708 * R + 0.5363325363 * G + 0.0514459929 * B);
@@ -151,8 +151,7 @@ export function oklab([r, g, b]: number[]): [number, number, number] {
 /**
  * Case de la palette la plus proche d'une couleur des kits, après adoucissement : saturation
  * réduite de 40 %, clarté remontée vers le pastel. Les accents des six lieux sont exclus : ils
- * sont réservés aux enseignes et aux bâtiments.
- */
+ * sont réservés aux enseignes et aux bâtiments. @public */
 export function nearestSwatch(rgb: number[]): number {
   const [L, a, b] = oklab(rgb);
   const soft: [number, number, number] = [L + (0.78 - L) * 0.18, a * 0.6, b * 0.6];

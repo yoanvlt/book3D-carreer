@@ -19,17 +19,15 @@ import { Clouds } from './Sky';
 
 // Contours (postprocessing) : téléchargés seulement en qualité Soignée.
 const Effects = lazy(() => import('./Effects'));
-// Planche du kit (`?debug=1&kit`), pour le contrôle visuel des pièces et des matières.
-const KitShowcase = lazy(() => import('./KitShowcase'));
 // Planche de direction artistique V8 (`?debug=1&da`).
 const DirectionArtistique = lazy(() => import('./DirectionArtistique'));
 const debugQuery = new URLSearchParams(window.location.search);
 const artBoard = debugQuery.has('debug') && debugQuery.has('da');
-const kitShowcase = (debugQuery.has('debug') && debugQuery.has('kit')) || artBoard;
+const kitShowcase = artBoard;
 import { useGame, setState, getState, player, cameraMode, passage } from '../state';
 
 // Le monde se construit dès le chargement du code de la scène : worker et modèles en parallèle.
-if (!debugQuery.has('kit') && !debugQuery.has('da')) prepareWorld();
+if (!artBoard) prepareWorld();
 
 /**
  * Une fois le monde monté : compilation des matières (compileAsync, en parallèle quand le pilote
@@ -166,7 +164,9 @@ export default function World() {
         color={scene.sun.color}
       />
       {kitShowcase ? (
-        <Suspense fallback={null}>{artBoard ? <DirectionArtistique /> : <KitShowcase />}</Suspense>
+        <Suspense fallback={null}>
+          <DirectionArtistique />
+        </Suspense>
       ) : interior ? (
         <Interior />
       ) : (

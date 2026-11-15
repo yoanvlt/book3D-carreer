@@ -22,6 +22,34 @@ export const ui = {
   backdrop: 'rgba(20, 34, 44, 0.42)',
 } as const;
 
+/**
+ * Désature une couleur sRGB (#rrggbb) : la saturation HSL est multipliée par 1 - amount.
+ * Sert à adoucir les aplats les plus vifs du monde 3D (V6 : -12 %) sans toucher à l'interface.
+ */
+function muted(hex: string, amount = 0.12): string {
+  const n = parseInt(hex.slice(1), 16);
+  const [r, g, b] = [(n >> 16) & 255, (n >> 8) & 255, n & 255].map((v) => v / 255);
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  const l = (max + min) / 2;
+  const d = max - min;
+  if (d === 0) return hex;
+  let s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+  let h = max === r ? (g - b) / d + (g < b ? 6 : 0) : max === g ? (b - r) / d + 2 : (r - g) / d + 4;
+  h /= 6;
+  s *= 1 - amount;
+  const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+  const p = 2 * l - q;
+  const channel = (t: number) => {
+    t = (t + 1) % 1;
+    const v = t < 1 / 6 ? p + (q - p) * 6 * t : t < 1 / 2 ? q : t < 2 / 3 ? p + (q - p) * (2 / 3 - t) * 6 : p;
+    return Math.round(v * 255)
+      .toString(16)
+      .padStart(2, '0');
+  };
+  return '#' + channel(h + 1 / 3) + channel(h) + channel(h - 1 / 3);
+}
+
 export const typography = {
   family: "'Bricolage Grotesque Variable', 'Bricolage Grotesque', system-ui, sans-serif",
   /** Tailles en px. Aucun texte d'information sous 13 px. */
@@ -50,34 +78,6 @@ const shadow = {
   raised: '0 5px 0 ' + ui.accentShade,
   pressed: '0 2px 0 ' + ui.accentShade,
 } as const;
-
-/**
- * Désature une couleur sRGB (#rrggbb) : la saturation HSL est multipliée par 1 - amount.
- * Sert à adoucir les aplats les plus vifs du monde 3D (V6 : -12 %) sans toucher à l'interface.
- */
-export function muted(hex: string, amount = 0.12): string {
-  const n = parseInt(hex.slice(1), 16);
-  const [r, g, b] = [(n >> 16) & 255, (n >> 8) & 255, n & 255].map((v) => v / 255);
-  const max = Math.max(r, g, b);
-  const min = Math.min(r, g, b);
-  const l = (max + min) / 2;
-  const d = max - min;
-  if (d === 0) return hex;
-  let s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-  let h = max === r ? (g - b) / d + (g < b ? 6 : 0) : max === g ? (b - r) / d + 2 : (r - g) / d + 4;
-  h /= 6;
-  s *= 1 - amount;
-  const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
-  const p = 2 * l - q;
-  const channel = (t: number) => {
-    t = (t + 1) % 1;
-    const v = t < 1 / 6 ? p + (q - p) * 6 * t : t < 1 / 2 ? q : t < 2 / 3 ? p + (q - p) * (2 / 3 - t) * 6 : p;
-    return Math.round(v * 255)
-      .toString(16)
-      .padStart(2, '0');
-  };
-  return '#' + channel(h + 1 / 3) + channel(h) + channel(h - 1 / 3);
-}
 
 /** Accents de l'interface (plan, passeport, cartes) : inchangés, contrastes vérifiés. */
 const accent = {

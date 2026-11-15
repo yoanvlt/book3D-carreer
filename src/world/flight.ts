@@ -16,17 +16,24 @@ import { edgeRadius } from './island';
 export type V3 = [number, number, number];
 
 /** Timeline (secondes) : chaque étape et sa durée. Total entre 3 et 3,5 s. */
-export const STEPS = { crouch: 0.4, launch: 0.3, cruise: 1.9, settle: 0.45, land: 0.3 } as const;
+const STEPS = { crouch: 0.4, launch: 0.3, cruise: 1.9, settle: 0.45, land: 0.3 } as const;
 export const FLIGHT = { total: Object.values(STEPS).reduce((a, b) => a + b, 0) };
 
 /** Réglages de la pose : inclinaisons (radians), accroupissement, écrasement. */
-export const POSE = { pitch: 0.38, flare: -0.22, bank: 0.42, crouch: 0.32, squash: 0.82 } as const;
+const POSE = { pitch: 0.38, flare: -0.22, bank: 0.42, crouch: 0.32, squash: 0.82 } as const;
 
 /** Caméra de travelling : part de la hauteur d'écran occupée par le robot (2,5 m). */
-export const TRACK = { screen: 0.15, robot: 2.5, height: 0.62, ahead: 0.2 } as const;
+const TRACK = {
+  screen: 0.15,
+  robot: 2.5,
+  /** Angle entre l'arrière du robot et la caméra (65° : trois quarts, jamais de dos). */
+  azimuth: (65 * Math.PI) / 180,
+  /** Plongée de la caméra vers le robot (l'île reste dans le cadre). */
+  elevation: (28 * Math.PI) / 180,
+} as const;
 
 /** Courbes d'accélération. */
-export const ease = {
+const ease = {
   inOut: (t: number) => t * t * (3 - 2 * t),
   out: (t: number) => 1 - (1 - t) ** 3,
   in: (t: number) => t * t * t,
@@ -68,7 +75,7 @@ export function flightPath(from: V3, to: V3): Path {
   ];
 }
 
-/** Point et tangente de la courbe à s (0 à 1). */
+/** Point et tangente de la courbe à s (0 à 1). @public */
 export function pointOnFlight([a, b, c, d]: Path, s: number) {
   const u = 1 - s;
   const p = [0, 1, 2].map(
@@ -97,7 +104,7 @@ export interface Pose {
 }
 
 /** Étape de la timeline à l'instant `time` (secondes), avec l'avancement dans l'étape. */
-export function stepAt(time: number): { step: keyof typeof STEPS; u: number } {
+function stepAt(time: number): { step: keyof typeof STEPS; u: number } {
   let t = Math.max(0, time);
   for (const [step, d] of Object.entries(STEPS) as [keyof typeof STEPS, number][]) {
     if (t <= d) return { step, u: t / d };
@@ -163,21 +170,22 @@ export function flightPose(path: Path, time: number, startYaw: number, endYaw: n
 }
 
 /**
- * Caméra de travelling : de profil, légèrement en avant (jamais de dos), à la distance qui donne
- * au robot `TRACK.screen` de la hauteur d'écran ; du côté opposé à l'île, pour la garder en fond.
+ * Caméra de travelling : de trois quarts (à `TRACK.azimuth` de l'arrière, jamais de dos), en
+ * plongée, à la distance qui donne au robot `TRACK.screen` de la hauteur d'écran ; du côté
+ * extérieur de l'île, si bien que l'île reste devant, dans le cadre.
  */
 export function flightCamera(pose: Pose, path: Path, fov: number): { position: V3; target: V3 } {
   const distance = TRACK.robot / (TRACK.screen * 2 * Math.tan((fov * Math.PI) / 360));
   const dir = new Vector3(path[3][0] - path[0][0], 0, path[3][2] - path[0][2]).normalize();
   const side = new Vector3(dir.z, 0, -dir.x);
   const center = new Vector3(pose.p[0], pose.p[1] + 1.2, pose.p[2]);
-  // Côté opposé à l'île : la caméra regarde la ville derrière le robot.
   if (side.dot(new Vector3(center.x, 0, center.z)) < 0) side.negate();
-  const offset = side
-    .multiplyScalar(0.9)
-    .addScaledVector(dir, TRACK.ahead)
-    .add(new Vector3(0, TRACK.height, 0))
-    .normalize();
+  const flat = dir
+    .clone()
+    .multiplyScalar(-Math.cos(TRACK.azimuth))
+    .addScaledVector(side, Math.sin(TRACK.azimuth))
+    .multiplyScalar(Math.cos(TRACK.elevation));
+  const offset = flat.add(new Vector3(0, Math.sin(TRACK.elevation), 0));
   const position = center.clone().addScaledVector(offset, distance);
   // Jamais sous le relief de l'île.
   position.y = Math.max(position.y, heightAt(position.x, position.z) + 2);

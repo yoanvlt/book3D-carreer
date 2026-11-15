@@ -2,7 +2,7 @@ import { useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { Ball, Beam, Box, Sign, material } from '../Primitives';
-import { Bevel } from '../kit';
+import { Bevel } from './parts';
 import { color as C, scenePlaceColor, type InteriorMood } from '../../design/tokens';
 import type { BuildingId } from '../../world/config';
 import { STATION, type Station } from '../../world/narrative';

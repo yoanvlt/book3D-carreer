@@ -8,7 +8,7 @@
  * - façades : aucun arbre contre une façade ni devant une porte ;
  * - alignement : lampadaires et bancs parallèles aux bordures, à distance fixe de la chaussée.
  */
-import { buildings, entrance, localToWorld, type BuildingId, type Point } from './config';
+import { buildings, entrance, localToWorld, type BuildingId } from './config';
 import { edgeRadius } from './island';
 import { heightAt } from './terrain';
 import { FOUNTAIN, INNER, LOOP, OUTER, PARCELS, ROAD_SINK, ROAD_TILES, zoneAt, type Zone } from './plan';
@@ -31,8 +31,6 @@ export type Model =
   | 'rocher-a'
   | 'rocher-c'
   | 'rocher-e'
-  | 'plante-eau'
-  | 'nenuphar'
   | 'voiture'
   | 'citadine';
 
@@ -49,7 +47,7 @@ export interface Item {
   parcel?: BuildingId;
 }
 
-/** Zones acceptées par type d'objet. */
+/** Zones acceptées par type d'objet. @public */
 export const ZONES: Record<string, Zone[]> = {
   route: ['route'],
   'route-passage': ['route'],
@@ -68,8 +66,6 @@ export const ZONES: Record<string, Zone[]> = {
   'rocher-a': ['pelouse'],
   'rocher-c': ['pelouse'],
   'rocher-e': ['pelouse'],
-  'plante-eau': ['place'],
-  nenuphar: ['place'],
   voiture: ['parcelle'],
   citadine: ['parcelle'],
 };
@@ -268,7 +264,7 @@ export const decor: Item[] = items.filter((item, i) => {
 /** Ce qui gêne la marche (rayon > 0), pour les collisions. */
 export const solids = decor.filter((d) => d.radius > 0 && !d.model.startsWith('route'));
 
-/** Distance d'un point à la façade d'entrée d'un lieu (couloir de 5 m devant la porte). */
+/** Distance d'un point à la façade d'entrée d'un lieu (couloir de 5 m devant la porte). @public */
 export function inFrontOfDoor(x: number, z: number) {
   return buildings.some((b) => {
     const [ex, ez] = entrance(b);
@@ -278,6 +274,3 @@ export function inFrontOfDoor(x: number, z: number) {
     return along > -3.5 && along < 6 && across < 2.5;
   });
 }
-
-/** Point utilisé par les tests : centre de la fontaine. */
-export const fountainPoint: Point = FOUNTAIN;

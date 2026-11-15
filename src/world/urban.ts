@@ -6,7 +6,7 @@ import { buildings, doorPoint, entrance, type Point } from './config';
 import { FOUNTAIN, LOOP } from './plan';
 
 const { west, east, north, south } = LOOP;
-/** Axes des rues : la boucle, fermée. */
+/** Axes des rues : la boucle, fermée. @public */
 export const streets: Point[][] = [
   [
     [west, north],
@@ -34,7 +34,7 @@ export const streets: Point[][] = [
   ],
 ];
 
-/** Accès : de la rue la plus proche au seuil de chaque porte, en ligne droite. */
+/** Accès : de la rue la plus proche au seuil de chaque porte, en ligne droite. @public */
 export const approaches = buildings.map((b) => {
   const door = entrance(b);
   const [dx, dz] = [Math.sin(b.rotation), Math.cos(b.rotation)];

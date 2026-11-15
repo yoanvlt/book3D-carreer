@@ -1,34 +1,17 @@
 import StaticBatch from './StaticBatch';
 import { interiors } from '../design/tokens';
-import { buildings, type BuildingId } from '../world/config';
+import { buildings } from '../world/config';
 import { stationsFor } from '../world/narrative';
 import { useGame } from '../state';
-import type { InteriorMood } from '../design/tokens';
 import Room from './interiors/Room';
 import Exhibit from './interiors/Exhibit';
-import ProfileInterior from './interiors/Profile';
-import InnovationInterior from './interiors/Innovation';
-import MechanismInterior from './interiors/Mechanism';
-import DiscoveryInterior from './interiors/Discovery';
-import GalleryInterior from './interiors/Gallery';
-import VeoliaInterior from './interiors/Veolia';
-
-/** Un fichier par intérieur, dans src/scene/interiors/. */
-const THEMES: Record<BuildingId, (props: { mood: InteriorMood }) => React.JSX.Element> = {
-  profile: ProfileInterior,
-  'project-1': InnovationInterior,
-  'project-2': MechanismInterior,
-  'project-3': DiscoveryInterior,
-  missions: GalleryInterior,
-  veolia: VeoliaInterior,
-};
+import Mobilier from './interiors/Mobilier';
 
 export default function Interior() {
   const { interior } = useGame();
   if (!interior) return null;
   const b = buildings.find((b) => b.id === interior)!;
   const mood = interiors[b.id];
-  const Theme = THEMES[b.id];
   // Une clé par lieu : la salle est reconstruite (et regroupée) à chaque changement d'intérieur.
   return (
     <group key={b.id}>
@@ -39,7 +22,7 @@ export default function Interior() {
       <directionalLight position={[14, 6, 2]} intensity={mood.lightIntensity * 0.45} color={mood.light} />
       <directionalLight position={[-14, 6, 2]} intensity={mood.lightIntensity * 0.45} color={mood.light} />
       <Room id={b.id} mood={mood}>
-        <Theme mood={mood} />
+        <Mobilier id={b.id} />
       </Room>
       <StaticBatch>
         {stationsFor(b.id).map((station) => (

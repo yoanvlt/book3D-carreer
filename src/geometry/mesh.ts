@@ -20,10 +20,10 @@ export interface Frame {
   z: number;
   ry: number;
 }
-export const ORIGIN: Frame = { x: 0, y: 0, z: 0, ry: 0 };
+const ORIGIN: Frame = { x: 0, y: 0, z: 0, ry: 0 };
 
 /** Pas maximal entre deux sommets d'une grande face. */
-export const STEP = 1.6;
+const STEP = 1.6;
 
 type V3 = [number, number, number];
 
@@ -128,10 +128,3 @@ export const gradient =
 
 /** Nombre de cases pour une longueur donnée. */
 export const cells = (length: number) => Math.max(1, Math.ceil(length / STEP - 1e-6));
-
-/** Fusionne plusieurs maillages en un seul. */
-export function mergeMeshes(list: MeshData[]): MeshData {
-  const b = new Builder();
-  for (const m of list) b.append(m);
-  return b.finish();
-}

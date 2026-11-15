@@ -1,6 +1,7 @@
 import { useSyncExternalStore } from 'react';
 import { WORLD, CAMERA, entrance, doorPoint, buildings, type BuildingId, type Point } from './world/config';
-import { decor } from './world/placer';
+import { sitOnBench } from './robot';
+import { TOUR, tourStep } from './tour';
 import { heightAt } from './world/terrain';
 import { findRoute } from './world/navigation';
 import { blocked } from './world/collision';
@@ -72,20 +73,6 @@ export const useGame = () =>
     listeners.add(fn);
     return () => listeners.delete(fn);
   }, getState);
-export function cameraMode(s = state): CameraMode {
-  if (s.phase === 'explore') return s.interior ? 'interior' : 'exterior';
-  return (
-    {
-      home: 'aerial',
-      entering: 'arrival',
-      travel: 'guided',
-      doorway: 'door',
-      showcase: 'presentation',
-      returning: 'return',
-      homing: 'homeward',
-    } as const
-  )[s.phase];
-}
 export const player = {
   x: WORLD.spawn[0],
   z: WORLD.spawn[1],
@@ -342,70 +329,12 @@ export function interact() {
   } else if (state.nearby) openBuilding(state.nearby);
   else sitOnBench();
 }
-/** Bancs du décor (position, orientation), pour s'asseoir avec E. */
-export const benches = decor.filter((d) => d.model === 'banc');
-/** S'asseoir sur le banc le plus proche (à moins de 2 m), face à son côté le plus proche. */
-export function sitOnBench() {
-  const near = benches
-    .map((b) => ({ b, d: Math.hypot(b.x - player.x, b.z - player.z) }))
-    .filter((x) => x.d < 2.2)
-    .sort((a, c) => a.d - c.d)[0];
-  if (!near) return false;
-  const { b } = near;
-  // Le banc est symétrique : le robot s'assoit du côté où il se trouve, dos au dossier absent.
-  const nx = Math.sin(b.ry);
-  const nz = Math.cos(b.ry);
-  const side = (player.x - b.x) * nx + (player.z - b.z) * nz >= 0 ? 1 : -1;
-  robotUi.sit = {
-    x: b.x + nx * side * 0.05,
-    z: b.z + nz * side * 0.05,
-    ry: side > 0 ? b.ry : b.ry + Math.PI,
-  };
-  player.speed = 0;
-  return true;
-}
-/** Se relever (au premier mouvement) et saluer (H). */
-export function standUp() {
-  if (!robotUi.sit) return;
-  const { ry } = robotUi.sit;
-  player.x = robotUi.sit.x + Math.sin(ry) * 0.9;
-  player.z = robotUi.sit.z + Math.cos(ry) * 0.9;
-  player.angle = ry;
-  robotUi.sit = null;
-}
-export function wave() {
-  robotUi.waveUntil = performance.now() + 1800;
-}
 export function guideToStation(index: number) {
   if (!state.interior || state.phase !== 'explore') return;
   const s = stationsFor(state.interior)[index];
   if (!s) return;
   startJourney(indoorRoute([player.x, player.z], stationApproach(s), state.interior), null);
 }
-/** Robot de l'accueil : position du curseur (écran normalisé) et signe de la main au survol. */
-export const robotUi = {
-  pointer: [0, 0] as [number, number],
-  wave: false,
-  /** Captures : vol figé à cette fraction (0 à 1) de sa durée totale ; null en jeu. */
-  hold: null as number | null,
-  /** Position et cap du robot pendant les vols, suivis par la caméra. */
-  position: [0, 0, 0] as [number, number, number],
-  heading: 0,
-  /** Assis sur un banc (position, orientation) ; null debout. */
-  sit: null as { x: number; z: number; ry: number } | null,
-  /** Salut en cours jusqu'à cet instant (performance.now). */
-  waveUntil: 0,
-  /** Vol en cours (Robot.tsx l'avance, CameraRig.tsx le suit). */
-  flight: {
-    mode: '' as '' | 'home' | 'entering' | 'homing' | 'tour' | 'back',
-    path: null as [number, number, number][] | null,
-    time: 0,
-    startYaw: 0,
-    endYaw: 0,
-    skip: 0,
-  },
-};
-
 export function goHome() {
   if (state.phase !== 'explore' || state.interior) return;
   journey.points = [];
@@ -457,25 +386,6 @@ export function walkTo(p: Point): boolean {
   return startJourney(route, null);
 }
 
-/**
- * Visite guidée depuis l'accueil : les six lieux s'enchaînent, chacun avec sa présentation complète
- * (quatre vues) et sa fiche. Durée totale : 6 × (8 + 0,8) s ≈ 53 s. On la quitte à tout moment ;
- * un clic ou Espace passe au lieu suivant.
- */
-export const TOUR = { perPlace: 8, order: buildings.map((b) => b.id) };
-function tourStep() {
-  const id = TOUR.order[state.tour ?? 0];
-  discover(id, true);
-  presentation.full = true;
-  presentation.duration = TOUR.perPlace;
-}
-export function startTour() {
-  if (state.phase !== 'home' || state.tour !== null) return;
-  setState({ tour: 0, ...overlaysClosed });
-  tourStep();
-}
-export function stopTour() {
-  if (state.tour === null) return;
-  setState({ tour: null });
-  endPresentation();
-}
+export { robotUi, standUp, wave } from './robot';
+export { TOUR, startTour, stopTour } from './tour';
+export { cameraMode } from './cameraMode';

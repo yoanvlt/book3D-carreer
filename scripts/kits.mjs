@@ -49,7 +49,6 @@ const PACKS = {
 const WORLD_MODELS = [
   ['city', 'road_straight', 'route'],
   ['city', 'road_straight_crossing', 'route-passage'],
-  ['city', 'road_tsplit', 'route-te'],
   ['city', 'road_corner_curved', 'route-courbe'],
   ['city', 'base', 'dalle', { grey: ['bordure', 'dalle'] }],
   ['city', 'streetlight', 'lampadaire', { grey: ['metal-sombre', 'gris-fonce'] }],
@@ -66,8 +65,6 @@ const WORLD_MODELS = [
   ['nature', 'rock_single_A', 'rocher-a', { grey: ['roche-profonde', 'roche', 'roche-claire'] }],
   ['nature', 'rock_single_C', 'rocher-c', { grey: ['roche-profonde', 'roche', 'roche-claire'] }],
   ['nature', 'rock_single_E', 'rocher-e', { grey: ['roche-profonde', 'roche', 'roche-claire'] }],
-  ['nature', 'waterplant_B', 'plante-eau'],
-  ['nature', 'waterlily_B', 'nenuphar'],
 ];
 const FURNITURE_MODELS = [
   'armchair',
@@ -77,7 +74,6 @@ const FURNITURE_MODELS = [
   'cabinet_small',
   'cactus_medium_A',
   'cactus_small_A',
-  'chair_A_wood',
   'chair_C',
   'chair_stool',
   'lamp_standing',
@@ -86,14 +82,11 @@ const FURNITURE_MODELS = [
   'pictureframe_large_B',
   'pictureframe_medium',
   'pictureframe_standing_A',
-  'rug_rectangle_A',
   'rug_oval_A',
   'rug_rectangle_stripes_A',
-  'shelf_A_big',
   'shelf_B_large_decorated',
   'shelf_B_small_decorated',
   'table_low',
-  'table_medium',
   'table_medium_long',
   'table_small',
 ].map((name) => [

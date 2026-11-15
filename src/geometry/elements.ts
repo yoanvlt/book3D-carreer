@@ -10,7 +10,7 @@ import type { Swatch } from '../world/palette';
 type Paint = Swatch | number;
 
 /** Ouverture commune des portes : le robot passe sans frôler. */
-export const DOOR = { w: 2.7, h: 3.3 } as const;
+const DOOR = { w: 2.7, h: 3.3 } as const;
 
 export interface WindowStyle {
   frame: Paint;

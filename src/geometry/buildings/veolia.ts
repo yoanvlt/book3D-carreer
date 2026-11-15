@@ -11,11 +11,11 @@ const D = 12;
 const H = 7;
 const RIBBON: WindowStyle = { frame: 'metal-sombre', bars: 0 };
 /** Cuves : centre (x, z local), rayon, hauteur. */
-export const TANKS: [number, number][] = [
+const TANKS: [number, number][] = [
   [13.5, 2.2],
   [18.6, 2.2],
 ];
-export const BASIN = { x: 16, z: -9, r: 3 };
+const BASIN = { x: 16, z: -9, r: 3 };
 
 export function veolia(b: Builder) {
   box(b, 0, 0, -0.5, W, H, D - 1, 'beton', { bevel: 0.08 });

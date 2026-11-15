@@ -74,7 +74,7 @@ const SHELVES: Footprint[] = [
   [9.75, ROWS[2], 0.55, 1.6],
   [-9.75, ROWS[3], 0.55, 1.6],
 ];
-export const FURNITURE: Record<BuildingId, Footprint[]> = {
+const FURNITURE: Record<BuildingId, Footprint[]> = {
   // Bibliothèques, canapé, fauteuil, table basse, guéridon.
   profile: [
     ...SHELVES,

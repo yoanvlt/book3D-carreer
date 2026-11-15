@@ -17,7 +17,7 @@ import { scene } from '../../design/tokens';
 
 let atlas: THREE.DataTexture | null = null;
 /** Atlas de la palette, généré une fois (aucun téléchargement). */
-export function atlasTexture(): THREE.DataTexture {
+function atlasTexture(): THREE.DataTexture {
   if (atlas) return atlas;
   const size = ATLAS.columns * ATLAS.cell;
   atlas = new THREE.DataTexture(atlasPixels(), size, ATLAS.rows * ATLAS.cell, THREE.RGBAFormat);

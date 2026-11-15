@@ -11,9 +11,10 @@
  */
 import type { BuildingId, Point } from './config';
 
+/** @public Utilisé par les tests. */
 export const GRID = 4;
 /** Tuile de route : 8 m de côté, chaussée de 7,2 m, bordures de 0,4 m. */
-export const TILE = 8;
+const TILE = 8;
 /** La chaussée est posée 0,24 m plus bas : son dessus est à 4 cm au-dessus du sol (pas de scintillement). */
 export const ROAD_SINK = 0.24;
 
@@ -23,7 +24,8 @@ export interface Rect {
   z0: number;
   z1: number;
 }
-export const rect = (x0: number, x1: number, z0: number, z1: number): Rect => ({ x0, x1, z0, z1 });
+const rect = (x0: number, x1: number, z0: number, z1: number): Rect => ({ x0, x1, z0, z1 });
+/** @public Utilisé par les tests. */
 export const inside = (r: Rect, x: number, z: number, margin = 0) =>
   x >= r.x0 - margin && x <= r.x1 + margin && z >= r.z0 - margin && z <= r.z1 + margin;
 /** Distance signée au rectangle (négative dedans). */
@@ -36,7 +38,7 @@ export function rectDistance(r: Rect, x: number, z: number) {
 /** Axes de la boucle de rues (centres des tuiles). */
 export const LOOP = { west: -32, east: 32, north: -24, south: 16 } as const;
 
-export type RoadKind = 'route' | 'route-passage' | 'route-courbe';
+type RoadKind = 'route' | 'route-passage' | 'route-courbe';
 export interface RoadTile {
   kind: RoadKind;
   x: number;
@@ -69,7 +71,7 @@ function loopTiles(): RoadTile[] {
 }
 export const ROAD_TILES = loopTiles();
 
-/** Chaussée de la boucle, en rectangles (pour les zones et les tests). */
+/** Chaussée de la boucle, en rectangles (pour les zones et les tests). @public */
 export const CARRIAGEWAYS: Rect[] = [
   rect(LOOP.west - 4, LOOP.east + 4, LOOP.north - 4, LOOP.north + 4),
   rect(LOOP.west - 4, LOOP.east + 4, LOOP.south - 4, LOOP.south + 4),
@@ -78,7 +80,7 @@ export const CARRIAGEWAYS: Rect[] = [
 ];
 
 /** Trottoirs : 3 m de chaque côté de la chaussée (sauf dans les virages, déjà pavés). */
-export const SIDEWALK = 3;
+const SIDEWALK = 3;
 export const OUTER = rect(
   LOOP.west - 4 - SIDEWALK,
   LOOP.east + 4 + SIDEWALK,
@@ -111,6 +113,7 @@ export const PARCELS: Parcel[] = [
   { id: 'veolia', bounds: rect(OUTER.x1, 58, -12, 26) },
   { id: 'project-1', bounds: rect(-12, 12, OUTER.z1, 40) },
 ];
+/** @public Utilisé par les tests. */
 export const parcelOf = (id: BuildingId) => PARCELS.find((p) => p.id === id)!;
 
 export type Zone = 'route' | 'trottoir' | 'place' | 'parcelle' | 'pelouse';

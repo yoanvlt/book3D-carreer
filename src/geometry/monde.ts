@@ -33,7 +33,7 @@ export interface Lit {
   data: MeshData;
   light: Float32Array;
 }
-export interface Placed {
+interface Placed {
   x: number;
   y: number;
   z: number;

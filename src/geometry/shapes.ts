@@ -11,7 +11,7 @@ type V3 = [number, number, number];
 type Paint = Swatch | number;
 
 /** Chanfrein par défaut des arêtes (0,1 m), comme les kits à l'échelle du site. */
-export const BEVEL = 0.1;
+const BEVEL = 0.1;
 
 function oriented(
   b: Builder,

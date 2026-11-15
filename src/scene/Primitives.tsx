@@ -85,27 +85,6 @@ export const FINISH = {
 const cube = new THREE.BoxGeometry(1, 1, 1);
 const cylinder = new THREE.CylinderGeometry(1, 1, 1, 18);
 const ball = new THREE.IcosahedronGeometry(1, 1);
-const cone = new THREE.ConeGeometry(1, 1, 18);
-const tube = new THREE.CylinderGeometry(1, 1, 1, 10);
-const halfBall = new THREE.SphereGeometry(1, 24, 8, 0, Math.PI * 2, 0, Math.PI / 2);
-/** Prisme triangulaire : pignon (triangle isocèle, base 1 en x, sommet à y = 1), profondeur 1 en z. */
-function prism(shape: [number, number][]) {
-  const s = new THREE.Shape(shape.map(([x, y]) => new THREE.Vector2(x, y)));
-  const g = new THREE.ExtrudeGeometry(s, { depth: 1, bevelEnabled: false });
-  g.translate(0, 0, -0.5);
-  return g;
-}
-const gable = prism([
-  [-0.5, 0],
-  [0.5, 0],
-  [0, 1],
-]);
-/** Rampe : triangle rectangle, hauteur nulle en x = -0,5 et 1 en x = 0,5. */
-const ramp = prism([
-  [-0.5, 0],
-  [0.5, 0],
-  [0.5, 1],
-]);
 
 interface PrimitiveProps {
   p?: V3;
@@ -145,142 +124,6 @@ function primitive(geometry: THREE.BufferGeometry) {
 export const Box = primitive(cube);
 export const Cylinder = primitive(cylinder);
 export const Ball = primitive(ball);
-export const Cone = primitive(cone);
-/** Cylindre à 10 pans pour les petites pièces (tuyaux, montants). */
-export const Rod = primitive(tube);
-export const Dome = primitive(halfBall);
-export const Gable = primitive(gable);
-export const Ramp = primitive(ramp);
-
-/**
- * Segment de cylindre (paroi courbe ouverte) de rayon 1 et de hauteur 1, couvrant l'angle `arc`
- * centré sur +z : mis à l'échelle [r, h, r], il épouse un tambour de rayon r (fenêtres, bandeaux).
- */
-const arcs = new Map<string, THREE.BufferGeometry>();
-export function Arc({
-  p = [0, 0, 0],
-  ry = 0,
-  radius,
-  height,
-  arc,
-  color = C.cream,
-  finish,
-  shadow = false,
-}: {
-  p?: V3;
-  ry?: number;
-  radius: number;
-  height: number;
-  arc: number;
-  color?: string;
-  finish?: Finish;
-  shadow?: boolean;
-}) {
-  const key = arc.toFixed(4);
-  let geometry = arcs.get(key);
-  if (!geometry) {
-    // thetaStart mesuré depuis +z : centrer l'arc sur +z.
-    geometry = new THREE.CylinderGeometry(
-      1,
-      1,
-      1,
-      Math.max(3, Math.ceil(arc / 0.12)),
-      1,
-      true,
-      -arc / 2,
-      arc,
-    );
-    arcs.set(key, geometry);
-  }
-  return (
-    <mesh
-      position={p}
-      rotation={[0, ry, 0]}
-      scale={[radius, height, radius]}
-      geometry={geometry}
-      material={material(color, finish)}
-      castShadow={shadow}
-      receiveShadow
-      dispose={null}
-    />
-  );
-}
-
-/** Tore (ou arc de tore) partagé par rayon, section et angle. */
-const tori = new Map<string, THREE.BufferGeometry>();
-export function Torus({
-  p = [0, 0, 0],
-  r = [0, 0, 0],
-  radius,
-  tube: t,
-  arc = Math.PI * 2,
-  segments = 32,
-  color = C.cream,
-  finish,
-}: {
-  p?: V3;
-  r?: V3;
-  radius: number;
-  tube: number;
-  arc?: number;
-  segments?: number;
-  color?: string;
-  finish?: Finish;
-}) {
-  const key = [radius, t, arc, segments].join(',');
-  let geometry = tori.get(key);
-  if (!geometry) {
-    geometry = new THREE.TorusGeometry(radius, t, 6, segments, arc);
-    tori.set(key, geometry);
-  }
-  return (
-    <mesh
-      position={p}
-      rotation={r}
-      geometry={geometry}
-      material={material(color, finish)}
-      castShadow
-      receiveShadow
-      dispose={null}
-    />
-  );
-}
-
-/** Tuyau (cylindre) entre deux points. */
-export function Pipe({
-  a,
-  b,
-  radius = 0.12,
-  color = C.metal,
-  finish,
-  shadow = true,
-}: {
-  a: V3;
-  b: V3;
-  radius?: number;
-  color?: string;
-  finish?: Finish;
-  shadow?: boolean;
-}) {
-  const start = new THREE.Vector3(...a);
-  const end = new THREE.Vector3(...b);
-  const q = new THREE.Quaternion().setFromUnitVectors(
-    new THREE.Vector3(0, 1, 0),
-    end.clone().sub(start).normalize(),
-  );
-  return (
-    <mesh
-      position={start.clone().add(end).multiplyScalar(0.5)}
-      quaternion={q}
-      geometry={tube}
-      scale={[radius, start.distanceTo(end), radius]}
-      material={material(color, finish)}
-      castShadow={shadow}
-      receiveShadow
-      dispose={null}
-    />
-  );
-}
 
 /** Poutre entre deux points. */
 export function Beam({
@@ -392,9 +235,4 @@ export function Sign({
       />
     </mesh>
   );
-}
-
-/** n éléments produits par fn(i, n) : pour répartir des pièces régulièrement. */
-export function times<T>(n: number, fn: (i: number, n: number) => T): T[] {
-  return Array.from({ length: n }, (_, i) => fn(i, n));
 }

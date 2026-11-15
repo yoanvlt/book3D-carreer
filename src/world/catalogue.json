@@ -12,12 +12,6 @@
       "triangles": 64,
       "cases": ["beton-profond", "enrobe", "enrobe-clair", "marquage", "marquage-ocre"]
     },
-    "route-te": {
-      "min": [-4, 0, -4],
-      "max": [4, 0.4, 4],
-      "triangles": 138,
-      "cases": ["beton-profond", "enrobe", "enrobe-clair", "marquage", "marquage-ocre"]
-    },
     "route-courbe": {
       "min": [-4, 0, -4],
       "max": [4, 0.4, 4],
@@ -136,18 +130,6 @@
       "max": [0.931, 0.779, 0.651],
       "triangles": 71,
       "cases": ["roche", "roche-claire"]
-    },
-    "plante-eau": {
-      "min": [-0.338, -0.076, -0.257],
-      "max": [0.294, 0.941, 0.156],
-      "triangles": 162,
-      "cases": ["bois", "bois-profond", "feuillage", "feuillage-clair", "feuillage-profond"]
-    },
-    "nenuphar": {
-      "min": [-0.423, 0, -0.423],
-      "max": [0.423, 0.069, 0.42],
-      "triangles": 68,
-      "cases": ["feuillage", "feuillage-profond"]
     }
   },
   "meubles": {
@@ -220,12 +202,6 @@
       "triangles": 252,
       "cases": ["bois", "bois-profond", "feuillage", "feuillage-clair", "herbe", "tissu-rouge"]
     },
-    "chair-a-wood": {
-      "min": [-0.375, 0, -0.47],
-      "max": [0.375, 1.258, 0.375],
-      "triangles": 308,
-      "cases": ["bois", "bois-profond"]
-    },
     "chair-c": {
       "min": [-0.375, 0, -0.561],
       "max": [0.375, 1.203, 0.375],
@@ -274,12 +250,6 @@
       "triangles": 74,
       "cases": ["bois", "bois-clair", "marquage"]
     },
-    "rug-rectangle-a": {
-      "min": [-1.5, 0, -1],
-      "max": [1.5, 0.1, 1],
-      "triangles": 44,
-      "cases": ["bois-clair", "creme"]
-    },
     "rug-oval-a": {
       "min": [-1.5, 0, -1],
       "max": [1.5, 0.1, 1],
@@ -291,12 +261,6 @@
       "max": [1.5, 0.1, 1],
       "triangles": 68,
       "cases": ["bois-clair", "creme"]
-    },
-    "shelf-a-big": {
-      "min": [-1, -0.3, 0],
-      "max": [1, 0.1, 0.5],
-      "triangles": 212,
-      "cases": ["bois", "bois-clair", "bois-profond"]
     },
     "shelf-b-large-decorated": {
       "min": [-1, -0.1, 0],
@@ -332,12 +296,6 @@
       "min": [-1.2, 0, -0.75],
       "max": [1.2, 0.5, 0.75],
       "triangles": 276,
-      "cases": ["bois", "bois-profond"]
-    },
-    "table-medium": {
-      "min": [-1, 0, -1],
-      "max": [1, 1, 1],
-      "triangles": 168,
       "cases": ["bois", "bois-profond"]
     },
     "table-medium-long": {
