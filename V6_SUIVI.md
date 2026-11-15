@@ -179,16 +179,19 @@ Défauts vus et corrigés pendant la vérification : bordures d'allées qui trav
 
 ## Alléger l'historique Git (proposition, rien n'est fait)
 
-Le dépôt pèse 20 Mo (`.git`, compacté : 19,5 Mo). Les fichiers lourds de l'historique, mesurés objet par objet :
+Au départ de la V6, le dépôt pesait 20 Mo. **Avec les captures de la V6, il pèse 32 Mo** (`.git` compacté : 31 Mo) : les vues avant/après, leurs comparaisons et les deux qualités font 11,8 Mo de WebP. Mesure objet par objet :
 
-| Type                                | Taille compressée | Fichiers |
-| ----------------------------------- | ----------------: | -------: |
-| PNG (captures V3 et V4)             |           13,5 Mo |       53 |
-| WebP (captures V5 et V6)            |            3,6 Mo |       62 |
-| JPEG (briefs, aperçu de partage)    |            2,6 Mo |       29 |
-| tout le reste (code, sons, polices) |            0,6 Mo |      483 |
+| Type                                                              | Taille compressée | Fichiers |
+| ----------------------------------------------------------------- | ----------------: | -------: |
+| PNG (captures V3 et V4)                                           |           13,5 Mo |       53 |
+| WebP V6 (scènes, Légère, avant, après, comparaisons, kit, portes) |           11,8 Mo |      158 |
+| WebP V5                                                           |            3,6 Mo |       62 |
+| JPEG (briefs, aperçu de partage)                                  |            2,6 Mo |       29 |
+| tout le reste (code, sons, polices)                               |            0,6 Mo |      497 |
 
 **Sans réécrire l'historique** (ce qui est fait) : captures en WebP seulement, et une seule version de captures dans l'arbre. Le clone reste lourd, mais il cesse de grossir de plus d'un ou deux Mo par version.
+
+**Pour cette PR, sans réécriture** : la fusionner en « Squash and merge » puis supprimer la branche. `main` ne recevra alors que l'état final des captures V6, sans les états intermédiaires de la campagne. On peut aussi, avant la fusion, retirer de l'arbre `avant/` et `apres/` (4,4 Mo, déjà contenus dans `comparaisons/`) en gardant leurs rapports JSON, que lit le test de budget.
 
 **Pour la suite, sans réécriture** : ne plus versionner les captures. Les publier en pièce jointe d'une Release GitHub par version (`v6-captures.zip`), ou sur une branche orpheline `captures` qu'on ne clone pas par défaut. Le README pointerait vers elles.
 
@@ -202,7 +205,7 @@ git filter-repo --path-glob 'docs/screenshots/**/*.png' --path-glob 'docs/screen
 git push --force --mirror
 ```
 
-Gain attendu : environ 15 Mo sur 20. Les briefs archivés (JPEG) sont gardés : ils documentent les décisions.
+Gain attendu : environ 15 Mo (PNG et WebP V5), plus 11 Mo si l'on retire aussi les WebP V6 de l'historique après les avoir publiés ailleurs. Les briefs archivés (JPEG) sont gardés : ils documentent les décisions.
 
 ## Choix faits sans te consulter
 
