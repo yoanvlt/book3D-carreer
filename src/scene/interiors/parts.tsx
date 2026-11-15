@@ -1,4 +1,5 @@
-import { Ball, Box, Cone, Cylinder } from '../Primitives';
+import { Ball, Box, Cone, Cylinder, FINISH } from '../Primitives';
+import { Fine } from '../StaticBatch';
 import { color as C } from '../../design/tokens';
 import { ROOM, type Footprint } from '../../world/narrative';
 
@@ -72,26 +73,143 @@ function Pendant({ p, color }: { p: [number, number, number]; color: string }) {
     </group>
   );
 }
-/** Lignes lumineuses au plafond, tout le long de la salle. */
-export function CeilingLights({ color = '#ffffff' }: { color?: string }) {
-  return (
-    <>
-      {[-1, 1].map((s) => (
-        <Box
-          key={s}
-          p={[s * 4, WALL_H - 0.12, 0]}
-          s={[0.25, 0.08, D * 2 - 4]}
-          color={C.lamp}
-          finish={{ glow: color, glowIntensity: 1.1 }}
-          shadow={false}
-        />
-      ))}
-    </>
-  );
-}
 
 /** Suspensions alignées dans l'allée centrale. */
 export const pendants = (color: string) =>
   [-8, -2, 4].map((z) => <Pendant key={z} p={[0, 6.6, z]} color={color} />);
 /** Intervalles entre les rangées de stations, le long des murs. */
 export const GAPS = [9.5, 4.5, -0.5, -5.5, -10.5];
+
+/** Tapis à bordure, posé dans l'allée ou devant un meuble. */
+export function Rug({
+  p,
+  w,
+  d,
+  color,
+  border,
+}: {
+  p: [number, number];
+  w: number;
+  d: number;
+  color: string;
+  border: string;
+}) {
+  return (
+    <>
+      <Box p={[p[0], 0.012, p[1]]} s={[w, 0.02, d]} color={border} finish={FINISH.fabric} shadow={false} />
+      <Box
+        p={[p[0], 0.024, p[1]]}
+        s={[w - 0.4, 0.02, d - 0.4]}
+        color={color}
+        finish={FINISH.fabric}
+        shadow={false}
+      />
+    </>
+  );
+}
+
+/**
+ * Cadre accroché à un mur latéral (side = -1 gauche, 1 droite) : baguette, passe-partout et
+ * œuvre abstraite en aplats ; suspendu à la cimaise par deux fils.
+ */
+export function Frame({
+  side,
+  z,
+  y,
+  w,
+  h,
+  colors,
+  rail = false,
+}: {
+  side: number;
+  z: number;
+  y: number;
+  w: number;
+  h: number;
+  colors: string[];
+  rail?: boolean;
+}) {
+  return (
+    <group position={[side * (W - 0.06), y, z]} rotation={[0, (-side * Math.PI) / 2, 0]}>
+      <Box p={[0, 0, 0]} s={[w + 0.16, h + 0.16, 0.06]} color={C.ink} shadow={false} />
+      <Box p={[0, 0, 0.03]} s={[w, h, 0.02]} color={C.cream} shadow={false} />
+      <Box p={[0, 0, 0.04]} s={[w * 0.82, h * 0.8, 0.02]} color={colors[0]} shadow={false} />
+      {colors.slice(1).map((c, i) => (
+        <Box
+          key={i}
+          p={[(i % 2 ? 1 : -1) * w * 0.18, (i - 0.5) * h * 0.22, 0.05]}
+          s={[w * (0.32 - i * 0.06), h * 0.3, 0.02]}
+          r={[0, 0, i * 0.4]}
+          color={c}
+          shadow={false}
+        />
+      ))}
+      {rail && (
+        <Fine>
+          {[-1, 1].map((s) => (
+            <Box
+              key={s}
+              p={[s * w * 0.3, h / 2 + 0.5, -0.01]}
+              s={[0.01, 1, 0.01]}
+              r={[0, 0, -s * 0.2]}
+              color={C.metal}
+              shadow={false}
+            />
+          ))}
+        </Fine>
+      )}
+    </group>
+  );
+}
+
+/** Applique murale sur un mur latéral. */
+export function Sconce({
+  side,
+  z,
+  y = 3.2,
+  color = C.white,
+}: {
+  side: number;
+  z: number;
+  y?: number;
+  color?: string;
+}) {
+  return (
+    <group position={[side * (W - 0.05), y, z]} rotation={[0, (-side * Math.PI) / 2, 0]}>
+      <Box p={[0, 0, 0.04]} s={[0.16, 0.3, 0.08]} color={C.ink} shadow={false} />
+      <Cone p={[0, 0.12, 0.22]} s={[0.2, 0.24, 0.2]} r={[Math.PI, 0, 0]} color={color} shadow={false} />
+      <Ball
+        p={[0, 0.02, 0.22]}
+        s={[0.08, 0.08, 0.08]}
+        color={C.lamp}
+        finish={{ glow: C.lamp, glowIntensity: 1.6 }}
+        shadow={false}
+      />
+    </group>
+  );
+}
+
+/** Poutres apparentes en travers du plafond. */
+export function CeilingBeams({
+  color,
+  every = 3.2,
+  depth = 0.4,
+}: {
+  color: string;
+  every?: number;
+  depth?: number;
+}) {
+  return (
+    <>
+      {Array.from({ length: Math.floor((D * 2) / every) }, (_, i) => (
+        <Box
+          key={i}
+          p={[0, WALL_H - depth / 2, -D + every * (i + 0.5)]}
+          s={[W * 2, depth, 0.3]}
+          color={color}
+          finish={FINISH.wood}
+        />
+      ))}
+    </>
+  );
+}

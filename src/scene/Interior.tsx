@@ -29,8 +29,9 @@ export default function Interior() {
   const b = buildings.find((b) => b.id === interior)!;
   const mood = interiors[b.id];
   const Theme = THEMES[b.id];
+  // Une clé par lieu : la salle est reconstruite (et regroupée) à chaque changement d'intérieur.
   return (
-    <>
+    <group key={b.id}>
       <color attach='background' args={[mood.ceiling]} />
       <ambientLight color={mood.ambient} intensity={mood.ambientIntensity * 0.8} />
       <directionalLight position={[0, 12, 10]} intensity={mood.lightIntensity} color={mood.light} />
@@ -45,6 +46,6 @@ export default function Interior() {
           <Exhibit key={station.id} id={b.id} station={station} mood={mood} />
         ))}
       </StaticBatch>
-    </>
+    </group>
   );
 }

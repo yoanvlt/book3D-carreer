@@ -54,7 +54,7 @@ export function material(color: string, finish: Finish = {}) {
 }
 /** Verre : légèrement réfléchissant, jamais transparent (pas de tri coûteux). */
 export const GLASS: Finish = { rough: 0.18, metal: 0.25 };
-export const METAL: Finish = { rough: 0.35, metal: 0.55 };
+const METAL: Finish = { rough: 0.35, metal: 0.55 };
 /**
  * Finitions par matière : rugosité propre à chaque matière et motif procédural (surface.ts).
  * Une fois regroupées, toutes partagent un seul matériau : varier les matières ne coûte aucun draw call.
