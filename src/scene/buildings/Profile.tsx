@@ -1,15 +1,31 @@
 /**
- * Profil : la maison d'architecte. Atelier vitré en avancée, corps blanc à deux niveaux, étage
- * orange en porte-à-faux portant une fresque-portrait, toit de tuiles, tour-belvédère en brique
- * surmontée d'une lanterne et d'une girouette, jardin clos avec le buste, boîte aux lettres et vélo.
- * Emprise 15 × 10 : maison à gauche (x de -7,5 à 2,8), jardin à droite, porte au centre (x = 0).
+ * Profil : la maison d'architecte (V7). Rez-de-chaussée sur toute l'emprise de la maison, atelier
+ * vitré dans la façade ; étage blanc en retrait sur une terrasse ; étage orange en léger
+ * porte-à-faux portant un médaillon : un portrait de profil en relief. Toit de tuiles, cheminée,
+ * tour-belvédère en brique, jardin clos avec le buste. Arrière : porte de service, fenêtres,
+ * local poubelles. Emprise 15 × 10 : maison de x = -7,5 à 2,8, jardin à droite ; vantaux en
+ * z = 5,5, façade du rez-de-chaussée en z = 4,9.
  */
-import { Ball, Box, Cylinder, FINISH, Gable, GLASS, Rod, Sign, type V3 } from '../Primitives';
+import { useMemo } from 'react';
+import * as THREE from 'three';
+import {
+  Ball,
+  Box,
+  Cylinder,
+  FINISH,
+  Gable,
+  GLASS,
+  Rod,
+  Sign,
+  Torus,
+  material,
+  type V3,
+} from '../Primitives';
 import { Fine } from '../StaticBatch';
 import {
   AirCon,
-  Balcony,
   Bike,
+  DoorSet,
   Downpipe,
   GableRoof,
   Mailbox,
@@ -30,46 +46,81 @@ const WHITE = '#f6f1e8';
 const BRICK = '#b8573a';
 const SLATE_ROOF = '#55606a';
 const STEEL = '#2b3640';
-const SKIN = '#f1c7a1';
-const HAIR = '#4a3428';
 
-/** Fresque-portrait peinte sur la façade de l'étage (plan XY, face à +Z). */
-function Fresco({ p }: { p: V3 }) {
+/** Profil d'un buste regardant vers +x (hauteur ≈ 1,3), avec lunettes : tracé en courbes. */
+function profileShape() {
+  const s = new THREE.Shape();
+  s.moveTo(-0.75, -0.62);
+  s.lineTo(0.62, -0.62);
+  s.quadraticCurveTo(0.6, -0.4, 0.22, -0.33);
+  s.lineTo(0.2, -0.12);
+  s.quadraticCurveTo(0.3, -0.1, 0.33, -0.02);
+  s.quadraticCurveTo(0.36, 0.03, 0.3, 0.06);
+  s.lineTo(0.34, 0.1);
+  s.quadraticCurveTo(0.3, 0.13, 0.33, 0.16);
+  s.lineTo(0.42, 0.27);
+  s.quadraticCurveTo(0.4, 0.3, 0.32, 0.32);
+  s.quadraticCurveTo(0.33, 0.42, 0.3, 0.48);
+  s.quadraticCurveTo(0.22, 0.66, 0, 0.68);
+  s.quadraticCurveTo(-0.3, 0.66, -0.36, 0.4);
+  s.quadraticCurveTo(-0.4, 0.18, -0.2, 0.02);
+  s.lineTo(-0.18, -0.3);
+  s.quadraticCurveTo(-0.4, -0.36, -0.75, -0.45);
+  s.closePath();
+  return s;
+}
+
+/** Médaillon : disque clair, cerclage, portrait de profil en relief et lunettes. */
+function Medallion({ p, radius }: { p: V3; radius: number }) {
+  const geometry = useMemo(() => {
+    const g = new THREE.ExtrudeGeometry(profileShape(), {
+      depth: 0.12,
+      bevelEnabled: true,
+      bevelThickness: 0.02,
+      bevelSize: 0.015,
+      bevelSegments: 1,
+      curveSegments: 8,
+    });
+    g.scale(radius * 1.15, radius * 1.15, 1);
+    return g;
+  }, [radius]);
   return (
     <group position={p}>
-      <Box p={[0, 0, 0]} s={[5.4, 3.9, 0.04]} color='#fbe7cf' shadow={false} />
-      <Box p={[0, 0, 0.01]} s={[5.6, 4.1, 0.02]} color={C.white} shadow={false} />
-      {/* Disque de fond et épaules */}
-      <Box p={[0, 0.2, 0.03]} s={[3.4, 3.2, 0.02]} color='#f7b267' shadow={false} />
-      <Box p={[0, -1.45, 0.04]} s={[3.6, 1, 0.02]} color='#3f7fc4' shadow={false} />
-      <Box p={[0, -1.12, 0.05]} s={[1.1, 0.42, 0.02]} color={C.white} shadow={false} />
-      {/* Visage, cou, oreilles */}
-      <Box p={[0, -0.85, 0.05]} s={[0.7, 0.5, 0.02]} color='#e4ae86' shadow={false} />
-      <Box p={[0, 0.25, 0.06]} s={[1.8, 2.1, 0.02]} color={SKIN} shadow={false} />
-      <Box p={[0, 0.25, 0.06]} s={[2.05, 1.6, 0.02]} color={SKIN} shadow={false} />
-      {[-1, 1].map((s) => (
-        <Box key={s} p={[s * 1.1, 0.25, 0.06]} s={[0.25, 0.5, 0.02]} color='#e4ae86' shadow={false} />
-      ))}
-      {/* Cheveux */}
-      <Box p={[0, 1.38, 0.07]} s={[2.15, 0.62, 0.02]} color={HAIR} shadow={false} />
-      <Box p={[-0.55, 1.05, 0.07]} s={[1.0, 0.3, 0.02]} color={HAIR} shadow={false} />
-      {[-1, 1].map((s) => (
-        <Box key={s} p={[s * 1.0, 0.95, 0.07]} s={[0.2, 0.75, 0.02]} color={HAIR} shadow={false} />
-      ))}
-      {/* Lunettes, sourcils, nez, sourire */}
-      {[-0.48, 0.48].map((x) => (
-        <group key={x}>
-          <Box p={[x, 0.42, 0.08]} s={[0.72, 0.5, 0.02]} color={C.ink} shadow={false} />
-          <Box p={[x, 0.42, 0.09]} s={[0.56, 0.36, 0.02]} color='#bfe3f2' shadow={false} />
-          <Box p={[x, 0.82, 0.08]} s={[0.5, 0.08, 0.02]} color={HAIR} shadow={false} />
-        </group>
-      ))}
-      <Box p={[0, 0.48, 0.08]} s={[0.26, 0.07, 0.02]} color={C.ink} shadow={false} />
-      <Box p={[0, 0.0, 0.08]} s={[0.18, 0.36, 0.02]} color='#e4ae86' shadow={false} />
-      <Box p={[0, -0.42, 0.08]} s={[0.66, 0.1, 0.02]} color='#b5413a' shadow={false} />
-      {[-1, 1].map((s) => (
-        <Box key={s} p={[s * 0.36, -0.37, 0.08]} s={[0.1, 0.1, 0.02]} color='#b5413a' shadow={false} />
-      ))}
+      <Cylinder
+        p={[0, 0, 0.02]}
+        s={[radius, 0.04, radius]}
+        r={[Math.PI / 2, 0, 0]}
+        color='#f3dcc6'
+        finish={FINISH.render}
+      />
+      <Torus
+        p={[0, 0, 0.05]}
+        radius={radius}
+        tube={0.09}
+        segments={48}
+        color={C.white}
+        finish={FINISH.stone}
+      />
+      <mesh
+        position={[-0.05, -0.05, 0.04]}
+        geometry={geometry}
+        material={material('#9c3f22', FINISH.stone)}
+        castShadow
+        receiveShadow
+      />
+      <Torus
+        p={[radius * 0.3, radius * 0.33, 0.2]}
+        radius={radius * 0.07}
+        tube={0.025}
+        segments={16}
+        color={C.ink}
+      />
+      <Box
+        p={[radius * 0.13, radius * 0.36, 0.2]}
+        s={[radius * 0.22, 0.03, 0.02]}
+        color={C.ink}
+        shadow={false}
+      />
     </group>
   );
 }
@@ -153,27 +204,76 @@ function Garden() {
 export default function Portrait() {
   return (
     <>
-      {/* Corps blanc : rez-de-chaussée et étage, soubassement de pierre, bandeau d'étage. */}
+      {/* Rez-de-chaussée : soubassement de pierre, enduit blanc, atelier vitré en façade. */}
       <Volume
-        p={[-2.35, 0, -1.9]}
+        p={[-2.35, 0, -0.05]}
         w={10.3}
-        d={6.2}
-        h={8.6}
+        d={9.9}
+        h={4.4}
         color={WHITE}
-        plinth={{ h: 0.7, color: C.stoneDark }}
-        bands={[4.4]}
-        parapet={{ h: 0.4, color: WHITE }}
+        plinth={{ h: 0.6, color: C.stoneDark }}
+        cornice={C.white}
       />
+      <Windows
+        p={[-4.65, 2.35, 4.92]}
+        w={5.0}
+        h={3.5}
+        cols={5}
+        rows={3}
+        frame={STEEL}
+        glass='#7fbcd6'
+        bar={0.1}
+        sill={false}
+        lit={[1, 3]}
+      />
+      <Box p={[-4.65, 4.2, 5.02]} s={[5.3, 0.2, 0.2]} color={STEEL} />
+      <Window
+        p={[2.1, 2.2, 4.9]}
+        w={0.8}
+        h={1.8}
+        cols={1}
+        rows={2}
+        wall={WHITE}
+        sill={C.stone}
+        lintel={C.stone}
+      />
+      <Sign text={place('profile').enseigne} p={[0, 4.15, 5.01]} s={[2.6, 0.38]} color={C.ink} bg={C.white} />
+      {/* Terrasse sur le rez-de-chaussée : dallage, garde-corps, jardinières, deux chaises. */}
+      <Box
+        p={[-2.35, 4.47, 3.25]}
+        s={[10.1, 0.06, 3.3]}
+        color={C.stone}
+        finish={FINISH.paving}
+        shadow={false}
+      />
+      <Railing a={[-7.4, 4.5, 4.85]} b={[2.7, 4.5, 4.85]} color={STEEL} />
+      <Railing a={[2.7, 4.5, 1.7]} b={[2.7, 4.5, 4.85]} color={STEEL} />
+      <Planter p={[-5.5, 4.5, 4.3]} w={2} color={STEEL} />
+      <Planter p={[1.2, 4.5, 4.3]} w={1.6} color={STEEL} />
+      <Fine>
+        {[-2.6, -1.6].map((x) => (
+          <group key={x} position={[x, 4.5, 3.2]}>
+            <Box p={[0, 0.45, 0]} s={[0.5, 0.06, 0.5]} color={C.wood} finish={FINISH.wood} />
+            <Box p={[0, 0.75, -0.22]} s={[0.5, 0.55, 0.05]} color={C.wood} finish={FINISH.wood} />
+            {[-0.2, 0.2].map((dx) => (
+              <Box key={dx} p={[dx, 0.22, 0]} s={[0.04, 0.45, 0.45]} color={STEEL} />
+            ))}
+          </group>
+        ))}
+      </Fine>
+      {/* Étage blanc en retrait : portes-fenêtres sur la terrasse, fenêtres à volets ailleurs. */}
+      <Volume p={[-2.35, 4.4, -1.7]} w={10.3} d={6.6} h={4.2} color={WHITE} bands={[0.05]} />
       <WindowRow
-        p={[-2.35, 6.8, 1.2]}
+        p={[-2.35, 6.3, 1.6]}
         count={3}
         spacing={3.1}
         w={1.5}
-        h={1.7}
+        h={2.4}
+        cols={2}
+        rows={2}
         wall={WHITE}
         lintel={C.white}
-        variant='blind'
-        accent={ORANGE}
+        sill={false}
         lit={[2]}
       />
       <WindowRow
@@ -187,7 +287,6 @@ export default function Portrait() {
         variant='shutters'
         accent={C.slate}
       />
-      <WindowRow p={[-2.35, 2.3, -5]} ry={Math.PI} count={3} spacing={3.1} w={1.3} h={1.5} wall={WHITE} />
       <Window
         p={[-7.5, 6.4, -3.5]}
         ry={-Math.PI / 2}
@@ -198,94 +297,92 @@ export default function Portrait() {
         accent={C.slate}
       />
       <Window
-        p={[2.8, 2.3, -3.2]}
+        p={[2.8, 6.4, -3.2]}
+        ry={Math.PI / 2}
+        w={1.2}
+        h={1.6}
+        wall={WHITE}
+        variant='box'
+        accent={BRICK}
+      />
+      <Window
+        p={[2.8, 2.2, -3.2]}
         ry={Math.PI / 2}
         w={1.6}
         h={1.7}
         wall={WHITE}
-        variant='box'
-        accent={BRICK}
+        variant='blind'
+        accent={ORANGE}
         lit
       />
-      <Window p={[2.8, 6.4, -3.2]} ry={Math.PI / 2} w={1.2} h={1.6} wall={WHITE} />
-      <Balcony p={[2.8, 4.55, -0.4]} ry={Math.PI / 2} w={2.4} d={1.1} color={WHITE} rail={STEEL} />
-      <Windows
-        p={[2.82, 5.9, -0.4]}
-        r={[0, Math.PI / 2, 0]}
-        w={1.6}
-        h={2.4}
-        cols={2}
-        frame={STEEL}
-        sill={false}
+      <Window p={[2.8, 2.2, 0.6]} ry={Math.PI / 2} w={1.2} h={1.7} wall={WHITE} />
+      <Window
+        p={[-7.5, 2.2, -2.5]}
+        ry={-Math.PI / 2}
+        w={1.4}
+        h={1.6}
+        wall={WHITE}
+        variant='shutters'
+        accent={C.slate}
       />
       <Downpipe p={[-7.5, 0, 0.9]} ry={-Math.PI / 2} h={8.6} />
       <Downpipe p={[2.5, 0, -5]} ry={Math.PI} h={8.6} />
-      <AirCon p={[-4.5, 3.2, -5]} ry={Math.PI} />
-      <Vent p={[-7.5, 1.4, -1.2]} ry={-Math.PI / 2} />
+      <Vent p={[-7.5, 1.4, -1.0]} ry={-Math.PI / 2} />
 
-      {/* Atelier vitré en avancée : ossature acier noire, toiture-terrasse plantée. */}
-      <group position={[-4.55, 0, 3.05]}>
-        <Box p={[0, 2.8, 0]} s={[5.4, 5.6, 3.6]} color='#3a6f8c' finish={GLASS} />
-        <Windows
-          p={[0, 2.85, 1.82]}
-          w={5.4}
-          h={5.4}
-          cols={5}
-          rows={3}
-          frame={STEEL}
-          glass='#7fbcd6'
-          bar={0.1}
-          sill={false}
-          lit={[1, 3]}
-        />
-        <Windows
-          p={[-2.72, 2.85, 0]}
-          r={[0, -Math.PI / 2, 0]}
-          w={3.6}
-          h={5.4}
-          cols={3}
-          rows={3}
-          frame={STEEL}
-          glass='#7fbcd6'
-          bar={0.1}
-          sill={false}
-        />
-        <Box p={[0, 5.7, 0]} s={[5.8, 0.24, 4]} color={STEEL} />
-        <Box p={[0, 5.86, 0]} s={[5.4, 0.1, 3.6]} color={C.garden} finish={FINISH.gravel} shadow={false} />
-        <Railing a={[-2.8, 5.82, 1.9]} b={[2.8, 5.82, 1.9]} color={STEEL} />
-        <Railing a={[-2.8, 5.82, -1.7]} b={[-2.8, 5.82, 1.9]} color={STEEL} />
-        <Planter p={[0.8, 5.82, 1.2]} w={1.8} color={STEEL} />
-        <Box p={[0, 0.12, 0]} s={[5.6, 0.24, 3.8]} color={C.stoneDark} />
-      </group>
-
-      {/* Hall d'entrée en brique autour de la porte. */}
-      <Volume
-        p={[0.5, 0, 3.1]}
-        w={4.6}
-        d={3.8}
-        h={4.4}
-        color={BRICK}
-        finish={FINISH.brick}
-        parapet={{ h: 0.35, color: BRICK, coping: C.white }}
+      {/* Arrière : porte de service à auvent sur consoles, fenêtres, climatiseur, local poubelles. */}
+      <DoorSet
+        p={[-1.2, 0, -5]}
+        ry={Math.PI}
+        w={1.0}
+        h={2.3}
+        leaf={'#7a4a2c'}
+        glazed
+        canopy='flat'
+        canopyColor={C.white}
+        steps={1}
+        lamps={false}
+        number='01b'
+        mat={false}
       />
-      <Sign text={place('profile').enseigne} p={[0, 4.3, 5.04]} s={[3.6, 0.62]} color={C.white} bg={C.ink} />
-
-      {/* Étage orange en porte-à-faux, fresque-portrait, nom de l'habitant. */}
-      <Volume p={[-2.25, 8.6, -1.1]} w={9.1} d={7} h={4.4} color={ORANGE} bands={[0.2]} bandColor={C.white} />
-      <group scale={0.92}>
-        <Fresco p={[-2.25 / 0.92, 11 / 0.92, 2.42 / 0.92]} />
+      <WindowRow
+        p={[-4.6, 2.2, -5]}
+        ry={Math.PI}
+        count={2}
+        spacing={2.4}
+        w={1.2}
+        h={1.5}
+        wall={WHITE}
+        sill={C.stone}
+      />
+      <Window p={[1.4, 2.2, -5]} ry={Math.PI} w={0.8} h={1.2} cols={1} wall={WHITE} />
+      <AirCon p={[-4.5, 3.6, -5]} ry={Math.PI} />
+      <group position={[-6.1, 0, -5.55]}>
+        <Box p={[0, 0.65, 0]} s={[2.2, 1.3, 1]} color={C.wood} finish={FINISH.wood} />
+        <Box p={[0, 1.33, 0]} s={[2.3, 0.06, 1.1]} color={STEEL} />
       </group>
+
+      {/* Étage orange en léger porte-à-faux, médaillon-portrait, nom ; toit, cheminée, panneaux. */}
+      <Volume
+        p={[-2.25, 8.6, -1.2]}
+        w={9.1}
+        d={6.8}
+        h={4.2}
+        color={ORANGE}
+        bands={[0.15]}
+        bandColor={C.white}
+      />
+      <Medallion p={[-2.25, 10.75, 2.21]} radius={1.55} />
       <Sign
         text={site.nom.toUpperCase()}
-        p={[-2.25, 8.85, 2.46]}
-        s={[4.4, 0.48]}
+        p={[-2.25, 9.05, 2.24]}
+        s={[4.2, 0.42]}
         color={C.white}
         bg={C.ink}
       />
       {[-1, 1].map((s) => (
         <WindowRow
           key={s}
-          p={[-2.25 + s * 4.55, 10.8, -1.1]}
+          p={[-2.25 + s * 4.55, 10.8, -1.2]}
           ry={(s * Math.PI) / 2}
           count={2}
           spacing={3}
@@ -298,16 +395,26 @@ export default function Portrait() {
         />
       ))}
       <WindowRow p={[-2.25, 10.8, -4.6]} ry={Math.PI} count={3} spacing={2.8} w={1.3} h={1.6} wall={ORANGE} />
-      {/* Toit de tuiles, cheminée, panneaux, gouttières. */}
-      <GableRoof x={-2.25} y={13} z={-1.1} w={9.1} d={7} h={2.7} color={SLATE_ROOF} gable={ORANGE} />
-      <Box p={[0.6, 15.2, -2.8]} s={[0.8, 2.6, 0.8]} color={BRICK} finish={FINISH.brick} />
-      <Box p={[0.6, 16.55, -2.8]} s={[1, 0.15, 1]} color={C.stone} />
+      {[-5.7, 1.2].map((x) => (
+        <Window
+          key={x}
+          p={[x, 10.8, 2.2]}
+          w={1.1}
+          h={1.6}
+          wall={ORANGE}
+          variant='shutters'
+          accent={C.white}
+        />
+      ))}
+      <GableRoof x={-2.25} y={12.8} z={-1.2} w={9.1} d={6.8} h={2.7} color={SLATE_ROOF} gable={ORANGE} />
+      <Box p={[0.6, 15.0, -2.9]} s={[0.8, 2.6, 0.8]} color={BRICK} finish={FINISH.brick} />
+      <Box p={[0.6, 16.35, -2.9]} s={[1, 0.15, 1]} color={C.stone} />
       <Fine>
         {[-0.18, 0.18].map((x) => (
-          <Rod key={x} p={[0.6 + x, 16.85, -2.8]} s={[0.12, 0.45, 0.12]} color='#a9583b' />
+          <Rod key={x} p={[0.6 + x, 16.65, -2.9]} s={[0.12, 0.45, 0.12]} color='#a9583b' />
         ))}
       </Fine>
-      <group position={[-2.3, 14.2, -3.3]} rotation={[-0.66, 0, 0]}>
+      <group position={[-2.3, 14.0, -3.4]} rotation={[-0.66, 0, 0]}>
         <Box p={[0, 0.06, 0]} s={[2.4, 0.06, 1.3]} color={C.blueDeep} finish={GLASS} />
         <Box p={[0, 0.02, 0]} s={[2.5, 0.05, 1.4]} color={C.white} />
       </group>
@@ -384,8 +491,8 @@ export default function Portrait() {
       <Bike p={[6.4, 0, 5.35]} color={C.teal} />
       <Garden />
       <Fine>
-        <Cylinder p={[-2.3, 0.3, 5.3]} s={[0.35, 0.6, 0.35]} color={C.stoneDark} />
-        <Ball p={[-2.3, 0.85, 5.3]} s={[0.4, 0.45, 0.4]} color={C.leafDark} />
+        <Cylinder p={[-2.4, 0.3, 5.35]} s={[0.35, 0.6, 0.35]} color={C.stoneDark} />
+        <Ball p={[-2.4, 0.85, 5.35]} s={[0.4, 0.45, 0.4]} color={C.leafDark} />
       </Fine>
     </>
   );
