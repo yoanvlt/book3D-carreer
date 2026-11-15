@@ -1,0 +1,414 @@
+[
+  {
+    "taille": "1920x1080",
+    "qualite": "low",
+    "scenes": {
+      "accueil": {
+        "fps": 2,
+        "drawCalls": 137,
+        "dpr": 0.9,
+        "triangles": 287476,
+        "position": [
+          -17,
+          0.45,
+          6
+        ],
+        "camera": [
+          92,
+          98,
+          122
+        ],
+        "mode": "aerial",
+        "doorStage": null,
+        "quality": "low",
+        "phase": "home",
+        "interior": null,
+        "station": null,
+        "nearby": null,
+        "reading": null
+      },
+      "exploration": {
+        "fps": 1,
+        "drawCalls": 122,
+        "dpr": 0.85,
+        "triangles": 287818,
+        "position": [
+          -17,
+          0.45,
+          6
+        ],
+        "camera": [
+          -34.69,
+          13.25,
+          7.94
+        ],
+        "mode": "exterior",
+        "doorStage": null,
+        "quality": "low",
+        "phase": "explore",
+        "interior": null,
+        "station": null,
+        "nearby": null,
+        "reading": null
+      },
+      "porte": {
+        "fps": 0,
+        "drawCalls": 104,
+        "dpr": 0.8,
+        "triangles": 273220,
+        "position": [
+          -25.99,
+          1.36,
+          29.34
+        ],
+        "camera": [
+          -23.86,
+          14.17,
+          47
+        ],
+        "mode": "exterior",
+        "doorStage": null,
+        "quality": "low",
+        "phase": "explore",
+        "interior": null,
+        "station": null,
+        "nearby": "profile",
+        "reading": null
+      },
+      "interieur": {
+        "fps": 2,
+        "drawCalls": 42,
+        "dpr": 0.75,
+        "triangles": 26384,
+        "position": [
+          -3.9,
+          0,
+          7
+        ],
+        "camera": [
+          2.34,
+          6.2,
+          11.17
+        ],
+        "mode": "interior",
+        "doorStage": null,
+        "quality": "low",
+        "phase": "explore",
+        "interior": "profile",
+        "station": null,
+        "nearby": null,
+        "reading": null
+      }
+    },
+    "erreurs": []
+  },
+  {
+    "taille": "1440x900",
+    "qualite": "low",
+    "scenes": {
+      "accueil": {
+        "fps": 1,
+        "drawCalls": 137,
+        "dpr": 0.9,
+        "triangles": 287476,
+        "position": [
+          -17,
+          0.45,
+          6
+        ],
+        "camera": [
+          92,
+          98,
+          122
+        ],
+        "mode": "aerial",
+        "doorStage": null,
+        "quality": "low",
+        "phase": "home",
+        "interior": null,
+        "station": null,
+        "nearby": null,
+        "reading": null
+      },
+      "exploration": {
+        "fps": 2,
+        "drawCalls": 120,
+        "dpr": 0.85,
+        "triangles": 287650,
+        "position": [
+          -17,
+          0.45,
+          6
+        ],
+        "camera": [
+          -34.69,
+          13.25,
+          7.94
+        ],
+        "mode": "exterior",
+        "doorStage": null,
+        "quality": "low",
+        "phase": "explore",
+        "interior": null,
+        "station": null,
+        "nearby": null,
+        "reading": null
+      },
+      "porte": {
+        "fps": 2,
+        "drawCalls": 103,
+        "dpr": 0.8,
+        "triangles": 260920,
+        "position": [
+          -25.99,
+          1.36,
+          29.34
+        ],
+        "camera": [
+          -23.86,
+          14.17,
+          47
+        ],
+        "mode": "exterior",
+        "doorStage": null,
+        "quality": "low",
+        "phase": "explore",
+        "interior": null,
+        "station": null,
+        "nearby": "profile",
+        "reading": null
+      },
+      "interieur": {
+        "fps": 3,
+        "drawCalls": 41,
+        "dpr": 0.75,
+        "triangles": 26382,
+        "position": [
+          -3.9,
+          0,
+          7
+        ],
+        "camera": [
+          2.34,
+          6.2,
+          11.17
+        ],
+        "mode": "interior",
+        "doorStage": null,
+        "quality": "low",
+        "phase": "explore",
+        "interior": "profile",
+        "station": null,
+        "nearby": null,
+        "reading": null
+      }
+    },
+    "erreurs": []
+  },
+  {
+    "taille": "1366x768",
+    "qualite": "low",
+    "scenes": {
+      "accueil": {
+        "fps": 1,
+        "drawCalls": 137,
+        "dpr": 0.9,
+        "triangles": 287476,
+        "position": [
+          -17,
+          0.45,
+          6
+        ],
+        "camera": [
+          92,
+          98,
+          122
+        ],
+        "mode": "aerial",
+        "doorStage": null,
+        "quality": "low",
+        "phase": "home",
+        "interior": null,
+        "station": null,
+        "nearby": null,
+        "reading": null
+      },
+      "exploration": {
+        "fps": 3,
+        "drawCalls": 123,
+        "dpr": 0.85,
+        "triangles": 287866,
+        "position": [
+          -17,
+          0.45,
+          6
+        ],
+        "camera": [
+          -34.69,
+          13.25,
+          7.94
+        ],
+        "mode": "exterior",
+        "doorStage": null,
+        "quality": "low",
+        "phase": "explore",
+        "interior": null,
+        "station": null,
+        "nearby": null,
+        "reading": null
+      },
+      "porte": {
+        "fps": 2,
+        "drawCalls": 104,
+        "dpr": 0.8,
+        "triangles": 273220,
+        "position": [
+          -25.99,
+          1.36,
+          29.34
+        ],
+        "camera": [
+          -23.86,
+          14.17,
+          47
+        ],
+        "mode": "exterior",
+        "doorStage": null,
+        "quality": "low",
+        "phase": "explore",
+        "interior": null,
+        "station": null,
+        "nearby": "profile",
+        "reading": null
+      },
+      "interieur": {
+        "fps": 3,
+        "drawCalls": 42,
+        "dpr": 0.75,
+        "triangles": 26384,
+        "position": [
+          -3.9,
+          0,
+          7
+        ],
+        "camera": [
+          2.34,
+          6.2,
+          11.17
+        ],
+        "mode": "interior",
+        "doorStage": null,
+        "quality": "low",
+        "phase": "explore",
+        "interior": "profile",
+        "station": null,
+        "nearby": null,
+        "reading": null
+      }
+    },
+    "erreurs": []
+  },
+  {
+    "taille": "390x844",
+    "qualite": "low",
+    "scenes": {
+      "accueil": {
+        "fps": 2,
+        "drawCalls": 137,
+        "dpr": 0.9,
+        "triangles": 287476,
+        "position": [
+          -17,
+          0.45,
+          6
+        ],
+        "camera": [
+          125.12,
+          133.28,
+          165.92
+        ],
+        "mode": "aerial",
+        "doorStage": null,
+        "quality": "low",
+        "phase": "home",
+        "interior": null,
+        "station": null,
+        "nearby": null,
+        "reading": null
+      },
+      "exploration": {
+        "fps": 5,
+        "drawCalls": 92,
+        "dpr": 0.85,
+        "triangles": 276296,
+        "position": [
+          -17,
+          0.45,
+          6
+        ],
+        "camera": [
+          -36.09,
+          19.63,
+          8.09
+        ],
+        "mode": "exterior",
+        "doorStage": null,
+        "quality": "low",
+        "phase": "explore",
+        "interior": null,
+        "station": null,
+        "nearby": null,
+        "reading": null
+      },
+      "porte": {
+        "fps": 5,
+        "drawCalls": 61,
+        "dpr": 0.8,
+        "triangles": 245398,
+        "position": [
+          -25.99,
+          1.36,
+          29.34
+        ],
+        "camera": [
+          -23.7,
+          20.55,
+          48.4
+        ],
+        "mode": "exterior",
+        "doorStage": null,
+        "quality": "low",
+        "phase": "explore",
+        "interior": null,
+        "station": null,
+        "nearby": "profile",
+        "reading": null
+      },
+      "interieur": {
+        "fps": 12,
+        "drawCalls": 34,
+        "dpr": 0.75,
+        "triangles": 26292,
+        "position": [
+          -3.9,
+          0,
+          7
+        ],
+        "camera": [
+          2.34,
+          6.2,
+          11.17
+        ],
+        "mode": "interior",
+        "doorStage": null,
+        "quality": "low",
+        "phase": "explore",
+        "interior": "profile",
+        "station": null,
+        "nearby": null,
+        "reading": null
+      }
+    },
+    "erreurs": []
+  }
+]
