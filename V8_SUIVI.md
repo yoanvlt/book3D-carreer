@@ -91,16 +91,51 @@ Mobilier Furniture Bits recoloré par lieu (`src/scene/interiors/Mobilier.tsx`) 
 
 Monde V7 supprimé (bâtiments, kit procédural, terrain, végétation, mobilier, île, place, vie, planche du kit), contours remplacés par l'effet miniature ; knip vide ; tous les fichiers sous 400 lignes (`state.ts` découpé en `robot.ts`, `tour.ts`, `cameraMode.ts`) ; captures V7 retirées de l'arbre.
 
-BUDGET
+## Budget de rendu
+
+Relevés de `npm run capture -- scenes` (draw calls / triangles par vue, `renderer.info` sur une image complète). Il n'y a aucune ombre en temps réel : la lumière est précalculée, donc aucune passe d'ombre à ajouter. Budget Soignée : 300 draw calls et 700 000 triangles ; Légère : 180 draw calls. Vérifié par `tests/budget.test.mjs` sur les rapports `docs/screenshots/v8/rapport-scenes.json`, `legere/rapport-scenes.json` et `details/rapport-details.json`.
+
+| Taille    | Qualité | Accueil     | Exploration | Devant une porte | Intérieur |
+| --------- | ------- | ----------- | ----------- | ---------------- | --------- |
+| 1920×1080 | Soignée | 119 / 313 k | 91 / 422 k  | 65 / 395 k       | 60 / 25 k |
+| 1440×900  | Soignée | 119 / 313 k | 90 / 421 k  | 64 / 383 k       | 52 / 23 k |
+| 1366×768  | Soignée | 119 / 313 k | 91 / 422 k  | 65 / 395 k       | 54 / 23 k |
+| 390×844   | Soignée | 119 / 313 k | 69 / 393 k  | 58 / 374 k       | 41 / 21 k |
+| 1920×1080 | Légère  | 115 / 313 k | 86 / 337 k  | 61 / 310 k       | 49 / 22 k |
+| 1440×900  | Légère  | 115 / 313 k | 82 / 316 k  | 60 / 299 k       | 47 / 22 k |
+| 1366×768  | Légère  | 115 / 313 k | 86 / 337 k  | 61 / 310 k       | 49 / 22 k |
+| 390×844   | Légère  | 115 / 313 k | 63 / 299 k  | 54 / 290 k       | 36 / 20 k |
+
+Pire cas des 31 vues de détail (`npm run capture:details`) : 118 draw calls (dessous de l'île) et 408 k triangles (Projet 1 vu de l'accueil). Poids : modèles 179 Ko (budget 1,5 Mo), premier affichage 560 Ko transférés (budget 2,5 Mo, intérieurs exclus).
+
+| Accueil (bureau)                               | Exploration (bureau)                               | Exploration (Légère)                                      | Accueil (téléphone)                           |
+| ---------------------------------------------- | -------------------------------------------------- | --------------------------------------------------------- | --------------------------------------------- |
+| ![](docs/screenshots/v8/accueil-1440x900.webp) | ![](docs/screenshots/v8/exploration-1440x900.webp) | ![](docs/screenshots/v8/legere/exploration-1440x900.webp) | ![](docs/screenshots/v8/accueil-390x844.webp) |
 
 ## Vu à l'écran
 
-VU
+Tout ce qui suit a été regardé image par image (Chromium sans écran, rendu logiciel SwiftShader) ; aucune erreur dans la console sur l'ensemble des captures (`erreurs: []` dans chaque rapport).
+
+- **Planche de direction artistique**, puis les quatre vues habituelles (accueil, exploration, devant une porte, intérieur) aux quatre tailles, en Soignée et en Légère (`docs/screenshots/v8/`, `legere/`).
+- **Tour d'inspection** (`inspection/`) : les six bâtiments sous huit angles, alternativement à hauteur d'œil et en plongée, plus l'île vue de dessus et de dessous. Quatre faces finies partout, aucun trou, aucune pièce flottante.
+- **Vols** (`robot/`) : aller et retour à 0, 20, 40, 60, 80 et 100 %, sur bureau et sur téléphone. Le robot garde la même taille, la caméra ne passe jamais derrière lui ; sur bureau l'île reste dans le cadre tout le vol ; sur téléphone aussi au retour, et à l'aller dès la descente (au début, le cadre portrait ne montre que le robot, l'îlot et les nuages).
+- **Actions et vie** (`actions/`) : robot assis sur un banc (vu de côté), robot qui salue, jardinier, livreur, chariot élévateur, astronome, agent Veolia, visiteur de la galerie.
+- **Chargement** (`chargement/`) : quatre étapes, bureau et téléphone.
+
+Corrigé pendant cette vérification : la caméra de vol (l'île sortait du cadre au milieu du vol, surtout au retour) ; une fente à la couture du dessous de l'île et une pointe noire (normale nulle) ; un dessous terne, désormais éclairé par la mer de nuages ; le robot restait assis dans la capture du salut ; la caméra d'inspection tombait dans un bâtiment voisin ; le livreur sortait du cadre.
+
+| Aller, 40 % (bureau)                                 | Retour, 60 % (bureau)                                 | Aller, 60 % (téléphone)                                 | Retour, 40 % (téléphone)                                 |
+| ---------------------------------------------------- | ----------------------------------------------------- | ------------------------------------------------------- | -------------------------------------------------------- |
+| ![](docs/screenshots/v8/robot/bureau-aller-040.webp) | ![](docs/screenshots/v8/robot/bureau-retour-060.webp) | ![](docs/screenshots/v8/robot/telephone-aller-060.webp) | ![](docs/screenshots/v8/robot/telephone-retour-040.webp) |
+
+| Robot assis                                       | Robot qui salue                                   | Livreur                                       | Dessous de l'île                                     |
+| ------------------------------------------------- | ------------------------------------------------- | --------------------------------------------- | ---------------------------------------------------- |
+| ![](docs/screenshots/v8/actions/robot-assis.webp) | ![](docs/screenshots/v8/actions/robot-salue.webp) | ![](docs/screenshots/v8/actions/livreur.webp) | ![](docs/screenshots/v8/inspection/ile-dessous.webp) |
 
 ## Non vérifié
 
 - **Fluidité sur un vrai GPU** : tout est rendu ici par le processeur (SwiftShader). **Les FPS relevés ne comptent pas.** Les draw calls, les triangles et les durées de chargement relatives, eux, sont mesurés.
-- **Le vol en mouvement** : vu sur des images figées (0, 20, 40, 60, 80, 100 %) et dans les tests ; pas en continu à 60 Hz.
+- **Le vol en mouvement** : vu sur des images figées (0, 20, 40, 60, 80, 100 %) et dans les tests ; pas en continu à 60 Hz. En portrait étroit, au début de l'aller, l'île n'est pas dans le cadre (voir les choix).
 - **Herbe et personnages en mouvement** : vus sur des images fixes ; l'animation (vent, couchage, allers-retours) n'est vue qu'à travers le code et les tests.
 - **Sons** (décollage, atterrissage, pas) : joués par le code, pas entendus.
 - **Firefox, Safari, vrais téléphones** : seul Chromium a été lancé.
