@@ -102,6 +102,7 @@ const fragmentShader = /* glsl */ `
   uniform vec3 sunColor;
   uniform vec3 skyColor;
   uniform vec3 groundColor;
+  uniform vec3 cloudColor;
   uniform float ambient;
   uniform vec3 tint;
   uniform float opacity;
@@ -127,6 +128,8 @@ const fragmentShader = /* glsl */ `
     // Terminateur adouci : la face à contre-jour ne tombe pas au noir.
     ndl = smoothstep(-0.12, 1.0, ndl);
     vec3 hemi = mix(groundColor, skyColor, n.y * 0.5 + 0.5);
+    // Faces tournées vers le bas : éclairées par la mer de nuages, claire et bleutée.
+    hemi = mix(hemi, cloudColor, 1.0 - smoothstep(-0.85, -0.35, n.y));
     vec3 color = albedo * (hemi * ambient * ao + sunColor * ndl * sun * mix(0.6, 1.0, ao));
     gl_FragColor = vec4(color, opacity);
     #include <tonemapping_fragment>
@@ -165,6 +168,7 @@ export function dioramaMaterial(kind: DioramaKind, tint = '#ffffff'): THREE.Shad
         sunColor: { value: new THREE.Color(scene.sun.color).multiplyScalar(1.15) },
         skyColor: { value: new THREE.Color(scene.hemisphere.sky) },
         groundColor: { value: new THREE.Color(scene.hemisphere.ground) },
+        cloudColor: { value: new THREE.Color(scene.hemisphere.clouds) },
         ambient: { value: 0.78 },
         tint: { value: new THREE.Color(tint) },
         opacity: { value: 1 },

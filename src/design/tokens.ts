@@ -163,7 +163,8 @@ export const scenePlaceColor: Record<BuildingId, string> = {
 export const scene = {
   sky: { top: '#3f9fe0', horizon: '#d6efff', bottom: '#8fd0ea' },
   fog: { color: '#cfeafa', near: 190, far: 520 },
-  hemisphere: { sky: '#e4f0fb', ground: '#b9b49a', intensity: 1.25 },
+  /** `clouds` : lumière renvoyée par la mer de nuages sur les faces tournées vers le bas (dessous de l'île). */
+  hemisphere: { sky: '#e4f0fb', ground: '#b9b49a', clouds: '#dbe5ef', intensity: 1.25 },
   sun: { color: '#fff6e6', intensity: 3.1, position: [-40, 70, 34] as [number, number, number] },
   exposure: 1,
 } as const;

@@ -76,10 +76,11 @@ const BANDS: [number, number, Swatch][] = [
 
 /** Rayon et hauteur d'un point du dessous (t de 0 à 1), bosselé, sans fissure entre bandes. */
 function under(a: number, t: number): [number, number, number] {
+  // Bruit lu sur un cercle (périodique en a) : la couture à a = 0 / 2π se referme sans fente.
   const lump =
     t < 0.012
       ? 0
-      : (noise(a * 9, t * 12) - 0.5) *
+      : (noise(Math.cos(a) * 9 + t * 12, Math.sin(a) * 9 - t * 7) - 0.5) *
         (t < ISLAND.cliff ? 1.4 : 3.2) *
         Math.sin(Math.PI * Math.min(1, t * 1.1));
   // Rebord arrondi : l'herbe déborde un peu avant de plonger.
@@ -108,8 +109,10 @@ export function underside(): MeshData {
         const v = [pt[0] - p[0], pt[1] - p[1], pt[2] - p[2]];
         let n = [u[1] * v[2] - u[2] * v[1], u[2] * v[0] - u[0] * v[2], u[0] * v[1] - u[1] * v[0]];
         if (n[0] * p[0] + n[2] * p[2] < 0) n = n.map((c) => -c);
-        const l = Math.hypot(...n) || 1;
-        b.vertex(p, [n[0] / l, n[1] / l, n[2] / l], paint, 0.2 + noise(a * 20, t * 30) * 0.6);
+        const l = Math.hypot(...n);
+        // À la pointe, tous les points se confondent : normale vers le bas (jamais nulle, donc jamais noire).
+        const normal: [number, number, number] = l > 1e-6 ? [n[0] / l, n[1] / l, n[2] / l] : [0, -1, 0];
+        b.vertex(p, normal, paint, 0.2 + noise(Math.cos(a) * 20 + t * 30, Math.sin(a) * 20) * 0.6);
       }
     }
     for (let j = 0; j < rows; j++)

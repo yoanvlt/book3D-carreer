@@ -76,6 +76,17 @@ const only = process.env.LIEUX?.split(',');
 const layout = (await page.evaluate(() => window.__careerverse.layout())).filter(
   (b) => !only || only.includes(b.id),
 );
+/** Vrai si (x, z) tombe dans l'emprise d'un autre bâtiment (plus une marge) : bâtiments voisins. */
+const all = await page.evaluate(() => window.__careerverse.layout());
+const insideOther = (self, x, z) =>
+  all.some((o) => {
+    if (o.id === self) return false;
+    const [dx, dz] = [x - o.position[0], z - o.position[1]];
+    const [c, s] = [Math.cos(o.rotation), Math.sin(o.rotation)];
+    const lx = c * dx - s * dz;
+    const lz = s * dx + c * dz;
+    return Math.abs(lx) < o.size[0] / 2 + 1.5 && Math.abs(lz) < o.size[1] / 2 + 1.5;
+  });
 for (const b of process.env.EMPRISES ? [] : layout) {
   const radius = Math.max(...b.size) / 2 + 11;
   const images = [];
@@ -84,10 +95,18 @@ for (const b of process.env.EMPRISES ? [] : layout) {
     // Angle 0 : face à la porte ; puis tous les 45°, dans le repère du bâtiment.
     const a = b.rotation + (k * Math.PI) / 4;
     const high = k % 2 === 1;
+    // À hauteur d'œil, la caméra se rapproche si elle tomberait dans un bâtiment voisin.
+    let r = radius * (high ? 0.85 : 1);
+    while (
+      !high &&
+      r > Math.max(...b.size) / 2 + 3 &&
+      insideOther(b.id, b.position[0] + Math.sin(a) * r, b.position[1] + Math.cos(a) * r)
+    )
+      r -= 1;
     const position = [
-      b.position[0] + Math.sin(a) * radius * (high ? 0.85 : 1),
+      b.position[0] + Math.sin(a) * r,
       b.elevation + (high ? b.height + 12 : 1.8),
-      b.position[1] + Math.cos(a) * radius * (high ? 0.85 : 1),
+      b.position[1] + Math.cos(a) * r,
     ];
     const target = [
       b.position[0],
