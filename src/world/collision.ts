@@ -1,6 +1,8 @@
-import { buildings, WORLD, type Point } from './config';
+import { buildings, doorPlane, localToWorld, WORLD, type Point } from './config';
 import { heightAt } from './terrain';
-import { trees, benches, lamps, bollards, bikeRacks, fences } from './landscape';
+import { solids } from './placer';
+import { FOUNTAIN, FOUNTAIN_RADIUS } from './plan';
+import { ANNEXES } from './annexes';
 interface Obstacle {
   x: number;
   z: number;
@@ -11,77 +13,55 @@ interface Obstacle {
   top: number;
 }
 /** @public Utilisé par les tests ou les scripts. */
-export const obstacles: Obstacle[] = buildings.map((b) => ({
-  x: b.position[0],
-  z: b.position[1],
-  halfX: b.size[0] / 2 + 0.25,
-  halfZ: b.size[1] / 2 + 0.25,
-  angle: b.rotation,
-  bottom: b.elevation - 0.2,
-  top: b.elevation + b.height + 0.8,
-}));
-const props: Obstacle[] = [
-  { x: 0, z: 0, halfX: 2.6, halfZ: 2.6, angle: 0, bottom: 0.65, top: 5.6 },
-  {
-    x: -43,
-    z: 20,
-    halfX: 2.4,
-    halfZ: 1.9,
-    angle: -0.3,
-    bottom: heightAt(-43, 20),
-    top: heightAt(-43, 20) + 3.8,
-  },
-  { x: -8, z: 5, halfX: 0.4, halfZ: 0.4, angle: 0, bottom: 0.65, top: 3.8 },
-];
+export const obstacles: Obstacle[] = buildings.map((b) => {
+  // Le volume va du fond jusqu'au plan de la porte (un portique reste praticable).
+  const front = doorPlane(b);
+  const [x, z] = localToWorld(b, 0, (front - b.size[1] / 2) / 2);
+  return {
+    x,
+    z,
+    halfX: b.size[0] / 2 + 0.25,
+    halfZ: (front + b.size[1] / 2) / 2 + 0.25,
+    angle: b.rotation,
+    bottom: b.elevation - 0.2,
+    top: b.elevation + b.height + 0.8,
+  };
+});
+/** Volumes annexes des lieux (portique, cuves, cour…), en repère local (world/annexes.ts). */
+const annexes: Obstacle[] = buildings.flatMap((b) =>
+  ANNEXES[b.id].map(([lx, lz, hx, hz, top]) => {
+    const [x, z] = localToWorld(b, lx, lz);
+    return { x, z, halfX: hx, halfZ: hz, angle: b.rotation, bottom: -0.2, top };
+  }),
+);
 export const allObstacles = [
   ...obstacles,
-  ...props,
-  ...trees.map((t) => ({
-    x: t.p[0],
-    z: t.p[1],
-    halfX: 0.25 * t.s,
-    halfZ: 0.25 * t.s,
-    angle: 0,
-    bottom: heightAt(...t.p),
-    top: heightAt(...t.p) + 3 * t.s,
-  })),
-  ...benches.map((b) => ({
-    x: b.p[0],
-    z: b.p[1],
-    halfX: 1.5,
-    halfZ: 0.45,
-    angle: b.angle,
-    bottom: heightAt(...b.p),
-    top: heightAt(...b.p) + 1.3,
-  })),
-  ...bollards.map((p) => ({ x: p[0], z: p[1], halfX: 0.15, halfZ: 0.15, angle: 0, bottom: 0.65, top: 1.6 })),
-  ...bikeRacks.map((r) => ({
-    x: r.p[0],
-    z: r.p[1],
-    halfX: 1.6,
-    halfZ: 0.5,
-    angle: r.angle,
-    bottom: heightAt(...r.p),
-    top: heightAt(...r.p) + 1.1,
-  })),
-  ...fences.map(([a, b]) => ({
-    x: (a[0] + b[0]) / 2,
-    z: (a[1] + b[1]) / 2,
-    halfX: Math.hypot(b[0] - a[0], b[1] - a[1]) / 2,
-    halfZ: 0.08,
-    angle: -Math.atan2(b[1] - a[1], b[0] - a[0]),
-    bottom: heightAt(...a),
-    top: heightAt(...a) + 1,
-  })),
-  ...lamps.map((p) => ({
-    x: p[0],
-    z: p[1],
-    halfX: 0.13,
-    halfZ: 0.13,
-    angle: 0,
-    bottom: heightAt(...p),
-    top: heightAt(...p) + 4,
-  })),
+  ...annexes,
+  // Bassin de la fontaine (carré inscrit dans le cercle, un peu agrandi).
+  {
+    x: FOUNTAIN[0],
+    z: FOUNTAIN[1],
+    halfX: FOUNTAIN_RADIUS * 0.8,
+    halfZ: FOUNTAIN_RADIUS * 0.8,
+    angle: Math.PI / 4,
+    bottom: 0,
+    top: 4.2,
+  },
+  ...solids.map((d) => {
+    const trunk = /^(pin|sapin|feuillu)$/.test(d.model);
+    const half = trunk ? 0.45 : d.radius * 0.75;
+    const k = typeof d.scale === 'number' ? d.scale : 1;
+    return {
+      x: d.x,
+      z: d.z,
+      // Banc : boîte de la taille du modèle (1,6 × 0,6 m), tournée comme lui.
+      halfX: d.model === 'banc' ? 0.85 * k : half,
+      halfZ: d.model === 'banc' ? 0.35 : half,
+      angle: d.model === 'banc' ? d.ry : 0,
+      bottom: heightAt(d.x, d.z),
+      top: heightAt(d.x, d.z) + (trunk ? 6 * k : d.model === 'lampadaire' ? 4 : 1.3),
+    };
+  }),
 ];
 export function blocked(x: number, z: number, radius = WORLD.robotRadius): boolean {
   if (Math.hypot(x, z) > WORLD.radius) return true;

@@ -11,67 +11,73 @@ export interface Building {
   height: number;
   elevation: number;
   color: string;
+  /** Plan de la porte (z local), quand elle est en retrait de la façade (portique). */
+  door?: number;
 }
+/**
+ * Implantation V8 (voir world/plan.ts) : rotation par quarts de tour, sol plat (elevation 0).
+ * La façade d'entrée est la face locale +z.
+ */
 export const buildings: Building[] = [
   {
     id: 'profile',
     number: '01',
-    position: [-27, 21],
-    rotation: 0.12,
-    size: [15, 10],
-    height: 23,
-    elevation: 1.4,
-    color: '#ec8057',
+    position: [-24, -38],
+    rotation: 0,
+    size: [14, 10],
+    height: 12.5,
+    elevation: 0,
+    color: '#d98a67',
   },
   {
     id: 'project-1',
     number: '02',
-    position: [-29, -10],
-    rotation: 0.18,
-    size: [15, 12],
-    height: 16,
-    elevation: 3.1,
-    color: '#60a8c6',
+    position: [0, 29],
+    rotation: Math.PI,
+    size: [15, 11],
+    height: 8.5,
+    elevation: 0,
+    color: '#6aa3b7',
   },
   {
     id: 'project-2',
     number: '03',
-    position: [0, -32],
-    rotation: -0.08,
-    size: [17, 12],
-    height: 14,
-    elevation: 4.4,
-    color: '#e9a24e',
+    position: [-46, 0],
+    rotation: Math.PI / 2,
+    size: [18, 13],
+    height: 8.5,
+    elevation: 0,
+    color: '#d6a557',
   },
   {
     id: 'project-3',
     number: '04',
-    position: [29, -25],
-    rotation: -0.28,
+    position: [24, -40],
+    rotation: 0,
     size: [13, 13],
-    height: 20,
-    elevation: 3.4,
-    color: '#a39ac9',
+    height: 15,
+    elevation: 0,
+    color: '#9890c4',
   },
   {
     id: 'missions',
     number: '05',
-    position: [3, 14],
-    rotation: -0.18,
-    size: [14, 9],
-    height: 8,
-    elevation: 1.7,
-    color: '#df7355',
+    position: [0, -38],
+    rotation: 0,
+    size: [18, 12],
+    height: 9.5,
+    elevation: 0,
+    color: '#6aa392',
   },
   {
     id: 'veolia',
     number: '06',
-    position: [32, 21],
-    rotation: -0.28,
-    size: [17, 12],
-    height: 15,
-    elevation: 0.8,
-    color: '#d84141',
+    position: [46, 0],
+    rotation: -Math.PI / 2,
+    size: [18, 12],
+    height: 10.5,
+    elevation: 0,
+    color: '#c8645a',
   },
 ];
 export function localToWorld(b: Building, x: number, z: number): Point {
@@ -83,14 +89,18 @@ export function localToWorld(b: Building, x: number, z: number): Point {
 export function entrance(b: Building): Point {
   return localToWorld(b, 0, b.size[1] / 2 + 3.4);
 }
+/** Plan de la porte (z local) : la façade, ou le fond du portique. */
+export const doorPlane = (b: Building) => b.door ?? b.size[1] / 2;
+/** Point devant la porte, à `offset` du plan des vantaux. */
+export const doorPoint = (b: Building, offset = 0.1) => localToWorld(b, 0, doorPlane(b) + offset);
 export const WORLD = {
   radius: 59,
   walkSpeed: 6.2,
   runSpeed: 9.5,
   robotRadius: 0.53,
-  /** Départ sur la rue ouest, face au poteau indicateur puis à la place (voir tests/v5.test.mjs). */
-  spawn: [-17, 6] as Point,
-  spawnAngle: 1.68,
+  /** Départ au sud de la place, face à la fontaine et à la galerie (nord). */
+  spawn: [0, 3] as Point,
+  spawnAngle: Math.PI,
 };
 export const CAMERA = {
   distance: 21,

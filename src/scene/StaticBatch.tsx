@@ -18,7 +18,7 @@ import { PATTERNS, applySurface, type Pattern } from './surface';
  * Les pièces placées sous <Fine> forment des maillages à part (userData.fine) : le bâtiment les
  * masque de loin, et la qualité Légère ne les construit pas (voir Fine).
  */
-export function batchMeshes(root: THREE.Object3D): { meshes: THREE.Mesh[]; restore: () => void } {
+function batchMeshes(root: THREE.Object3D): { meshes: THREE.Mesh[]; restore: () => void } {
   root.updateWorldMatrix(true, true);
   const inverse = root.matrixWorld.clone().invert();
   const groups = new Map<

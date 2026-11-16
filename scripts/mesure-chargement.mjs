@@ -22,7 +22,7 @@ for (let i = 0; i < runs; i++) {
   await page.addInitScript(() => {
     window.__tasks = [];
     new PerformanceObserver((list) => {
-      for (const e of list.getEntries()) window.__tasks.push(e.duration);
+      for (const e of list.getEntries()) window.__tasks.push([e.startTime, e.duration]);
     }).observe({ type: 'longtask', buffered: true });
   });
   const start = Date.now();
@@ -36,6 +36,12 @@ for (let i = 0; i < runs; i++) {
   const ready = Date.now() - start;
   await page.waitForTimeout(1500);
   const tasks = await page.evaluate(() => window.__tasks);
+  // Tâches pendant que la page de chargement est visible (avant la marque « prêt »).
+  const pret = await page.evaluate(
+    () => performance.getEntriesByName('careerverse:pret')[0]?.startTime ?? Infinity,
+  );
+  const during = tasks.filter(([start]) => start < pret).map(([, d]) => d);
+  const all = tasks.map(([, d]) => d);
   // Poids transféré : document, scripts, styles, polices, sons (Resource Timing).
   const bytes = await page.evaluate(() =>
     [...performance.getEntriesByType('navigation'), ...performance.getEntriesByType('resource')].reduce(
@@ -45,8 +51,9 @@ for (let i = 0; i < runs; i++) {
   );
   results.push({
     pret_ms: ready,
-    plus_longue_tache_ms: Math.round(Math.max(0, ...tasks)),
-    taches_de_plus_de_200_ms: tasks.filter((d) => d > 200).length,
+    plus_longue_tache_ms: Math.round(Math.max(0, ...all)),
+    plus_longue_tache_chargement_ms: Math.round(Math.max(0, ...during)),
+    taches_chargement_de_plus_de_200_ms: during.filter((d) => d > 200).length,
     transfere_ko: Math.round(bytes / 1024),
   });
   await context.close();

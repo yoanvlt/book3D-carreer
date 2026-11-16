@@ -28,9 +28,3 @@ export function undersideRadius(a: number, t: number): number {
 
 /** Hauteur (y) à la fraction t, du bord (y = 0) à la pointe. */
 export const undersideY = (t: number) => ISLAND.bottom * t;
-
-/** Sources et cascades : angle sur le bord, largeur de la chute, hauteur de chute. */
-export const WATERFALLS: { a: number; width: number; drop: number }[] = [
-  { a: 0.42, width: 2.2, drop: 15 },
-  { a: 1.28, width: 1.6, drop: 11 },
-];

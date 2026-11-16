@@ -16,13 +16,16 @@ import {
   travel,
   walkTo,
   stopTour,
+  robotUi,
+  standUp,
+  wave,
 } from '../state';
 import { moveIndoors, stationAt } from '../world/narrative';
 import { WORLD, CAMERA, buildings, entrance } from '../world/config';
 import { heightAt } from '../world/terrain';
 import { moveWithCollisions } from '../world/collision';
 import { skipCurrent } from '../world/motion';
-import { JUMP, actions, combineInput, desiredVelocity, groundHit, stepJump } from '../world/controls';
+import { JUMP, actions, combineInput, desiredVelocity, groundHit, stepJump, stick } from '../world/controls';
 
 const MOVE_KEYS = ['w', 'z', 'a', 'q', 's', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'];
 const overlay = () => {
@@ -80,6 +83,10 @@ export default function Controller() {
       }
       if (k === 'e' || k === 'enter') {
         interact();
+        return;
+      }
+      if (k === 'h') {
+        wave();
         return;
       }
       if (k === 'r') {
@@ -211,6 +218,14 @@ export default function Controller() {
       if (player.jump.height === 0) player.jump.velocity = JUMP.velocity;
     }
     const has = (...ks: string[]) => ks.some((k) => keys.current.has(k));
+    // Assis : le premier mouvement relève le robot ; sinon il reste en place.
+    if (robotUi.sit) {
+      if (MOVE_KEYS.some((k) => keys.current.has(k)) || Math.hypot(stick.x, stick.y) > 0.2) standUp();
+      else {
+        player.speed = 0;
+        return;
+      }
+    }
     const intent = combineInput({
       forward: Number(has('w', 'z', 'arrowup')) - Number(has('s', 'arrowdown')),
       right: Number(has('d', 'arrowright')) - Number(has('a', 'q', 'arrowleft')),

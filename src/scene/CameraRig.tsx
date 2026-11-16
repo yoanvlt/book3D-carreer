@@ -1,40 +1,33 @@
 import { useRef } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
-import { safeCameraRoute, sampleRoute, ease, mix3 } from '../world/cinematics';
 import type { Vec3 } from '../world/collision';
 import { CAMERA } from '../world/config';
 import { chooseCamera, moveCamera, chooseInteriorCamera, moveInteriorCamera, framing } from '../world/camera';
 import { heightAt } from '../world/terrain';
-import { getState, setState, player, view, finishArrival, skip, robotUi } from '../state';
-import { FLIGHT } from '../world/flight';
+import { getState, player, view, robotUi } from '../state';
+import { FLIGHT, flightCamera, flightPose, type Path } from '../world/flight';
 import { photo } from './photo';
 
 /**
- * Poursuite du robot pendant les vols : la caméra se place derrière lui, un peu au-dessus (poids
- * `weight`), et le regarde (poids `lookWeight`, qui peut durer plus longtemps).
+ * Vols (V8) : caméra de travelling de la timeline (world/flight.ts), raccordée au départ et à
+ * l'arrivée par des fondus de position et de regard (aucun saut d'échelle).
  */
-const CHASE = { back: 8, up: 3.5 };
-const chasePoint = new THREE.Vector3();
-const chaseLook = new THREE.Vector3();
-function chase(weight: number, lookWeight: number, position: THREE.Vector3, look: THREE.Vector3) {
-  if (lookWeight <= 0) return;
-  const [x, y, z] = robotUi.position;
-  const h = robotUi.heading;
-  chasePoint.set(x - Math.sin(h) * CHASE.back, y + CHASE.up, z - Math.cos(h) * CHASE.back);
-  position.lerp(chasePoint, weight);
-  // Mélange des directions (pas des points) : un point visé lointain ne doit pas sortir le robot du cadre.
-  chaseLook.copy(look).sub(position).normalize();
-  chasePoint
-    .set(x, y + 1.2, z)
-    .sub(position)
-    .normalize();
-  chaseLook.lerp(chasePoint, lookWeight).normalize();
-  look.copy(position).addScaledVector(chaseLook, 10);
+const rigPosition = new THREE.Vector3();
+const rigTarget = new THREE.Vector3();
+function flightView(fov: number, aspect: number) {
+  const f = robotUi.flight;
+  if (!f.path) return null;
+  const pose = flightPose(f.path as Path, f.time, f.startYaw, f.endYaw);
+  const view = flightCamera(pose, f.path as Path, fov, aspect);
+  rigPosition.set(...view.position);
+  rigTarget.set(...view.target);
+  return {
+    time: f.time,
+    start: THREE.MathUtils.smoothstep(f.time, 0, 0.7),
+    end: THREE.MathUtils.smoothstep(f.time, FLIGHT.total - 0.75, FLIGHT.total),
+  };
 }
-/** Poids de la poursuite : monte jusqu'à `rise`, tient, puis rend la main à partir de `release`. */
-const chaseWeight = (t: number, rise: number, release: number) =>
-  THREE.MathUtils.smoothstep(t, 0, rise) * (1 - THREE.MathUtils.smoothstep(t, release, 1));
 
 export default function CameraRig() {
   const { camera, size } = useThree();
@@ -48,6 +41,7 @@ export default function CameraRig() {
     skip: 0,
     t: 0,
     offset: 0,
+    flightEnd: 0,
     from: new THREE.Vector3(),
     lookFrom: new THREE.Vector3(),
     look: new THREE.Vector3(),
@@ -65,9 +59,6 @@ export default function CameraRig() {
       perspective.updateProjectionMatrix();
       return;
     }
-    // Une demande de passer n'est valable que pour la séquence en cours.
-    const skipped = runtime.current.skip !== skip.serial;
-    runtime.current.skip = skip.serial;
     const dt = Math.min(delta, 0.05),
       r = runtime.current,
       // Cadrage portrait réglé ici, à chaque image, selon le format réel de l'écran.
@@ -109,36 +100,28 @@ export default function CameraRig() {
       r.look.copy(r.target);
     }
     if (s.phase === 'homing') {
+      // Retour : vue de ville → travelling → vue d'accueil.
       const distance = narrow ? 1.36 : 1;
-      const end = {
-        x: CAMERA.aerial[0] * distance,
-        y: CAMERA.aerial[1] * distance,
-        z: CAMERA.aerial[2] * distance,
-      };
       if (r.phase !== 'homing') {
-        r.t = 0;
         r.from.copy(camera.position);
         r.lookFrom.copy(r.look);
-        r.route = safeCameraRoute(r.from, end);
       }
-      r.t = Math.min(1, r.t + dt / (s.reducedMotion ? 0.001 : FLIGHT.total));
-      if (skipped) r.t = 1;
-      if (robotUi.hold !== null) r.t = robotUi.hold;
-      // La caméra suit le robot qui remonte, puis se cale sur la vue d'accueil.
-      const p = sampleRoute(r.route, r.t),
-        aim = mix3(r.lookFrom, { x: 0, y: 1, z: 0 }, ease(r.t));
-      camera.position.set(p.x, p.y, p.z);
-      r.look.set(aim.x, aim.y, aim.z);
-      // Le regard reste sur le robot presque jusqu'au bout : à l'arrivée, il est déjà dans la vue d'accueil.
-      chase(chaseWeight(r.t, 0.2, 0.6), chaseWeight(r.t, 0.15, 0.92), camera.position, r.look);
-      camera.position.y = Math.max(
-        camera.position.y,
-        heightAt(camera.position.x, camera.position.z) + CAMERA.clearance,
+      const v = flightView(narrow ? 48 : 41, size.width / size.height);
+      const w = v ?? { start: 1, end: 1 };
+      const homeView = new THREE.Vector3(
+        CAMERA.aerial[0] * distance,
+        CAMERA.aerial[1] * distance,
+        CAMERA.aerial[2] * distance,
       );
+      camera.position.copy(r.from).lerp(rigPosition, w.start).lerp(homeView, w.end);
+      r.look
+        .copy(r.lookFrom)
+        .lerp(rigTarget, w.start)
+        .lerp(new THREE.Vector3(0, 1, 0), w.end);
       camera.lookAt(r.look);
-      perspective.fov = THREE.MathUtils.damp(perspective.fov, narrow ? 48 : 41, 3, dt);
-      r.offset = (narrow ? 0 : -size.width * CAMERA.homeOffset) * ease(r.t);
-      if (r.t >= 1) setState({ phase: 'home' });
+      // Focale du travelling (celle de l'accueil) tenue pendant tout le vol.
+      perspective.fov = THREE.MathUtils.lerp(narrow ? 53 : 48, narrow ? 48 : 41, Math.max(w.start, w.end));
+      r.offset = (narrow ? 0 : -size.width * CAMERA.homeOffset) * w.end;
     } else if (s.phase === 'home') {
       const drift = 0;
       const distance = narrow ? 1.36 : 1;
@@ -171,39 +154,21 @@ export default function CameraRig() {
         r.look.copy(r.target);
       }
       if (s.phase === 'entering') {
-        if (r.phase !== 'entering' || r.teleport !== player.teleport) {
-          r.t = 0;
+        // Aller : vue d'accueil → travelling → vue de ville derrière le robot posé.
+        if (r.phase !== 'entering') {
           r.from.copy(camera.position);
           r.lookFrom.copy(r.look);
-          if (r.teleport !== player.teleport) {
-            r.from.copy(r.safe).add(new THREE.Vector3(0, 23, 0));
-            r.lookFrom.copy(r.aim);
-            r.offset = 0;
-          }
         }
-        if (r.t === 0) r.route = safeCameraRoute(r.from, r.safe);
-        r.t += dt / (s.reducedMotion ? 0.001 : FLIGHT.total);
-        if (skipped) r.t = 1;
-        if (robotUi.hold !== null) r.t = robotUi.hold;
-        const t = Math.min(1, r.t),
-          e = t * t * (3 - 2 * t);
-        const pathPosition = sampleRoute(r.route, t);
-        camera.position.set(pathPosition.x, pathPosition.y, pathPosition.z);
-        r.look.lerpVectors(r.lookFrom, r.aim, e);
-        // Pendant le vol, la caméra plonge derrière le robot et le suit jusqu'à la place.
-        if (r.teleport === player.teleport)
-          chase(chaseWeight(t, 0.25, 0.7), chaseWeight(t, 0.2, 0.85), camera.position, r.look);
-        // An elevated arc clears roofs during descent and destination transitions.
-        // The route is swept against terrain and building collision volumes.
+        const v = flightView(narrow ? 48 : 41, size.width / size.height);
+        const w = v ?? { start: 1, end: 1 };
+        camera.position.copy(r.from).lerp(rigPosition, w.start).lerp(r.safe, w.end);
+        r.look.copy(r.lookFrom).lerp(rigTarget, w.start).lerp(r.aim, w.end);
         camera.position.y = Math.max(
           camera.position.y,
           heightAt(camera.position.x, camera.position.z) + CAMERA.clearance,
         );
-        r.offset *= 1 - Math.min(0.3, dt * 3);
-        if (t >= 1) {
-          r.offset = 0;
-          finishArrival();
-        }
+        r.offset *= 1 - w.start;
+        r.flightEnd = w.end;
       } else {
         const smooth = 1 - Math.exp(-CAMERA.stiffness * dt);
         r.look.lerp(r.target, smooth);
@@ -214,7 +179,10 @@ export default function CameraRig() {
         r.offset = 0;
       }
       camera.lookAt(r.look);
-      perspective.fov = THREE.MathUtils.damp(perspective.fov, narrow ? 53 : 48, 3, dt);
+      perspective.fov =
+        s.phase === 'entering'
+          ? THREE.MathUtils.lerp(narrow ? 48 : 41, narrow ? 53 : 48, r.flightEnd)
+          : THREE.MathUtils.damp(perspective.fov, narrow ? 53 : 48, 3, dt);
     }
     perspective.setViewOffset(size.width, size.height, r.offset, 0, size.width, size.height);
     perspective.updateProjectionMatrix();

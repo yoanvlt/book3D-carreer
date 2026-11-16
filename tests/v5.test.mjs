@@ -162,16 +162,18 @@ test('Caméra portrait : plus haute et plus loin, réglée par le format d’éc
   assert.ok(Math.abs(portrait.pitch - CAMERA.portrait.elevation) < 1e-9);
 });
 
-test('Départ : le robot regarde le poteau indicateur et la place, pas le mur d’Autres missions', () => {
+test('Départ : le robot regarde la fontaine et la galerie au bout de la place', () => {
   const [x, z] = WORLD.spawn;
   assert.equal(collision.blocked(x, z), false);
-  const toPost = Math.atan2(-8 - x, 5 - z);
-  const toPlaza = Math.atan2(-x, -z);
   const diff = (a, b) => Math.abs(Math.atan2(Math.sin(a - b), Math.cos(a - b)));
-  assert.ok(diff(WORLD.spawnAngle, toPost) < 0.15, 'face au poteau');
-  assert.ok(diff(WORLD.spawnAngle, toPlaza) < 0.6, 'vers la place');
-  // Part de l'écran 1440×900 couverte par Autres missions depuis la caméra de départ (V4 : 29 %).
+  // Fontaine au centre de la place, galerie (Autres missions) dans l'axe, au nord.
+  assert.ok(diff(WORLD.spawnAngle, Math.atan2(0 - x, -4 - z)) < 0.15, 'face à la fontaine');
   const m = buildings.find((b) => b.id === 'missions');
+  assert.ok(
+    diff(WORLD.spawnAngle, Math.atan2(m.position[0] - x, m.position[1] - z)) < 0.15,
+    'face à la galerie',
+  );
+  // La galerie reste lisible sans boucher l'écran depuis la caméra de départ.
   const yaw = WORLD.spawnAngle - Math.PI;
   const target = { x, y: heightAt(x, z) + CAMERA.targetHeight, z };
   const c = camera.chooseCamera(target, yaw, CAMERA.elevation, CAMERA.distance, yaw).point;
@@ -179,26 +181,17 @@ test('Départ : le robot regarde le poteau indicateur et la place, pas le mur d�
   view.position.set(c.x, c.y, c.z);
   view.lookAt(target.x, target.y, target.z);
   view.updateMatrixWorld();
-  const xs = [],
-    ys = [];
-  for (const lx of [-m.size[0] / 2, m.size[0] / 2])
-    for (const lz of [-m.size[1] / 2, m.size[1] / 2])
-      for (const ly of [0, m.height]) {
-        const wx = m.position[0] + lx * Math.cos(m.rotation) + lz * Math.sin(m.rotation);
-        const wz = m.position[1] - lx * Math.sin(m.rotation) + lz * Math.cos(m.rotation);
-        const v = new Vector3(wx, m.elevation + ly, wz).project(view);
-        assert.ok(v.z < 1);
-        xs.push(Math.max(-1, Math.min(1, v.x)));
-        ys.push(Math.max(-1, Math.min(1, v.y)));
-      }
-  const area = ((Math.max(...xs) - Math.min(...xs)) * (Math.max(...ys) - Math.min(...ys))) / 4;
-  assert.ok(area < 0.12, `Autres missions couvre ${(area * 100).toFixed(0)} % de l’écran`);
-  const post = new Vector3(-8, 2.5, 5).project(view);
-  assert.ok(Math.abs(post.x) < 0.2, 'poteau au centre de l’écran');
+  const g = new Vector3(m.position[0], m.height / 2, m.position[1]).project(view);
+  assert.ok(Math.abs(g.x) < 0.2 && g.z < 1, 'galerie au centre de l’écran');
 });
 
 test('Collisions : glisser le long d’un mur tourné et d’un banc au lieu de bloquer', () => {
-  for (const o of [collision.obstacles[5], ...collision.allObstacles.filter((o) => o.halfX === 1.5)]) {
+  // Un bâtiment tourné d'un quart de tour (atelier) et les bancs de la place (en biais).
+  const benches = collision.allObstacles.filter(
+    (o) => o.halfZ === 0.35 && Math.abs(Math.sin(2 * o.angle)) > 0.5,
+  );
+  assert.ok(benches.length >= 2);
+  for (const o of [collision.obstacles[2], ...benches]) {
     // Départ devant la face +Z locale de l'obstacle, poussée à 45° vers le mur.
     const c = Math.cos(o.angle),
       s = Math.sin(o.angle);

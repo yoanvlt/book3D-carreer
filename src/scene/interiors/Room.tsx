@@ -2,12 +2,12 @@ import { type ReactNode } from 'react';
 import { DoorLeaves } from '../Door';
 import StaticBatch from '../StaticBatch';
 import { Box, FINISH, Sign, type Finish } from '../Primitives';
-import { Planter, Windows } from '../kit';
+
 import { color as C, type InteriorMood } from '../../design/tokens';
 import type { BuildingId } from '../../world/config';
 import { DOOR_PLANTERS, ROWS } from '../../world/narrative';
 import { isOpen, place } from '../../content';
-import { W, D, WALL_H, Plant } from './parts';
+import { W, D, WALL_H, Plant, Planter, Windows } from './parts';
 
 /** Matières propres à chaque salle : sol, murs, lambris éventuel, plinthes. */
 const SHELL: Record<BuildingId, { floor: Finish; wall: Finish; wainscot?: string; plinth: string }> = {

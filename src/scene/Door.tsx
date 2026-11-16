@@ -14,7 +14,7 @@ import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { color as C } from '../design/tokens';
 import { getState, passage } from '../state';
 import type { BuildingId } from '../world/config';
-import { Box, FINISH, type Finish } from './Primitives';
+import { FINISH, type Finish } from './Primitives';
 
 type DoorStyle = 'glass' | 'wood' | 'workshop' | 'porthole' | 'gallery' | 'shutter';
 
@@ -192,48 +192,5 @@ export function DoorLeaves({ id }: { id: BuildingId }) {
         </group>
       )}
     </group>
-  );
-}
-
-/**
- * Embrasure dans la façade : piédroits et linteau du matériau du mur, d'épaisseur `depth` en
- * avant du plan des vantaux, et un fond de mur jusqu'à `back` derrière. Seuil de pierre.
- */
-export function DoorSurround({
-  id,
-  depth = 0.45,
-  back = 0.6,
-  pier = 0.55,
-}: {
-  id: BuildingId;
-  depth?: number;
-  back?: number;
-  pier?: number;
-}) {
-  const spec = DOORS[id];
-  const { w, h } = OPENING;
-  const z = (depth - back) / 2;
-  const d = depth + back;
-  return (
-    <>
-      {[-1, 1].map((s) => (
-        <Box
-          key={s}
-          p={[s * (w / 2 + pier / 2), (h + 0.6) / 2, z]}
-          s={[pier, h + 0.6, d]}
-          color={spec.wall}
-          finish={spec.finish}
-        />
-      ))}
-      <Box
-        p={[0, h + 0.3, z]}
-        s={[w + pier * 2, 0.6, d]}
-        color={spec.lintel ?? spec.wall}
-        finish={spec.lintel ? FINISH.stone : spec.finish}
-      />
-      {/* Fond sombre derrière les vantaux et seuil */}
-      <Box p={[0, h / 2, -back + 0.05]} s={[w, h, 0.1]} color={C.slate} />
-      <Box p={[0, 0.04, depth / 2]} s={[w + 0.2, 0.08, depth + 0.4]} color={C.stone} finish={FINISH.stone} />
-    </>
   );
 }

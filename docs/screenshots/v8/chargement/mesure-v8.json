@@ -1,0 +1,32 @@
+{
+  "mesures": [
+    {
+      "pret_ms": 3031,
+      "plus_longue_tache_ms": 195,
+      "plus_longue_tache_chargement_ms": 125,
+      "taches_chargement_de_plus_de_200_ms": 0,
+      "transfere_ko": 560
+    },
+    {
+      "pret_ms": 2204,
+      "plus_longue_tache_ms": 580,
+      "plus_longue_tache_chargement_ms": 106,
+      "taches_chargement_de_plus_de_200_ms": 0,
+      "transfere_ko": 560
+    },
+    {
+      "pret_ms": 2015,
+      "plus_longue_tache_ms": 1114,
+      "plus_longue_tache_chargement_ms": 143,
+      "taches_chargement_de_plus_de_200_ms": 0,
+      "transfere_ko": 560
+    }
+  ],
+  "mediane": {
+    "pret_ms": 2204,
+    "plus_longue_tache_ms": 580,
+    "plus_longue_tache_chargement_ms": 125,
+    "taches_chargement_de_plus_de_200_ms": 0,
+    "transfere_ko": 560
+  }
+}

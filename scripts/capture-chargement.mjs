@@ -1,12 +1,14 @@
-// Page de chargement (V7) : une capture à trois étapes réelles (polices, construction de la ville,
-// préparation des matières), au bureau et sur téléphone. Le rendu logiciel rend ces étapes assez
+// Page de chargement (V8) : une capture à quatre étapes réelles (modèles, monde, lumière
+// précalculée, première image), au bureau et sur téléphone. Chaque étape est figée par
+// `?debug=1&chargement=<étape>` (même affichage qu'en vrai), sans quoi le chargement est trop
+// rapide pour être saisi. Le rendu logiciel rend ces étapes assez
 // longues pour être saisies au vol ; sur un vrai poste elles passent plus vite.
 //   npm run capture:chargement -- [dossier]
 // Variable : URL (défaut http://127.0.0.1:4173/book3D-carreer/).
 import { mkdir, writeFile } from 'node:fs/promises';
 import { chromium } from 'playwright';
 
-const [out = 'docs/screenshots/v7/chargement'] = process.argv.slice(2);
+const [out = 'docs/screenshots/v8/chargement'] = process.argv.slice(2);
 const base = process.env.URL ?? 'http://127.0.0.1:4173/book3D-carreer/';
 await mkdir(out, { recursive: true });
 const browser = await chromium.launch({
@@ -17,11 +19,8 @@ const browser = await chromium.launch({
     '--ignore-gpu-blocklist',
   ],
 });
-const STEPS = [
-  ['1-polices', 'Chargement des polices', 'Préparation de la scène'],
-  ['2-construction', 'Construction de la ville'],
-  ['3-matieres', 'Préparation des matières', 'Première image'],
-];
+// Étapes capturées : la page est figée à chacune par `?debug=1&chargement=<étape>`.
+const STEPS = ['modeles', 'monde', 'lumiere', 'image'];
 const seen = [];
 const shots = [];
 for (const [name, options] of [
@@ -29,23 +28,18 @@ for (const [name, options] of [
   ['telephone', { viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true }],
 ]) {
   const page = await browser.newPage(options);
-  await page.goto(base, { waitUntil: 'commit' });
-  for (const [file, ...labels] of STEPS) {
-    const label = await page
-      .waitForFunction(
-        (list) => {
-          const text = document.getElementById('loader-step')?.textContent ?? '';
-          return list.includes(text) && text;
-        },
-        labels,
-        { timeout: 180000, polling: 20 },
-      )
-      .then((h) => h.jsonValue())
-      .catch(() => null);
-    if (!label) continue;
-    // Capture immédiate : l'étape en cours, pas la suivante. Encodage WebP à la fin.
-    shots.push([`${out}/${name}-${file}.webp`, await page.screenshot({ timeout: 180000 })]);
-    seen.push(`${name} ${file} : ${label}`);
+  for (const [i, step] of STEPS.entries()) {
+    await page.goto(`${base}?debug=1&chargement=${step}`);
+    await page.waitForFunction(() => document.querySelectorAll('#loader .trait.on').length > 0, null, {
+      timeout: 60000,
+    });
+    await page.waitForTimeout(900);
+    const label = await page.evaluate(
+      () =>
+        `${document.querySelector('#loader-steps li.active')?.dataset.step ?? 'image'} ${document.getElementById('loader-percent')?.textContent} %`,
+    );
+    shots.push([`${out}/${name}-${i + 1}-${step}.webp`, await page.screenshot({ timeout: 180000 })]);
+    seen.push(`${name} ${step} : ${label}`);
   }
   await page.close();
 }

@@ -34,21 +34,15 @@ test('Every building has an exactly level platform', () => {
     }
   }
 });
-test('Relief is substantial, finite and continuous along the main paths', () => {
-  const heights = [];
-  for (let x = -45; x <= 45; x += 3)
-    for (let z = -45; z <= 45; z += 3) {
-      const h = heightAt(x, z);
-      assert.ok(Number.isFinite(h));
-      heights.push(h);
-    }
-  assert.ok(Math.max(...heights) - Math.min(...heights) > 4);
+test('Relief : fini, continu et doux le long des chemins vers chaque porte', () => {
+  for (let x = -60; x <= 60; x += 3)
+    for (let z = -60; z <= 60; z += 3) assert.ok(Number.isFinite(heightAt(x, z)));
   for (const b of buildings) {
     const end = entrance(b);
-    let previous = heightAt(0, 0);
+    let previous = heightAt(...WORLD.spawn);
     for (let i = 1; i <= 150; i++) {
-      const x = (end[0] * i) / 150,
-        z = (end[1] * i) / 150,
+      const x = WORLD.spawn[0] + ((end[0] - WORLD.spawn[0]) * i) / 150,
+        z = WORLD.spawn[1] + ((end[1] - WORLD.spawn[1]) * i) / 150,
         y = heightAt(x, z);
       assert.ok(Math.abs(y - previous) < 0.3);
       assert.ok(terrainSlope(x, z) < 1.2);

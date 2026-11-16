@@ -1,13 +1,7 @@
 import { useSyncExternalStore } from 'react';
-import {
-  WORLD,
-  CAMERA,
-  entrance,
-  localToWorld,
-  buildings,
-  type BuildingId,
-  type Point,
-} from './world/config';
+import { WORLD, CAMERA, entrance, doorPoint, buildings, type BuildingId, type Point } from './world/config';
+import { sitOnBench } from './robot';
+import { TOUR, tourStep } from './tour';
 import { heightAt } from './world/terrain';
 import { findRoute } from './world/navigation';
 import { blocked } from './world/collision';
@@ -79,20 +73,6 @@ export const useGame = () =>
     listeners.add(fn);
     return () => listeners.delete(fn);
   }, getState);
-export function cameraMode(s = state): CameraMode {
-  if (s.phase === 'explore') return s.interior ? 'interior' : 'exterior';
-  return (
-    {
-      home: 'aerial',
-      entering: 'arrival',
-      travel: 'guided',
-      doorway: 'door',
-      showcase: 'presentation',
-      returning: 'return',
-      homing: 'homeward',
-    } as const
-  )[s.phase];
-}
 export const player = {
   x: WORLD.spawn[0],
   z: WORLD.spawn[1],
@@ -313,7 +293,7 @@ function startDoor(id: BuildingId, leaving: boolean, route: Point[]) {
     swapped: false,
     leaving,
     from: [player.x, player.z],
-    to: leaving ? ROOM.door : localToWorld(b, 0, b.size[1] / 2 + 0.1),
+    to: leaving ? ROOM.door : doorPoint(b),
     // Loin de la porte intérieure, un fondu remplace la marche jusqu'au seuil.
     stage: leaving && length > 3 ? 'cut' : 'approach',
     openness: 0,
@@ -347,6 +327,7 @@ export function interact() {
       setState({ reading: state.station });
     } else if (Math.hypot(player.x - ROOM.exit[0], player.z - ROOM.exit[1]) < 3) leaveBuilding();
   } else if (state.nearby) openBuilding(state.nearby);
+  else sitOnBench();
 }
 export function guideToStation(index: number) {
   if (!state.interior || state.phase !== 'explore') return;
@@ -354,17 +335,6 @@ export function guideToStation(index: number) {
   if (!s) return;
   startJourney(indoorRoute([player.x, player.z], stationApproach(s), state.interior), null);
 }
-/** Robot de l'accueil : position du curseur (écran normalisé) et signe de la main au survol. */
-export const robotUi = {
-  pointer: [0, 0] as [number, number],
-  wave: false,
-  /** Captures : vol figé à cette fraction (0 à 1) de sa durée totale ; null en jeu. */
-  hold: null as number | null,
-  /** Position et cap du robot pendant les vols, suivis par la caméra. */
-  position: [0, 0, 0] as [number, number, number],
-  heading: 0,
-};
-
 export function goHome() {
   if (state.phase !== 'explore' || state.interior) return;
   journey.points = [];
@@ -416,25 +386,6 @@ export function walkTo(p: Point): boolean {
   return startJourney(route, null);
 }
 
-/**
- * Visite guidée depuis l'accueil : les six lieux s'enchaînent, chacun avec sa présentation complète
- * (quatre vues) et sa fiche. Durée totale : 6 × (8 + 0,8) s ≈ 53 s. On la quitte à tout moment ;
- * un clic ou Espace passe au lieu suivant.
- */
-export const TOUR = { perPlace: 8, order: buildings.map((b) => b.id) };
-function tourStep() {
-  const id = TOUR.order[state.tour ?? 0];
-  discover(id, true);
-  presentation.full = true;
-  presentation.duration = TOUR.perPlace;
-}
-export function startTour() {
-  if (state.phase !== 'home' || state.tour !== null) return;
-  setState({ tour: 0, ...overlaysClosed });
-  tourStep();
-}
-export function stopTour() {
-  if (state.tour === null) return;
-  setState({ tour: null });
-  endPresentation();
-}
+export { robotUi, standUp, wave } from './robot';
+export { TOUR, startTour, stopTour } from './tour';
+export { cameraMode } from './cameraMode';

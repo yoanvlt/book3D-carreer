@@ -1,10 +1,10 @@
-// Budget de rendu (V6, inchangé en V7), vérifié sur les relevés des campagnes de capture versionnées
+// Budget de rendu (V6, inchangé en V7 et V8), vérifié sur les relevés des campagnes de capture versionnées
 // (le décompte des draw calls et des triangles demande un vrai rendu WebGL, impossible sous Node).
 // Après une modification de la scène, refaire les relevés :
 //   npm run build && npm run preview
-//   npm run capture -- scenes docs/screenshots/v7
-//   QUALITE=low npm run capture -- scenes docs/screenshots/v7/legere
-//   npm run capture:details -- docs/screenshots/v7/details
+//   npm run capture -- scenes docs/screenshots/v8
+//   QUALITE=low npm run capture -- scenes docs/screenshots/v8/legere
+//   npm run capture:details -- docs/screenshots/v8/details
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
@@ -15,7 +15,7 @@ export const BUDGET = {
 };
 
 const read = async (path) =>
-  JSON.parse(await readFile(new URL(`../docs/screenshots/v7/${path}`, import.meta.url)));
+  JSON.parse(await readFile(new URL(`../docs/screenshots/v8/${path}`, import.meta.url)));
 
 test('Qualité Soignée : au plus 300 draw calls et 700 000 triangles par scène, aux quatre tailles', async () => {
   const report = await read('rapport-scenes.json');

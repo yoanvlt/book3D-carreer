@@ -25,7 +25,10 @@
     "capture:inspection": "node scripts/capture-inspection.mjs",
     "capture:robot": "node scripts/capture-robot.mjs",
     "capture:chargement": "node scripts/capture-chargement.mjs",
-    "mesure:chargement": "node scripts/mesure-chargement.mjs"
+    "mesure:chargement": "node scripts/mesure-chargement.mjs",
+    "kits": "node scripts/kits.mjs",
+    "capture:da": "node scripts/capture-da.mjs",
+    "capture:actions": "node scripts/capture-actions.mjs"
   },
   "dependencies": {
     "@fontsource-variable/bricolage-grotesque": "^5.3.0",
@@ -38,6 +41,9 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",
+    "@gltf-transform/core": "^4.5.1",
+    "@gltf-transform/extensions": "^4.5.1",
+    "@gltf-transform/functions": "^4.5.1",
     "@types/node": "^22.20.5",
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
@@ -47,7 +53,9 @@
     "eslint-plugin-react-hooks": "^5.2.0",
     "globals": "^17.14.0",
     "knip": "^6.45.1",
+    "meshoptimizer": "^1.3.0",
     "playwright": "1.63.0",
+    "pngjs": "^7.0.0",
     "prettier": "^3.10.1",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.72.2",
